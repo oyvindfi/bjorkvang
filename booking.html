@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lei lokalet – Bjørkvang forsamlingslokale</title>
+    <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet">
+</head>
+<body>
+    <a class="skip-link" href="#main-content">Hopp til hovedinnhold</a>
+    <header class="site-header">
+        <div class="container nav-container">
+            <div class="branding">
+                <a class="logo" href="index.html">
+                    <span class="logo-mark" aria-hidden="true">BV</span>
+                    <span class="logo-text">
+                        <span class="logo-title">Bjørkvang forsamlingslokale</span>
+                        <span class="logo-subtitle">Helgøens Vel</span>
+                    </span>
+                </a>
+            </div>
+            <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav">
+                <span class="sr-only">Åpne hovedmenyen</span>
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <nav class="site-nav" id="primary-nav" aria-label="Hovedmeny">
+                <ul>
+                    <li><a href="index.html">Hjem</a></li>
+                    <li><a href="booking.html#calendar">Kalender</a></li>
+                    <li><a href="booking.html" aria-current="page">Lei lokalet</a></li>
+                    <li><a href="medlemskap.html">Medlemskap</a></li>
+                    <li><a href="nyheter.html">Nyheter</a></li>
+                    <li><a href="kontakt.html">Kontakt</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="page-header" aria-labelledby="page-title">
+        <div class="container">
+            <h1 id="page-title">Lei Bjørkvang forsamlingslokale</h1>
+            <p>Sjekk kalenderen for ledige datoer og send inn forespørsel. Styret svarer innen 2 virkedager.</p>
+        </div>
+    </section>
+
+    <main class="page-main" id="main-content">
+        <section class="page-section booking-calendar-section" aria-labelledby="booking-calendar-heading">
+            <div class="container booking-layout">
+                <div class="booking-main">
+                    <div class="section-heading">
+                        <h2 id="booking-calendar-heading">Finn ledige datoer</h2>
+                        <p>Klikk på en ledig dato for å starte forespørselen.</p>
+                    </div>
+                    <div id="calendar" aria-live="polite"></div>
+                </div>
+                <aside class="booking-aside" aria-labelledby="availability-heading">
+                    <h3 id="availability-heading">Slik leser du kalenderen</h3>
+                    <div class="availability-legend" role="list">
+                        <div class="legend-item" role="listitem">
+                            <span class="legend-dot legend-dot--available" aria-hidden="true"></span>
+                            <span>Ledig dato</span>
+                        </div>
+                        <div class="legend-item" role="listitem">
+                            <span class="legend-dot legend-dot--unavailable" aria-hidden="true"></span>
+                            <span>Reservert</span>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <h4>Spørsmål?</h4>
+                        <p>Kontakt styret hvis du trenger hjelp med bookingen eller har spesielle behov.</p>
+                        <a class="button ghost" href="mailto:helgoens.vel@example.com">Send e-post</a>
+                    </div>
+                </aside>
+            </div>
+        </section>
+
+        <section class="page-section booking-form-section" id="booking-form-section" aria-labelledby="booking-form-heading">
+            <div class="container">
+                <div class="section-heading">
+                    <h2 id="booking-form-heading">Send leieforespørsel</h2>
+                    <p>Fyll ut skjemaet så tar styret kontakt for bekreftelse og signering av leieavtale.</p>
+                </div>
+                <form id="booking-form">
+                    <fieldset class="form-fieldset">
+                        <legend>Kontaktinformasjon</legend>
+                        <div class="form-grid">
+                            <div class="form-field">
+                                <label for="name">Navn *</label>
+                                <input type="text" id="name" name="name" autocomplete="name" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="email">E-post *</label>
+                                <input type="email" id="email" name="email" autocomplete="email" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="phone">Telefon *</label>
+                                <input type="tel" id="phone" name="phone" autocomplete="tel" placeholder="+47 000 00 000" required>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="form-fieldset">
+                        <legend>Når og hva?</legend>
+                        <div class="form-grid">
+                            <div class="form-field">
+                                <label for="event-type">Type arrangement *</label>
+                                <select id="event-type" name="eventType" required>
+                                    <option value="" disabled selected>Velg type</option>
+                                    <option value="Familiefeiring">Familiefeiring</option>
+                                    <option value="Møte eller kurs">Møte eller kurs</option>
+                                    <option value="Konsert eller forestilling">Konsert eller forestilling</option>
+                                    <option value="Dugnad">Dugnad eller nærmiljøtreff</option>
+                                    <option value="Annet">Annet</option>
+                                </select>
+                            </div>
+                            <div class="form-field">
+                                <label for="date">Dato *</label>
+                                <input type="date" id="date" name="date" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="time">Starttid *</label>
+                                <input type="time" id="time" name="time" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="duration">Varighet (timer) *</label>
+                                <input type="number" id="duration" name="duration" min="1" max="12" value="4" required>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="form-fieldset form-fieldset--full" aria-labelledby="spaces-label">
+                        <legend id="spaces-label">Hva ønsker du å leie? *</legend>
+                        <div class="option-grid">
+                            <label class="option-pill">
+                                <input type="checkbox" name="spaces" value="Peisestue">
+                                <span>Peisestue (1 500 kr)</span>
+                            </label>
+                            <label class="option-pill">
+                                <input type="checkbox" name="spaces" value="Salen">
+                                <span>Sal (3 000 kr)</span>
+                            </label>
+                            <label class="option-pill">
+                                <input type="checkbox" name="spaces" value="Hele lokalet">
+                                <span>Hele lokalet (4 000 kr)</span>
+                            </label>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="form-fieldset form-fieldset--full" aria-labelledby="services-label">
+                        <legend id="services-label">Tillegg (valgfritt)</legend>
+                        <div class="option-grid">
+                            <label class="option-pill">
+                                <input type="checkbox" name="services" value="Projektor">
+                                <span>Projektor (500 kr)</span>
+                            </label>
+                            <label class="option-pill">
+                                <input type="checkbox" name="services" value="Teknisk utstyr">
+                                <span>Annet teknisk utstyr</span>
+                            </label>
+                            <label class="option-pill">
+                                <input type="checkbox" name="services" value="Riggehjelp">
+                                <span>Riggehjelp</span>
+                            </label>
+                        </div>
+                    </fieldset>
+
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label for="attendees">Antall deltakere (ca.)</label>
+                            <input type="number" id="attendees" name="attendees" min="1" placeholder="Hvor mange kommer?">
+                        </div>
+                        <div class="form-field form-field--full">
+                            <label for="message">Tilleggsinformasjon</label>
+                            <textarea id="message" name="message" rows="3" placeholder="Har du spesielle behov eller spørsmål?"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="button" type="submit">Send forespørsel</button>
+                        <p id="booking-status" class="form-status" role="status" aria-live="polite"></p>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <section class="page-section" id="priser" aria-labelledby="pricing-heading">
+            <div class="container">
+                <div class="section-heading">
+                    <h2 id="pricing-heading">Priser og pakker</h2>
+                    <p>Medlemmer sparer opptil 500 kr per leie. <a href="medlemskap.html">Bli medlem for 250 kr/år</a>.</p>
+                </div>
+                <div class="products-grid">
+                    <article class="product-card">
+                        <h3>Peisestue</h3>
+                        <p class="price">1 500 kr</p>
+                        <p class="description">Intim stue med peis – ideell for små møter og minnesamvær.</p>
+                    </article>
+                    <article class="product-card">
+                        <h3>Salen</h3>
+                        <p class="price">3 000 kr</p>
+                        <p class="description">Romslig sal med scene, god takhøyde og plass til dansegulv.</p>
+                    </article>
+                    <article class="product-card">
+                        <h3>Hele lokalet</h3>
+                        <p class="price">4 000 kr</p>
+                        <p class="description">Eksklusiv tilgang til både sal og peisestue. Passer for store arrangementer.</p>
+                    </article>
+                    <article class="product-card">
+                        <h3>Bryllupspakke</h3>
+                        <p class="price">6 000 kr</p>
+                        <p class="description">Torsdag til søndag. Inkluderer ekstra tid til pynting og nedrigg.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="page-section space-gallery-section" aria-labelledby="space-gallery-heading">
+            <div class="container">
+                <div class="section-heading">
+                    <h2 id="space-gallery-heading">Se lokalene</h2>
+                    <p>Få et glimt av rom og muligheter når du planlegger.</p>
+                </div>
+                <div class="space-gallery" role="list">
+                    <article class="space-card" role="listitem">
+                        <figure>
+                            <img src="images/67A6972D-DA19-4F40-B0AC-0C283E59D9F2.jpeg" alt="Selskapsoppsett i Bjørkvangs store sal">
+                        </figure>
+                        <div class="space-card__body">
+                            <h3>Salen</h3>
+                            <p>Romslig sal med scene og plass til både langbord og dansegulv.</p>
+                        </div>
+                    </article>
+                    <article class="space-card" role="listitem">
+                        <figure>
+                            <img src="images/981ED216-C4FB-45C8-8862-E7A537F76A9A.jpeg" alt="Peisestue med sofaer">
+                        </figure>
+                        <div class="space-card__body">
+                            <h3>Peisestua</h3>
+                            <p>Intim stue med peis som passer til mindre selskap og møter.</p>
+                        </div>
+                    </article>
+                    <article class="space-card" role="listitem">
+                        <figure>
+                            <img src="images/76ee410e-035f-409f-bc0c-025141df694e.png" alt="Kjøkkenbenker">
+                        </figure>
+                        <div class="space-card__body">
+                            <h3>Kjøkken</h3>
+                            <p>Fullt utstyrt kjøkken med dekketøy og serveringsløsninger.</p>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-grid">
+            <div>
+                <h2 class="footer-title">Bjørkvang forsamlingslokale</h2>
+                <p>Et inkluderende forsamlingshus på Helgøya som rommer møter, feiringer og fellesskap.</p>
+            </div>
+            <div>
+                <h2 class="footer-title">Snarveier</h2>
+                <ul class="footer-links">
+                    <li><a href="booking.html" aria-current="page">Lei lokalet</a></li>
+                    <li><a href="medlemskap.html">Medlemskap</a></li>
+                    <li><a href="nyheter.html">Nyheter</a></li>
+                </ul>
+            </div>
+            <div>
+                <h2 class="footer-title">Kontakt</h2>
+                <ul class="footer-contact">
+                    <li><a href="mailto:helgoens.vel@example.com">helgoens.vel@example.com</a></li>
+                    <li><a href="tel:+4748060273">+47 480 60 273</a></li>
+                    <li>Helgøya, Ringsaker</li>
+                </ul>
+            </div>
+        </div>
+        <p class="footer-meta">&copy; 2025 Bjørkvang forsamlingslokale og Helgøens Vel.</p>
+    </footer>
+
+    <script src="app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    <script src="booking.js"></script>
+</body>
+</html>

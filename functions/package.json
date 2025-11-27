@@ -1,0 +1,21 @@
+{
+  "name": "bjorkvang-functions",
+  "version": "1.0.0",
+  "description": "Azure Functions v4 for Bjorkvang services",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "func start",
+    "test": "echo \"No tests yet...\""
+  },
+  "author": "Bjorkvang",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.0.0",
+    "node-fetch": "^2.6.7",
+    "nodemailer": "^6.9.10",
+    "undici": "^5.29.0"
+  }
+}
