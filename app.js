@@ -36,6 +36,55 @@ document.addEventListener('DOMContentLoaded', () => {
     link.addEventListener('click', () => closeNav(true));
   });
 
+  const highlightActiveLink = () => {
+    const links = nav.querySelectorAll('a');
+
+    const normalizePath = (path) => {
+      let p = path.replace(/\/$/, '');
+      if (p === '' || p === '/index.html') return '/';
+      return p;
+    };
+
+    const currentPath = normalizePath(window.location.pathname);
+    const currentHash = window.location.hash;
+
+    let bestMatch = null;
+    let maxScore = -1;
+
+    links.forEach((link) => {
+      const linkUrl = new URL(link.href, window.location.origin);
+      const linkPath = normalizePath(linkUrl.pathname);
+      const linkHash = linkUrl.hash;
+
+      // Reset status
+      link.removeAttribute('aria-current');
+
+      if (linkPath !== currentPath) {
+        return;
+      }
+
+      let score = 0;
+      if (linkHash === currentHash) {
+        score = 3; // Exact match (path + hash)
+      } else if (linkHash === '') {
+        score = 1; // Page match (fallback)
+      }
+
+      if (score > maxScore) {
+        maxScore = score;
+        bestMatch = link;
+      }
+    });
+
+    if (bestMatch) {
+      bestMatch.setAttribute('aria-current', 'page');
+    }
+  };
+
+  highlightActiveLink();
+  window.addEventListener('hashchange', highlightActiveLink);
+  window.addEventListener('popstate', highlightActiveLink);
+
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
       closeNav();
