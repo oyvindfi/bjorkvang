@@ -38,36 +38,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const highlightActiveLink = () => {
     const links = nav.querySelectorAll('a');
-
-    const normalizePath = (path) => {
-      let p = path.replace(/\/$/, '');
-      if (p === '' || p === '/index.html') return '/';
-      return p;
-    };
-
-    const currentPath = normalizePath(window.location.pathname);
+    // Normalize current path: remove trailing slash, ensure root is '/'
+    const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
     const currentHash = window.location.hash;
 
     let bestMatch = null;
     let maxScore = -1;
 
     links.forEach((link) => {
-      const linkUrl = new URL(link.href, window.location.origin);
-      const linkPath = normalizePath(linkUrl.pathname);
-      const linkHash = linkUrl.hash;
-
       // Reset status
       link.removeAttribute('aria-current');
 
+      // Normalize link path using the anchor's pathname property
+      const linkPath = link.pathname.replace(/\/$/, '') || '/';
+      const linkHash = link.hash;
+
+      // Check if paths match (ignoring trailing slashes)
       if (linkPath !== currentPath) {
         return;
       }
 
       let score = 0;
+
       if (linkHash === currentHash) {
-        score = 3; // Exact match (path + hash)
-      } else if (linkHash === '') {
-        score = 1; // Page match (fallback)
+        // Exact match (path + hash)
+        // Give higher score to non-empty hash match to prefer specific sections
+        score = linkHash ? 3 : 2;
+      } else if (linkHash === '' && currentHash !== '') {
+        // Link is to page root, but current url has hash.
+        // This is a fallback match (Score 1).
+        score = 1;
+      } else {
+        // Link has hash, but current url doesn't, or hashes differ.
+        // No match.
+        return;
       }
 
       if (score > maxScore) {
