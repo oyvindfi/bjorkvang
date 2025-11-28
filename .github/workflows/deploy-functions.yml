@@ -1,0 +1,81 @@
+name: Deploy Azure Functions
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ 'functions/**' ]
+  workflow_dispatch:
+    inputs:
+      deploy_environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+
+env:
+  AZURE_FUNCTIONAPP_NAME: bjorkvang
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'functions'
+  NODE_VERSION: '18.x'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+    - name: 'Checkout'
+      uses: actions/checkout@v4
+
+    - name: Setup Node ${{ env.NODE_VERSION }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: 'Install dependencies and verify'
+      shell: bash
+      run: |
+        pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
+        npm install
+        npm run verify:prod
+        npm run build --if-present
+        popd
+
+    - name: 'Deploy to Azure Functions'
+      uses: Azure/functions-action@v1
+      with:
+        app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+        package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+        publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
+
+    - name: 'Post-deployment verification'
+      shell: bash
+      run: |
+        echo "Waiting for deployment to complete..."
+        sleep 30
+        
+        # Test calendar endpoint
+        echo "Testing calendar endpoint..."
+        response=$(curl -s -o /dev/null -w "%{http_code}" \
+          https://${{ env.AZURE_FUNCTIONAPP_NAME }}.azurewebsites.net/api/booking/calendar)
+        
+        if [ "$response" -eq 200 ]; then
+          echo "✅ Health check passed! Calendar endpoint responding."
+        else
+          echo "❌ Health check failed. Status: $response"
+          echo "Functions may still be starting up..."
+          exit 1
+        fi
+        
+        # Test booking endpoint (should return 400 for empty POST)
+        echo "Testing booking endpoint..."
+        booking_response=$(curl -s -o /dev/null -w "%{http_code}" \
+          -X POST https://${{ env.AZURE_FUNCTIONAPP_NAME }}.azurewebsites.net/api/booking \
+          -H "Content-Type: application/json" -d '{}')
+        
+        if [ "$booking_response" -eq 400 ]; then
+          echo "✅ Booking endpoint responding correctly to invalid request."
+        else
+          echo "⚠️  Booking endpoint returned: $booking_response (expected 400)"
+        fi

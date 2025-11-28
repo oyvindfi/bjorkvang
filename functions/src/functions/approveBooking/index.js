@@ -1,7 +1,7 @@
 const { app } = require('@azure/functions');
 const { sendEmail } = require('../../../shared/email');
 const { createHtmlResponse, createJsonResponse } = require('../../../shared/http');
-const { getBooking, updateBookingStatus } = require('../../../shared/bookingStore');
+const { getBooking, updateBookingStatus } = require('../../../shared/cosmosDb');
 
 /**
  * Approve a booking via a direct link.
@@ -12,40 +12,67 @@ app.http('approveBooking', {
     route: 'booking/approve',
     handler: async (request, context) => {
         const id = request.query.get('id');
-        if (!id) {
+        
+        // Validate booking ID
+        if (!id || typeof id !== 'string' || id.trim().length === 0) {
+            context.log.warn('approveBooking called with invalid or missing ID');
             return createJsonResponse(400, { error: 'Missing booking id.' });
         }
 
-        const existingBooking = getBooking(id);
+        const existingBooking = await getBooking(id.trim());
         if (!existingBooking) {
+            context.log.warn(`approveBooking: Booking not found for ID: ${id}`);
             return createJsonResponse(404, { error: 'Booking not found.' });
         }
 
         if (existingBooking.status === 'approved') {
+            context.log.info(`approveBooking: Booking ${id} was already approved`);
             return createHtmlResponse(200, '<p>Booking var allerede godkjent. Bekreftelse er tidligere sendt.</p>');
         }
 
-        updateBookingStatus(id, 'approved');
+        const updatedBooking = await updateBookingStatus(id.trim(), 'approved');
+        if (!updatedBooking) {
+            context.log.error(`approveBooking: Failed to update booking status for ID: ${id}`);
+            return createJsonResponse(500, { error: 'Failed to approve booking.' });
+        }
+        
+        context.log.info(`approveBooking: Successfully approved booking ${id} for ${existingBooking.requesterEmail}`);
 
         try {
             const from = process.env.DEFAULT_FROM_ADDRESS;
-            if (from) {
+            if (!from) {
+                context.log.warn('approveBooking: DEFAULT_FROM_ADDRESS is not set. Skipping confirmation email.');
+            } else if (!existingBooking.requesterEmail || typeof existingBooking.requesterEmail !== 'string') {
+                context.log.error('approveBooking: Invalid requester email in booking');
+            } else {
+                // Escape HTML to prevent XSS
+                const escapeHtml = (str) => String(str).replace(/[&<>"']/g, (m) => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+                })[m]);
+                
+                const safeName = escapeHtml(existingBooking.requesterName || 'Bruker');
+                const safeDate = escapeHtml(existingBooking.date || '');
+                const safeTime = escapeHtml(existingBooking.time || '');
+                
                 await sendEmail({
-                    to: existingBooking.requesterEmail,
+                    to: existingBooking.requesterEmail.trim(),
                     from,
                     subject: 'Din booking er godkjent',
-                    text: `Hei ${existingBooking.requesterName}! Booking ${existingBooking.date} kl. ${existingBooking.time} er godkjent. Vi sees!`,
+                    text: `Hei ${safeName}! Booking ${safeDate} kl. ${safeTime} er godkjent. Vi sees!`,
                     html: `
-                        <p>Hei ${existingBooking.requesterName}!</p>
-                        <p>Booking for ${existingBooking.date} kl. ${existingBooking.time} er nå godkjent.</p>
+                        <p>Hei ${safeName}!</p>
+                        <p>Booking for ${safeDate} kl. ${safeTime} er nå godkjent.</p>
                         <p>Vennlig hilsen<br/>Bjorkvang.no</p>
                     `,
                 });
-            } else {
-                context.log.warn('DEFAULT_FROM_ADDRESS is not set. Skipping confirmation email.');
+                context.log.info(`approveBooking: Confirmation email sent to ${existingBooking.requesterEmail}`);
             }
         } catch (error) {
-            context.log.error('Failed to send booking approval email', error);
+            context.log.error('approveBooking: Failed to send booking approval email', {
+                error: error.message,
+                stack: error.stack,
+                bookingId: id
+            });
         }
 
         return createHtmlResponse(200, '<p>Booking er nå godkjent og bekreftelse er sendt til forespørrer.</p>');

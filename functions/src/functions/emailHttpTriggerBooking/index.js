@@ -32,6 +32,18 @@ app.http('emailHttpTriggerBooking', {
         }
 
         const body = await parseBody(request);
+        
+        // Basic validation to prevent abuse
+        if (body?.html && body.html.length > 100000) {
+            context.log.warn('emailHttpTriggerBooking rejected: HTML too large');
+            return createJsonResponse(413, { error: 'Email content too large.' });
+        }
+        
+        if (body?.text && body.text.length > 50000) {
+            context.log.warn('emailHttpTriggerBooking rejected: Text too large');
+            return createJsonResponse(413, { error: 'Email content too large.' });
+        }
+        
         context.log('emailHttpTriggerBooking payload received', {
             hasTo: Boolean(body?.to),
             hasFrom: Boolean(body?.from),
@@ -84,10 +96,20 @@ app.http('emailHttpTriggerBooking', {
         } catch (error) {
             context.log.error('emailHttpTriggerBooking failed to send email', {
                 error: error.message,
+                stack: error.stack,
                 to: maskEmailForLog(to),
                 from: maskEmailForLog(from),
             });
-            return createJsonResponse(500, { error: 'Failed to send email.' });
+            
+            // Provide more specific error message
+            const errorMessage = error.message?.includes('PLUNK')
+                ? 'Email service configuration error. Please contact support.'
+                : 'Failed to send email. Please try again later.';
+            
+            return createJsonResponse(500, { 
+                error: errorMessage,
+                retryable: !error.message?.includes('PLUNK')
+            });
         }
     },
 });

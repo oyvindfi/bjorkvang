@@ -59,7 +59,9 @@ const sendEmail = async (options) => {
             'Content-Type': 'application/json',
             'Content-Length': Buffer.byteLength(payload),
             Authorization: `Bearer ${token}`,
+            'Connection': 'keep-alive',
         },
+        timeout: 30000,
     };
 
     return new Promise((resolve, reject) => {
@@ -94,7 +96,14 @@ const sendEmail = async (options) => {
             });
         });
 
-        req.on('error', reject);
+        req.on('error', (error) => {
+            reject(new Error(`Network error: ${error.message}`));
+        });
+        
+        req.on('timeout', () => {
+            req.destroy();
+            reject(new Error('Request timeout after 30 seconds'));
+        });
 
         req.write(payload);
         req.end();

@@ -18,6 +18,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const STATUS_VALUES = ['pending', 'confirmed', 'blocked'];
 
+  // Debounce utility to prevent excessive function calls
+  const debounce = (func, wait) => {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  };
+
   const escapeHtml = (value) => {
     if (typeof value !== 'string') {
       return '';
@@ -265,32 +278,47 @@ document.addEventListener('DOMContentLoaded', function () {
   const postEmailPayload = async (payload) => {
     console.log('Sender payload:', payload);
 
-    const response = await fetch(BOOKING_EMAIL_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-
-    console.log('Respons status:', response.status);
-    const text = await response.text();
-    console.log('Respons body:', text);
-
-    if (!response.ok) {
-      throw new Error(`Kunne ikke sende e-posten. (${response.status})`);
-    }
-
-    if (!text) {
-      return {};
-    }
+    // Add timeout to prevent hanging requests
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
     try {
-      return JSON.parse(text);
+      const response = await fetch(BOOKING_EMAIL_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      console.log('Respons status:', response.status);
+      const text = await response.text();
+      console.log('Respons body:', text);
+
+      if (!response.ok) {
+        throw new Error(`Kunne ikke sende e-posten. (${response.status})`);
+      }
+
+      if (!text) {
+        return {};
+      }
+
+      try {
+        return JSON.parse(text);
+      } catch (error) {
+        console.warn('Kunne ikke tolke respons som JSON:', error);
+        return {};
+      }
     } catch (error) {
-      console.warn('Kunne ikke tolke respons som JSON:', error);
-      return {};
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error('Forespørselen tok for lang tid. Prøv igjen.');
+      }
+      throw error;
     }
   };
 
@@ -359,7 +387,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    // Use querySelectorAll once and cache the result
     const dayCells = calendarEl.querySelectorAll('.fc-daygrid-day');
+    if (!dayCells.length) {
+      return;
+    }
     dayCells.forEach((cell) => {
       const dateStr = cell.getAttribute('data-date');
       cell.classList.remove('is-available', 'is-pending', 'is-booked', 'is-blocked', 'is-past');
@@ -590,6 +622,9 @@ document.addEventListener('DOMContentLoaded', function () {
     eventList.sort((a, b) => new Date(a.start) - new Date(b.start));
   };
 
+  // Create debounced version to prevent excessive calls during calendar interactions
+  const debouncedHighlightDayCells = debounce(highlightDayCells, 150);
+
   let events = loadEvents();
   ensureSeedEvents(events);
 
@@ -699,7 +734,8 @@ document.addEventListener('DOMContentLoaded', function () {
   let calendar;
 
   if (calendarEl) {
-    calendar = new FullCalendar.Calendar(calendarEl, {
+    try {
+      calendar = new FullCalendar.Calendar(calendarEl, {
       initialView: 'dayGridMonth',
       height: 'auto',
       headerToolbar: {
@@ -762,7 +798,7 @@ document.addEventListener('DOMContentLoaded', function () {
       eventDidMount: function (info) {
         const removeTooltip = () => {
           const tooltip = document.getElementById('fc-tooltip');
-          if (tooltip) {
+          if (tooltip && tooltip.parentNode) {
             tooltip.remove();
           }
         };
@@ -788,6 +824,7 @@ document.addEventListener('DOMContentLoaded', function () {
           tooltip.style.padding = '6px 9px';
           tooltip.style.borderRadius = '8px';
           tooltip.style.boxShadow = '0 8px 18px rgba(24, 61, 44, 0.18)';
+          tooltip.style.pointerEvents = 'none'; // Prevent tooltip from interfering with mouse events
           tooltip.setAttribute('role', 'tooltip');
 
           const start = info.event.start ? new Date(info.event.start) : null;
@@ -828,7 +865,7 @@ document.addEventListener('DOMContentLoaded', function () {
       },
       eventWillUnmount: function (info) {
         const tooltip = document.getElementById('fc-tooltip');
-        if (tooltip) {
+        if (tooltip && tooltip.parentNode) {
           tooltip.remove();
         }
 
@@ -850,26 +887,36 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       },
       datesSet: function () {
-        requestAnimationFrame(() => {
-          highlightDayCells();
-        });
+        debouncedHighlightDayCells();
       },
       eventsSet: function () {
-        requestAnimationFrame(() => {
-          highlightDayCells();
-        });
+        debouncedHighlightDayCells();
       }
     });
     calendar.render();
     highlightDayCells();
+    } catch (error) {
+      console.error('Kunne ikke initialisere kalender:', error);
+      if (statusEl) {
+        showStatus('Kunne ikke laste kalenderen. Pr\u00f8v \u00e5 laste siden p\u00e5 nytt.', 'error');
+      }
+    }
   }
 
   updateReservationList();
   highlightDayCells();
 
+  // Prevent double submissions
+  let isSubmitting = false;
+
   if (form) {
     form.addEventListener('submit', async function (e) {
       e.preventDefault();
+
+      if (isSubmitting) {
+        return;
+      }
+      isSubmitting = true;
 
       if (statusEl) {
         statusEl.classList.remove('is-visible', 'is-success', 'is-error', 'is-info');
@@ -902,28 +949,33 @@ document.addEventListener('DOMContentLoaded', function () {
       const invalidRecipient = notificationRecipients.find((value) => !isValidEmail(value));
       if (invalidRecipient) {
         showStatus(`"${invalidRecipient}" er ikke en gyldig e-postadresse.`, 'error');
+        isSubmitting = false;
         return;
       }
 
       if (!name || !email || !phone || !dateValue || !timeValue || !durationInput || !eventType) {
         showStatus('Vennligst fyll ut alle obligatoriske felter.', 'error');
+        isSubmitting = false;
         return;
       }
 
       if (!selectedSpaces.length) {
         showStatus('Velg minst ett område du ønsker å leie.', 'error');
+        isSubmitting = false;
         return;
       }
 
       const duration = parseFloat(durationInput);
       if (!Number.isFinite(duration) || duration <= 0) {
         showStatus('Varighet må være minst én time.', 'error');
+        isSubmitting = false;
         return;
       }
 
       const startDate = new Date(`${dateValue}T${timeValue}`);
       if (Number.isNaN(startDate.getTime())) {
         showStatus('Ugyldig dato eller klokkeslett.', 'error');
+        isSubmitting = false;
         return;
       }
 
@@ -941,6 +993,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (conflictingEvent) {
         const conflictStart = new Date(conflictingEvent.start).toLocaleString('nb-NO');
         showStatus(`Tidsrommet er allerede holdt av (${conflictStart}). Velg et annet tidspunkt.`, 'error');
+        isSubmitting = false;
         return;
       }
 
@@ -973,6 +1026,7 @@ document.addEventListener('DOMContentLoaded', function () {
           'Kunne ikke sende bookingforespørselen. Sjekk nettforbindelsen og prøv igjen litt senere.',
           'error'
         );
+        isSubmitting = false;
         return;
       }
 
@@ -995,10 +1049,22 @@ document.addEventListener('DOMContentLoaded', function () {
       events.sort((a, b) => new Date(a.start) - new Date(b.start));
 
       try {
-        localStorage.setItem('bookingEvents', JSON.stringify(events));
+        const eventsJson = JSON.stringify(events);
+        localStorage.setItem('bookingEvents', eventsJson);
       } catch (err) {
         console.error('Kunne ikke lagre hendelse:', err);
-        showStatus('Forespørselen ble sendt, men kunne ikke lagres lokalt i nettleseren.', 'error');
+        // Check if quota exceeded
+        if (err.name === 'QuotaExceededError') {
+          console.warn('LocalStorage quota exceeded. Removing old events.');
+          // Keep only future events to save space
+          const futureEvents = events.filter(e => new Date(e.start) >= new Date());
+          try {
+            localStorage.setItem('bookingEvents', JSON.stringify(futureEvents));
+            events = futureEvents;
+          } catch (retryErr) {
+            console.error('Still failed after cleanup:', retryErr);
+          }
+        }
       }
 
       if (calendar) {
@@ -1020,6 +1086,8 @@ document.addEventListener('DOMContentLoaded', function () {
       showStatus(
         'Din bookingforespørsel er mottatt og vises nå i kalenderen. Du blir kontaktet av styret for endelig bekreftelse.'
       );
+      
+      isSubmitting = false;
     });
   }
 });

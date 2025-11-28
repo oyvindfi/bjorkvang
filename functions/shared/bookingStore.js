@@ -11,14 +11,28 @@ const createBookingId = () => crypto.randomUUID ? crypto.randomUUID() : crypto.r
  * Persist a booking in memory.
  */
 const createBooking = ({ date, time, requesterName, requesterEmail, message }) => {
+    // Validate required fields
+    if (!date || typeof date !== 'string') {
+        throw new Error('Invalid or missing date');
+    }
+    if (!time || typeof time !== 'string') {
+        throw new Error('Invalid or missing time');
+    }
+    if (!requesterName || typeof requesterName !== 'string') {
+        throw new Error('Invalid or missing requesterName');
+    }
+    if (!requesterEmail || typeof requesterEmail !== 'string') {
+        throw new Error('Invalid or missing requesterEmail');
+    }
+    
     const now = new Date().toISOString();
     const booking = {
         id: createBookingId(),
-        date,
-        time,
-        requesterName,
-        requesterEmail,
-        message: message || '',
+        date: date.trim(),
+        time: time.trim(),
+        requesterName: requesterName.trim(),
+        requesterEmail: requesterEmail.trim(),
+        message: (message || '').trim(),
         status: 'pending',
         createdAt: now,
         updatedAt: now,
@@ -31,12 +45,26 @@ const createBooking = ({ date, time, requesterName, requesterEmail, message }) =
 /**
  * Look up a single booking by id.
  */
-const getBooking = (id) => bookings.get(id);
+const getBooking = (id) => {
+    if (!id || typeof id !== 'string') {
+        return null;
+    }
+    return bookings.get(id) || null;
+};
 
 /**
  * Update the booking status and timestamp.
  */
 const updateBookingStatus = (id, status) => {
+    if (!id || typeof id !== 'string') {
+        return null;
+    }
+    
+    const validStatuses = ['pending', 'approved', 'rejected'];
+    if (!validStatuses.includes(status)) {
+        throw new Error(`Invalid status: ${status}. Must be one of: ${validStatuses.join(', ')}`);
+    }
+    
     const booking = bookings.get(id);
     if (!booking) {
         return null;
@@ -51,7 +79,19 @@ const updateBookingStatus = (id, status) => {
 /**
  * Return every booking in a stable array.
  */
-const listBookings = () => Array.from(bookings.values()).sort((a, b) => new Date(a.date) - new Date(b.date) || a.time.localeCompare(b.time));
+const listBookings = () => {
+    try {
+        return Array.from(bookings.values())
+            .filter(booking => booking && booking.date && booking.time)
+            .sort((a, b) => {
+                const dateComparison = new Date(a.date) - new Date(b.date);
+                return dateComparison !== 0 ? dateComparison : a.time.localeCompare(b.time);
+            });
+    } catch (error) {
+        console.error('Error in listBookings:', error);
+        return [];
+    }
+};
 
 module.exports = {
     createBooking,

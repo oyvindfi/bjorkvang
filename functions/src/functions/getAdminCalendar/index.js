@@ -1,6 +1,6 @@
 const { app } = require('@azure/functions');
 const { createJsonResponse } = require('../../../shared/http');
-const { listBookings } = require('../../../shared/bookingStore');
+const { listBookings } = require('../../../shared/cosmosDb');
 
 /**
  * Admin calendar endpoint with full requester visibility.
@@ -13,7 +13,7 @@ app.http('getAdminCalendar', {
         context.log('Handling getAdminCalendar request');
 
         try {
-            const bookings = listBookings();
+            const bookings = await listBookings();
             context.log(`Successfully retrieved ${bookings.length} bookings for admin calendar.`);
             return createJsonResponse(200, { bookings });
         } catch (error) {

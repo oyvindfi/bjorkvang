@@ -5,7 +5,11 @@
   "main": "src/index.js",
   "scripts": {
     "start": "func start",
-    "test": "echo \"No tests yet...\""
+    "test": "node test-functions.js",
+    "test:cosmos": "node test-cosmos.js",
+    "verify": "node verify-integration.js",
+    "verify:local": "node verify-deployment.js local",
+    "verify:prod": "node verify-deployment.js production"
   },
   "author": "Bjorkvang",
   "license": "MIT",
@@ -13,7 +17,10 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
+    "@azure/cosmos": "^4.0.0",
     "@azure/functions": "^4.0.0",
+    "@azure/identity": "^4.0.0",
+    "dotenv": "^17.2.3",
     "node-fetch": "^2.6.7",
     "nodemailer": "^6.9.10",
     "undici": "^5.29.0"
