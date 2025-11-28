@@ -1,5 +1,3 @@
-const https = require('https');
-
 const DEFAULT_PLUNK_API_URL = 'https://api.useplunk.com/v1/send';
 
 const getPlunkApiUrl = () => {
@@ -36,78 +34,36 @@ const sendEmail = async (options) => {
     }
 
     const urlString = getPlunkApiUrl();
-    let url;
+    const payload = buildPayload(options);
 
     try {
-        url = new URL(urlString);
+        const response = await fetch(urlString, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Plunk API error: ${response.status} ${response.statusText} - ${errorText}`);
+        }
+
+        const data = await response.json();
+        // Plunk usually returns { success: true, id: "..." }
+        const messageId = data.id || data.messageId; 
+
+        return {
+            messageId,
+            response: data
+        };
+
     } catch (error) {
-        throw new Error(`Invalid PLUNK_API_URL provided: ${urlString}`);
+        console.error('Failed to send email via Plunk:', error);
+        throw error;
     }
-
-    if (url.protocol !== 'https:') {
-        throw new Error(`PLUNK_API_URL must use HTTPS. Received protocol: ${url.protocol}`);
-    }
-
-    const payload = JSON.stringify(buildPayload(options));
-
-    const requestOptions = {
-        hostname: url.hostname,
-        port: url.port ? Number(url.port) : 443,
-        path: `${url.pathname}${url.search}`,
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Content-Length': Buffer.byteLength(payload),
-            Authorization: `Bearer ${token}`,
-            'Connection': 'keep-alive',
-        },
-        timeout: 30000,
-    };
-
-    return new Promise((resolve, reject) => {
-        const req = https.request(requestOptions, (res) => {
-            let data = '';
-
-            res.on('data', (chunk) => {
-                data += chunk;
-            });
-
-            res.on('end', () => {
-                if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
-                    let parsed;
-
-                    try {
-                        parsed = data ? JSON.parse(data) : undefined;
-                    } catch (error) {
-                        parsed = undefined;
-                    }
-
-                    const messageId = parsed?.data?.id || parsed?.id || parsed?.messageId;
-
-                    resolve({
-                        messageId,
-                        response: parsed,
-                    });
-                } else {
-                    const statusText = res.statusMessage || '';
-                    const errorMessage = `Failed to send email. Status: ${res.statusCode} ${statusText}`.trim();
-                    reject(new Error(`${errorMessage}. Body: ${data}`));
-                }
-            });
-        });
-
-        req.on('error', (error) => {
-            reject(new Error(`Network error: ${error.message}`));
-        });
-        
-        req.on('timeout', () => {
-            req.destroy();
-            reject(new Error('Request timeout after 30 seconds'));
-        });
-
-        req.write(payload);
-        req.end();
-    });
 };
 
 module.exports = {
