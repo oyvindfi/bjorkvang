@@ -22,7 +22,7 @@ app.http('bookingRequest', {
 
         // Validate required fields
         if (!date || !time || !requesterName || !requesterEmail) {
-            context.log.warn('bookingRequest: Missing required fields', { 
+            context.warn('bookingRequest: Missing required fields', { 
                 hasDate: Boolean(date),
                 hasTime: Boolean(time),
                 hasName: Boolean(requesterName),
@@ -34,14 +34,14 @@ app.http('bookingRequest', {
         // Validate field types and formats
         if (typeof date !== 'string' || typeof time !== 'string' || 
             typeof requesterName !== 'string' || typeof requesterEmail !== 'string') {
-            context.log.warn('bookingRequest: Invalid field types');
+            context.warn('bookingRequest: Invalid field types');
             return createJsonResponse(400, { error: 'Invalid field types.' });
         }
         
         // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(requesterEmail.trim())) {
-            context.log.warn('bookingRequest: Invalid email format', { email: requesterEmail });
+            context.warn('bookingRequest: Invalid email format', { email: requesterEmail });
             return createJsonResponse(400, { error: 'Invalid email format.' });
         }
         
@@ -54,24 +54,24 @@ app.http('bookingRequest', {
         
         // Length validation
         if (trimmedName.length > 100) {
-            context.log.warn('bookingRequest: Name too long');
+            context.warn('bookingRequest: Name too long');
             return createJsonResponse(400, { error: 'Name must be less than 100 characters.' });
         }
         
         if (trimmedMessage.length > 2000) {
-            context.log.warn('bookingRequest: Message too long');
+            context.warn('bookingRequest: Message too long');
             return createJsonResponse(400, { error: 'Message must be less than 2000 characters.' });
         }
         
         // Date format validation (basic ISO date check)
         if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmedDate)) {
-            context.log.warn('bookingRequest: Invalid date format', { date: trimmedDate });
+            context.warn('bookingRequest: Invalid date format', { date: trimmedDate });
             return createJsonResponse(400, { error: 'Invalid date format. Expected YYYY-MM-DD.' });
         }
         
         // Time format validation (HH:MM)
         if (!/^\d{2}:\d{2}$/.test(trimmedTime)) {
-            context.log.warn('bookingRequest: Invalid time format', { time: trimmedTime });
+            context.warn('bookingRequest: Invalid time format', { time: trimmedTime });
             return createJsonResponse(400, { error: 'Invalid time format. Expected HH:MM.' });
         }
 
@@ -90,7 +90,7 @@ app.http('bookingRequest', {
                 status: 'pending'
             });
             
-            context.log.info('bookingRequest: Created booking', {
+            context.info('bookingRequest: Created booking', {
                 id: booking.id,
                 date: booking.date,
                 email: booking.requesterEmail
@@ -104,7 +104,7 @@ app.http('bookingRequest', {
             const from = process.env.DEFAULT_FROM_ADDRESS;
 
             if (!to || !from) {
-                context.log.error('bookingRequest: Missing email configuration', { 
+                context.error('bookingRequest: Missing email configuration', { 
                     hasTo: Boolean(to), 
                     hasFrom: Boolean(from) 
                 });
@@ -150,7 +150,7 @@ app.http('bookingRequest', {
                 html,
             });
             
-            context.log.info('bookingRequest: Board notification email sent');
+            context.info('bookingRequest: Board notification email sent');
 
             const confirmationSubject = 'Vi har mottatt bookingforespørselen din';
             const confirmationHtml = `
@@ -176,22 +176,22 @@ app.http('bookingRequest', {
                     text: confirmationText,
                     html: confirmationHtml,
                 });
-                context.log.info('bookingRequest: Confirmation email sent to requester');
+                context.info('bookingRequest: Confirmation email sent to requester');
             } catch (error) {
-                context.log.error('bookingRequest: Failed to send confirmation email to requester', {
+                context.error('bookingRequest: Failed to send confirmation email to requester', {
                     error: error.message,
                     stack: error.stack,
                     bookingId: booking.id
                 });
             }
 
-            context.log.info(`bookingRequest: Successfully processed booking ${booking.id}`);
+            context.info(`bookingRequest: Successfully processed booking ${booking.id}`);
             return createJsonResponse(202, {
                 id: booking.id,
                 status: booking.status,
             });
         } catch (error) {
-            context.log.error('bookingRequest: Failed to process booking request', {
+            context.error('bookingRequest: Failed to process booking request', {
                 error: error.message,
                 stack: error.stack,
                 body: { date, time, requesterName, hasEmail: Boolean(requesterEmail) }

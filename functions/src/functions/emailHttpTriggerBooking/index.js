@@ -21,13 +21,13 @@ app.http('emailHttpTriggerBooking', {
     authLevel: 'anonymous',
     route: 'emailHttpTriggerBooking',
     handler: async (request, context) => {
-        context.log('emailHttpTriggerBooking invoked', {
+        context.info('emailHttpTriggerBooking invoked', {
             method: request.method,
             url: request.url,
         });
 
         if (request.method === 'OPTIONS') {
-            context.log('emailHttpTriggerBooking handled CORS preflight');
+            context.info('emailHttpTriggerBooking handled CORS preflight');
             return createJsonResponse(204);
         }
 
@@ -35,16 +35,16 @@ app.http('emailHttpTriggerBooking', {
         
         // Basic validation to prevent abuse
         if (body?.html && body.html.length > 100000) {
-            context.log.warn('emailHttpTriggerBooking rejected: HTML too large');
+            context.warn('emailHttpTriggerBooking rejected: HTML too large');
             return createJsonResponse(413, { error: 'Email content too large.' });
         }
         
         if (body?.text && body.text.length > 50000) {
-            context.log.warn('emailHttpTriggerBooking rejected: Text too large');
+            context.warn('emailHttpTriggerBooking rejected: Text too large');
             return createJsonResponse(413, { error: 'Email content too large.' });
         }
         
-        context.log('emailHttpTriggerBooking payload received', {
+        context.info('emailHttpTriggerBooking payload received', {
             hasTo: Boolean(body?.to),
             hasFrom: Boolean(body?.from),
             subject: body?.subject || null,
@@ -66,7 +66,7 @@ app.http('emailHttpTriggerBooking', {
         const replyTo = (body?.replyTo && String(body.replyTo).trim()) || undefined;
 
         if (!to || !from) {
-            context.log.warn('emailHttpTriggerBooking missing required addresses', {
+            context.warn('emailHttpTriggerBooking missing required addresses', {
                 hasTo: Boolean(to),
                 hasFrom: Boolean(from),
             });
@@ -83,7 +83,7 @@ app.http('emailHttpTriggerBooking', {
                 replyTo,
             });
 
-            context.log('emailHttpTriggerBooking succeeded', {
+            context.info('emailHttpTriggerBooking succeeded', {
                 messageId: result.messageId || null,
                 to: maskEmailForLog(to),
                 from: maskEmailForLog(from),
@@ -94,7 +94,7 @@ app.http('emailHttpTriggerBooking', {
                 response: result,
             });
         } catch (error) {
-            context.log.error('emailHttpTriggerBooking failed to send email', {
+            context.error('emailHttpTriggerBooking failed to send email', {
                 error: error.message,
                 stack: error.stack,
                 to: maskEmailForLog(to),

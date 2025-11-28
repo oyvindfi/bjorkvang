@@ -15,35 +15,35 @@ app.http('approveBooking', {
         
         // Validate booking ID
         if (!id || typeof id !== 'string' || id.trim().length === 0) {
-            context.log.warn('approveBooking called with invalid or missing ID');
+            context.warn('approveBooking called with invalid or missing ID');
             return createJsonResponse(400, { error: 'Missing booking id.' });
         }
 
         const existingBooking = await getBooking(id.trim());
         if (!existingBooking) {
-            context.log.warn(`approveBooking: Booking not found for ID: ${id}`);
+            context.warn(`approveBooking: Booking not found for ID: ${id}`);
             return createJsonResponse(404, { error: 'Booking not found.' });
         }
 
         if (existingBooking.status === 'approved') {
-            context.log.info(`approveBooking: Booking ${id} was already approved`);
+            context.info(`approveBooking: Booking ${id} was already approved`);
             return createHtmlResponse(200, '<p>Booking var allerede godkjent. Bekreftelse er tidligere sendt.</p>');
         }
 
         const updatedBooking = await updateBookingStatus(id.trim(), 'approved');
         if (!updatedBooking) {
-            context.log.error(`approveBooking: Failed to update booking status for ID: ${id}`);
+            context.error(`approveBooking: Failed to update booking status for ID: ${id}`);
             return createJsonResponse(500, { error: 'Failed to approve booking.' });
         }
         
-        context.log.info(`approveBooking: Successfully approved booking ${id} for ${existingBooking.requesterEmail}`);
+        context.info(`approveBooking: Successfully approved booking ${id} for ${existingBooking.requesterEmail}`);
 
         try {
             const from = process.env.DEFAULT_FROM_ADDRESS;
             if (!from) {
-                context.log.warn('approveBooking: DEFAULT_FROM_ADDRESS is not set. Skipping confirmation email.');
+                context.warn('approveBooking: DEFAULT_FROM_ADDRESS is not set. Skipping confirmation email.');
             } else if (!existingBooking.requesterEmail || typeof existingBooking.requesterEmail !== 'string') {
-                context.log.error('approveBooking: Invalid requester email in booking');
+                context.error('approveBooking: Invalid requester email in booking');
             } else {
                 // Escape HTML to prevent XSS
                 const escapeHtml = (str) => String(str).replace(/[&<>"']/g, (m) => ({
@@ -65,10 +65,10 @@ app.http('approveBooking', {
                         <p>Vennlig hilsen<br/>Bjorkvang.no</p>
                     `,
                 });
-                context.log.info(`approveBooking: Confirmation email sent to ${existingBooking.requesterEmail}`);
+                context.info(`approveBooking: Confirmation email sent to ${existingBooking.requesterEmail}`);
             }
         } catch (error) {
-            context.log.error('approveBooking: Failed to send booking approval email', {
+            context.error('approveBooking: Failed to send booking approval email', {
                 error: error.message,
                 stack: error.stack,
                 bookingId: id

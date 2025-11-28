@@ -18,18 +18,18 @@ app.http('rejectBooking', {
 
         const id = request.query.get('id');
         if (!id || typeof id !== 'string' || id.trim().length === 0) {
-            context.log.warn('rejectBooking called with invalid or missing ID');
+            context.warn('rejectBooking called with invalid or missing ID');
             return createJsonResponse(400, { error: 'Missing booking id.' });
         }
 
         const existingBooking = await getBooking(id.trim());
         if (!existingBooking) {
-            context.log.warn(`rejectBooking: Booking not found for ID: ${id}`);
+            context.warn(`rejectBooking: Booking not found for ID: ${id}`);
             return createJsonResponse(404, { error: 'Booking not found.' });
         }
 
         if (existingBooking.status === 'rejected') {
-            context.log.info(`rejectBooking: Booking ${id} was already rejected`);
+            context.info(`rejectBooking: Booking ${id} was already rejected`);
             return createHtmlResponse(200, '<p>Booking var allerede avvist. Forespørrer er informert.</p>');
         }
 
@@ -39,25 +39,25 @@ app.http('rejectBooking', {
             rejectionMessage = (body.reason || '').trim();
             // Limit message length to prevent abuse
             if (rejectionMessage.length > 1000) {
-                context.log.warn('rejectBooking: Rejection message too long, truncating');
+                context.warn('rejectBooking: Rejection message too long, truncating');
                 rejectionMessage = rejectionMessage.substring(0, 1000);
             }
         }
 
         const updatedBooking = await updateBookingStatus(id.trim(), 'rejected');
         if (!updatedBooking) {
-            context.log.error(`rejectBooking: Failed to update booking status for ID: ${id}`);
+            context.error(`rejectBooking: Failed to update booking status for ID: ${id}`);
             return createJsonResponse(500, { error: 'Failed to reject booking.' });
         }
         
-        context.log.info(`rejectBooking: Successfully rejected booking ${id} for ${existingBooking.requesterEmail}`);
+        context.info(`rejectBooking: Successfully rejected booking ${id} for ${existingBooking.requesterEmail}`);
 
         try {
             const from = process.env.DEFAULT_FROM_ADDRESS;
             if (!from) {
-                context.log.warn('rejectBooking: DEFAULT_FROM_ADDRESS is not set. Skipping rejection email.');
+                context.warn('rejectBooking: DEFAULT_FROM_ADDRESS is not set. Skipping rejection email.');
             } else if (!existingBooking.requesterEmail || typeof existingBooking.requesterEmail !== 'string') {
-                context.log.error('rejectBooking: Invalid requester email in booking');
+                context.error('rejectBooking: Invalid requester email in booking');
             } else {
                 // Escape HTML to prevent XSS
                 const escapeHtml = (str) => String(str).replace(/[&<>"']/g, (m) => ({
@@ -85,10 +85,10 @@ app.http('rejectBooking', {
                         <p>Vennlig hilsen<br/>Bjorkvang.no</p>
                     `,
                 });
-                context.log.info(`rejectBooking: Rejection email sent to ${existingBooking.requesterEmail}`);
+                context.info(`rejectBooking: Rejection email sent to ${existingBooking.requesterEmail}`);
             }
         } catch (error) {
-            context.log.error('rejectBooking: Failed to send booking rejection email', {
+            context.error('rejectBooking: Failed to send booking rejection email', {
                 error: error.message,
                 stack: error.stack,
                 bookingId: id
