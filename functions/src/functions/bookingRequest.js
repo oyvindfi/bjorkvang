@@ -75,10 +75,14 @@ app.http('bookingRequest', {
             return createJsonResponse(400, { error: 'Invalid time format. Expected HH:MM.' });
         }
 
+        context.info('bookingRequest: Validation passed, attempting to save booking...');
+
         try {
             // Generate unique booking ID
             const bookingId = `booking-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
             
+            context.info(`bookingRequest: Generated ID ${bookingId}, calling saveBooking...`);
+
             // Create booking with sanitized inputs
             const booking = await saveBooking({ 
                 id: bookingId,

@@ -19,6 +19,7 @@ const initCosmosClient = () => {
         return { database, container };
     }
 
+    console.log('CosmosDB: Initializing client...');
     try {
         // Check if running locally with connection string
         const connectionString = process.env.COSMOS_CONNECTION_STRING;
@@ -28,23 +29,20 @@ const initCosmosClient = () => {
             console.log('CosmosDB: Using connection string for local development');
             client = new CosmosClient(connectionString);
         } else {
-            // Production mode: use Managed Identity (no keys!)
-            console.log('CosmosDB: Using Managed Identity for authentication');
+            // Production mode: use Managed Identity
+            console.log('CosmosDB: Using Managed Identity');
             const credential = new DefaultAzureCredential();
-            client = new CosmosClient({
-                endpoint: COSMOS_ENDPOINT,
-                aadCredentials: credential
-            });
+            client = new CosmosClient({ endpoint: COSMOS_ENDPOINT, aadCredentials: credential });
         }
 
         database = client.database(COSMOS_DATABASE_ID);
         container = database.container(COSMOS_CONTAINER_ID);
-
-        console.log(`CosmosDB: Connected to database '${COSMOS_DATABASE_ID}', container '${COSMOS_CONTAINER_ID}'`);
+        console.log(`CosmosDB: Client initialized for ${COSMOS_DATABASE_ID}/${COSMOS_CONTAINER_ID}`);
+        
         return { database, container };
     } catch (error) {
         console.error('CosmosDB: Failed to initialize client', error);
-        throw new Error(`Failed to connect to Cosmos DB: ${error.message}`);
+        throw error;
     }
 };
 
@@ -55,6 +53,7 @@ const initCosmosClient = () => {
  */
 const saveBooking = async (booking) => {
     try {
+        console.log('CosmosDB: saveBooking called', { id: booking.id });
         const { container } = initCosmosClient();
         
         // Add partition key field (using first 7 chars of date: YYYY-MM)
@@ -65,6 +64,7 @@ const saveBooking = async (booking) => {
             updatedAt: new Date().toISOString(),
         };
 
+        console.log('CosmosDB: Creating item in container...', { id: item.id, partitionKey: item.bjorkvang });
         const { resource } = await container.items.create(item);
         console.log(`CosmosDB: Saved booking ${resource.id}`);
         return resource;
