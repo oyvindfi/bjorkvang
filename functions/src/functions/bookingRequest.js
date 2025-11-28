@@ -202,11 +202,10 @@ app.http('bookingRequest', {
             });
             
             // Provide user-friendly error message
-            const userMessage = error.message?.includes('Invalid') || error.message?.includes('missing')
-                ? error.message
-                : 'Unable to process booking right now. Please try again later.';
+            // DEBUG: Exposing full error for troubleshooting
+            const userMessage = error.message || 'Unable to process booking right now.';
                 
-            return createJsonResponse(500, { error: userMessage });
+            return createJsonResponse(500, { error: userMessage, details: error.stack });
         }
     },
 });
