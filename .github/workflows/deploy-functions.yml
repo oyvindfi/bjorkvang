@@ -55,8 +55,11 @@ jobs:
         # Install Azure Functions Core Tools
         npm install -g azure-functions-core-tools@4 --unsafe-perm true
         
-        # Deploy using func CLI
-        func azure functionapp publish ${{ env.AZURE_FUNCTIONAPP_NAME }} --build remote --javascript
+        # Prune dev dependencies for production build
+        npm prune --production
+
+        # Deploy using func CLI (local build to avoid conflict)
+        func azure functionapp publish ${{ env.AZURE_FUNCTIONAPP_NAME }} --javascript
 
     - name: 'Post-deployment verification'
       shell: bash
