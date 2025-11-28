@@ -10,8 +10,7 @@ const buildPayload = (options) => {
         from: options.from,
         to: options.to,
         subject: options.subject,
-        ...(options.text ? { text: options.text } : {}),
-        ...(options.html ? { html: options.html } : {}),
+        body: options.html || options.text, // Plunk expects 'body' for the content
     };
 
     if (options.replyTo) {
