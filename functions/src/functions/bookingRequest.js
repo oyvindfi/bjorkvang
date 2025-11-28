@@ -105,7 +105,13 @@ app.http('bookingRequest', {
             const rejectLink = `${baseUrl}/api/booking/reject?id=${encodeURIComponent(booking.id)}`;
 
             const to = process.env.BOARD_TO_ADDRESS || process.env.DEFAULT_TO_ADDRESS;
-            const from = process.env.DEFAULT_FROM_ADDRESS;
+            let from = process.env.DEFAULT_FROM_ADDRESS || 'booking@finsrud.cloud';
+
+            // Workaround: Plunk does not support non-ASCII characters in sender address
+            // Fallback to known working domain if special characters are present
+            if (from.match(/[æøåÆØÅ]/)) {
+                from = 'booking@finsrud.cloud';
+            }
 
             if (!to || !from) {
                 context.error('bookingRequest: Missing email configuration', { 
