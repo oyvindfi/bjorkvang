@@ -20,7 +20,8 @@ app.http('getCalendar', {
                 id: booking.id,
                 date: booking.date,
                 time: booking.time,
-                status: booking.status === 'approved' ? 'booked' : booking.status,
+                duration: booking.duration,
+                status: booking.status === 'approved' ? 'confirmed' : booking.status,
             }));
             
             context.log(`getCalendar: Successfully retrieved ${bookings.length} bookings`);

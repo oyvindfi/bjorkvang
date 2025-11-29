@@ -5,7 +5,7 @@
 
 require('dotenv').config({ path: './local.settings.json' });
 
-const BASE_URL = 'http://localhost:7071/api';
+const BASE_URL = 'http://127.0.0.1:7071/api';
 
 // Test data
 const testBooking = {

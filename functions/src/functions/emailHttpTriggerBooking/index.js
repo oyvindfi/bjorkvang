@@ -56,7 +56,7 @@ app.http('emailHttpTriggerBooking', {
             'skype.oyvind@hotmail.com';
         const defaultFromAddress =
             (process.env.DEFAULT_FROM_ADDRESS && process.env.DEFAULT_FROM_ADDRESS.trim()) ||
-            'styret@bjørkvang.no';
+            'styret@xn--bjrkvang-64a.no';
 
         const to = (body?.to && String(body.to).trim()) || defaultToAddress;
         const from = (body?.from && String(body.from).trim()) || defaultFromAddress;

@@ -18,7 +18,7 @@ app.http('bookingRequest', {
         }
 
         const body = await parseBody(request);
-        const { date, time, requesterName, requesterEmail, message } = body;
+        const { date, time, requesterName, requesterEmail, message, duration, eventType, spaces, services, attendees } = body;
 
         // Validate required fields
         if (!date || !time || !requesterName || !requesterEmail) {
@@ -51,6 +51,11 @@ app.http('bookingRequest', {
         const trimmedName = requesterName.trim();
         const trimmedEmail = requesterEmail.trim();
         const trimmedMessage = message ? String(message).trim() : '';
+        const trimmedEventType = eventType ? String(eventType).trim() : 'Reservasjon';
+        const safeDuration = Number(duration) || 4;
+        const safeAttendees = Number(attendees) || 0;
+        const safeSpaces = Array.isArray(spaces) ? spaces : (spaces ? [String(spaces)] : []);
+        const safeServices = Array.isArray(services) ? services : (services ? [String(services)] : []);
         
         // Length validation
         if (trimmedName.length > 100) {
@@ -91,6 +96,11 @@ app.http('bookingRequest', {
                 requesterName: trimmedName, 
                 requesterEmail: trimmedEmail, 
                 message: trimmedMessage,
+                eventType: trimmedEventType,
+                duration: safeDuration,
+                attendees: safeAttendees,
+                spaces: safeSpaces,
+                services: safeServices,
                 status: 'pending'
             });
             
@@ -105,7 +115,7 @@ app.http('bookingRequest', {
             const rejectLink = `${baseUrl}/api/booking/reject?id=${encodeURIComponent(booking.id)}`;
 
             const to = process.env.BOARD_TO_ADDRESS || process.env.DEFAULT_TO_ADDRESS || 'skype.oyvind@hotmail.com';
-            let from = process.env.DEFAULT_FROM_ADDRESS || 'styret@bjørkvang.no';
+            let from = process.env.DEFAULT_FROM_ADDRESS || 'styret@xn--bjrkvang-64a.no';
 
             if (!to || !from) {
                 context.error('bookingRequest: Missing email configuration', { 
@@ -125,6 +135,9 @@ app.http('bookingRequest', {
             const safeDate = escapeHtml(booking.date);
             const safeTime = escapeHtml(booking.time);
             const safeMessage = escapeHtml(booking.message || 'Ingen melding oppgitt.');
+            const safeEventType = escapeHtml(booking.eventType);
+            const safeSpacesStr = escapeHtml(booking.spaces.join(', ') || 'Ingen valgt');
+            const safeServicesStr = escapeHtml(booking.services.join(', ') || 'Ingen valgt');
 
             const html = `
                 <p>Hei styret,</p>
@@ -132,8 +145,13 @@ app.http('bookingRequest', {
                 <ul>
                     <li><strong>Dato:</strong> ${safeDate}</li>
                     <li><strong>Tid:</strong> ${safeTime}</li>
+                    <li><strong>Type:</strong> ${safeEventType}</li>
+                    <li><strong>Varighet:</strong> ${booking.duration} timer</li>
                     <li><strong>Navn:</strong> ${safeName}</li>
                     <li><strong>E-post:</strong> ${safeEmail}</li>
+                    <li><strong>Arealer:</strong> ${safeSpacesStr}</li>
+                    <li><strong>Tjenester:</strong> ${safeServicesStr}</li>
+                    <li><strong>Antall:</strong> ${booking.attendees || 'Ikke oppgitt'}</li>
                     <li><strong>Melding:</strong> ${safeMessage}</li>
                 </ul>
                 <p>Bruk knappene under for å godkjenne eller avvise:</p>
@@ -144,12 +162,12 @@ app.http('bookingRequest', {
                 <p>Vennlig hilsen<br/>Bjorkvang.no</p>
             `;
 
-            const text = `Ny bookingforespørsel:\nDato: ${booking.date}\nTid: ${booking.time}\nNavn: ${booking.requesterName}\nE-post: ${booking.requesterEmail}\nMelding: ${booking.message || 'Ingen melding'}\nGodkjenn: ${approveLink}\nAvvis: ${rejectLink}`;
+            const text = `Ny bookingforespørsel:\nDato: ${booking.date}\nTid: ${booking.time}\nType: ${booking.eventType}\nNavn: ${booking.requesterName}\nE-post: ${booking.requesterEmail}\nMelding: ${booking.message || 'Ingen melding'}\nGodkjenn: ${approveLink}\nAvvis: ${rejectLink}`;
 
             await sendEmail({
                 to,
                 from,
-                subject: 'Ny bookingforespørsel – venter på godkjenning',
+                subject: `Ny bookingforespørsel: ${booking.eventType} – ${booking.date}`,
                 text,
                 html,
             });
@@ -164,13 +182,15 @@ app.http('bookingRequest', {
                 <ul>
                     <li><strong>Dato:</strong> ${safeDate}</li>
                     <li><strong>Tid:</strong> ${safeTime}</li>
+                    <li><strong>Type:</strong> ${safeEventType}</li>
+                    <li><strong>Arealer:</strong> ${safeSpacesStr}</li>
                     <li><strong>Melding:</strong> ${safeMessage}</li>
                 </ul>
                 <p>Styret vil se gjennom forespørselen og ta kontakt med deg så snart som mulig.</p>
                 <p>Vennlig hilsen<br/>Bjørkvang</p>
             `;
 
-            const confirmationText = `Hei ${booking.requesterName},\n\nTakk for din forespørsel om å booke Bjørkvang.\n\nOppsummering av forespørselen:\n- Dato: ${booking.date}\n- Tid: ${booking.time}\n- Melding: ${booking.message || 'Ingen melding oppgitt.'}\n\nStyret vil ta kontakt med deg så snart som mulig.\n\nVennlig hilsen\nBjørkvang`;
+            const confirmationText = `Hei ${booking.requesterName},\n\nTakk for din forespørsel om å booke Bjørkvang.\n\nOppsummering av forespørselen:\n- Dato: ${booking.date}\n- Tid: ${booking.time}\n- Type: ${booking.eventType}\n- Melding: ${booking.message || 'Ingen melding oppgitt.'}\n\nStyret vil ta kontakt med deg så snart som mulig.\n\nVennlig hilsen\nBjørkvang`;
 
             try {
                 await sendEmail({

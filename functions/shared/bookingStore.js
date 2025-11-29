@@ -10,7 +10,9 @@ const createBookingId = () => crypto.randomUUID ? crypto.randomUUID() : crypto.r
 /**
  * Persist a booking in memory.
  */
-const createBooking = ({ date, time, requesterName, requesterEmail, message }) => {
+const createBooking = (bookingData) => {
+    const { date, time, requesterName, requesterEmail, message, duration, eventType, spaces, services, attendees, status } = bookingData;
+
     // Validate required fields
     if (!date || typeof date !== 'string') {
         throw new Error('Invalid or missing date');
@@ -33,7 +35,12 @@ const createBooking = ({ date, time, requesterName, requesterEmail, message }) =
         requesterName: requesterName.trim(),
         requesterEmail: requesterEmail.trim(),
         message: (message || '').trim(),
-        status: 'pending',
+        duration: duration,
+        eventType: eventType,
+        spaces: Array.isArray(spaces) ? spaces : [],
+        services: Array.isArray(services) ? services : [],
+        attendees: attendees,
+        status: status || 'pending',
         createdAt: now,
         updatedAt: now,
     };
