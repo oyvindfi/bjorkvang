@@ -43,7 +43,7 @@ This project consists of a static frontend website (HTML/CSS/JS) and a serverles
 - **Environment Variables**:
   - `PLUNK_API_TOKEN`: Required for sending emails.
   - `BOARD_TO_ADDRESS`: Recipient for admin notifications.
-  - `DEFAULT_FROM_ADDRESS`: Sender address (e.g., `booking@finsrud.cloud`).
+  - `DEFAULT_FROM_ADDRESS`: Sender address (e.g., `styret@bjørkvang.no`).
 
 ## Conventions & Patterns
 - **Language**: Code comments and UI text are primarily in **Norwegian** (`nb-NO`).

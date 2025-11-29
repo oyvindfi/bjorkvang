@@ -53,10 +53,10 @@ app.http('emailHttpTriggerBooking', {
         const defaultToAddress =
             (process.env.BOARD_TO_ADDRESS && process.env.BOARD_TO_ADDRESS.trim()) ||
             (process.env.DEFAULT_TO_ADDRESS && process.env.DEFAULT_TO_ADDRESS.trim()) ||
-            'helgoens.vel@example.com';
+            'skype.oyvind@hotmail.com';
         const defaultFromAddress =
             (process.env.DEFAULT_FROM_ADDRESS && process.env.DEFAULT_FROM_ADDRESS.trim()) ||
-            'booking@finsrud.cloud';
+            'styret@bjørkvang.no';
 
         const to = (body?.to && String(body.to).trim()) || defaultToAddress;
         const from = (body?.from && String(body.from).trim()) || defaultFromAddress;

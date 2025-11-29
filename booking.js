@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const toField = recipientList.length ? recipientList.join(',') : undefined;
 
     const payload = {
-      from: 'booking@finsrud.cloud',
+      from: 'styret@bjørkvang.no',
       subject: `Ny bookingforespørsel: ${eventType} – ${startLabel}`,
       text: textLines.join('\n'),
       html,
@@ -258,7 +258,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     return {
       to: email,
-      from: 'booking@finsrud.cloud',
+      from: 'styret@bjørkvang.no',
       subject: `Vi har mottatt bookingforespørselen din: ${eventType}`,
       text: [
         `Hei ${name}!`,
