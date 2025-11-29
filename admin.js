@@ -99,6 +99,19 @@ function createBookingCard(booking) {
     
     const spaces = Array.isArray(booking.spaces) ? booking.spaces.join(', ') : booking.spaces;
     const services = Array.isArray(booking.services) ? booking.services.join(', ') : booking.services;
+    
+    // Format created date
+    let createdStr = 'Ukjent';
+    if (booking.createdAt) {
+        const createdDate = new Date(booking.createdAt);
+        createdStr = createdDate.toLocaleString('nb-NO', { 
+            day: '2-digit', 
+            month: '2-digit', 
+            year: 'numeric', 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+    }
 
     div.innerHTML = `
         <div class="booking-details">
@@ -111,7 +124,10 @@ function createBookingCard(booking) {
             ${services ? `<div class="booking-meta"><strong>Tillegg:</strong> ${services}</div>` : ''}
             ${booking.attendees ? `<div class="booking-meta"><strong>Antall:</strong> ${booking.attendees}</div>` : ''}
             ${booking.message ? `<div class="booking-meta" style="margin-top:5px; font-style:italic;">"${booking.message}"</div>` : ''}
-            <div class="booking-meta" style="margin-top:5px; font-size:0.8rem; color:#999;">ID: ${booking.id} | Status: ${translateStatus(booking.status)}</div>
+            <div class="booking-meta" style="margin-top:5px; font-size:0.8rem; color:#999;">
+                Sendt inn: ${createdStr}<br>
+                ID: ${booking.id} | Status: ${translateStatus(booking.status)}
+            </div>
         </div>
         <div class="booking-actions">
             ${booking.status === 'pending' ? `
