@@ -58,7 +58,9 @@ document.addEventListener('DOMContentLoaded', function () {
   };
 
   const isLocal = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost';
-  const API_BASE_URL = isLocal ? 'http://localhost:7071' : '';
+  const API_BASE_URL = isLocal 
+    ? 'http://localhost:7071' 
+    : 'https://bjorkvang-duhsaxahgfe0btgv.westeurope-01.azurewebsites.net';
   
   const BOOKING_API_ENDPOINT = `${API_BASE_URL}/api/booking`;
   const CALENDAR_API_ENDPOINT = `${API_BASE_URL}/api/booking/calendar`;
