@@ -73,6 +73,16 @@ app.http('bookingRequest', {
             context.warn('bookingRequest: Invalid date format', { date: trimmedDate });
             return createJsonResponse(400, { error: 'Invalid date format. Expected YYYY-MM-DD.' });
         }
+
+        // Validate that booking is not too far in the future (max 2 years)
+        const bookingDateObj = new Date(trimmedDate);
+        const maxDate = new Date();
+        maxDate.setFullYear(maxDate.getFullYear() + 2);
+        
+        if (bookingDateObj > maxDate) {
+            context.warn('bookingRequest: Date too far in future', { date: trimmedDate });
+            return createJsonResponse(400, { error: 'Bookings can only be made up to 2 years in advance.' });
+        }
         
         // Time format validation (HH:MM)
         if (!/^\d{2}:\d{2}$/.test(trimmedTime)) {
