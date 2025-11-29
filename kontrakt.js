@@ -203,9 +203,14 @@ const loadContract = async () => {
                 showLandlordSignedState(contract);
             } else {
                 // Waiting for Landlord
-                // Show Landlord Signature Area
-                document.getElementById('landlord-signature-area').style.display = 'block';
-                initCanvas('landlord-signature-canvas');
+                if (getQueryParam('mode') === 'admin') {
+                    // Show Landlord Signature Area for signing (Only for admin)
+                    document.getElementById('landlord-signature-area').style.display = 'block';
+                    initCanvas('landlord-signature-canvas');
+                } else {
+                    // Show waiting message for regular users
+                    showWaitingForLandlordState();
+                }
             }
         } else {
             // Not signed by anyone
@@ -269,6 +274,20 @@ const showRequesterSignedState = (contract) => {
         </div>
         <p>Dato: ${signedDate}</p>
         <p style="font-size: 0.8rem; color: #888;">IP: ${contract.ipAddress || 'Loggført'}</p>
+    `;
+};
+
+const showWaitingForLandlordState = () => {
+    const area = document.getElementById('landlord-signature-area');
+    area.style.display = 'block';
+    area.style.background = '#f9f9f9';
+    area.style.border = '1px dashed #ccc';
+    area.innerHTML = `
+        <h3>Utleiers signatur</h3>
+        <div style="padding: 20px; text-align: center; color: #666;">
+            <p><strong>Venter på signering fra utleier.</strong></p>
+            <p style="font-size: 0.9rem;">Avtalen er signert av deg, og vil bli ferdigstilt når utleier har signert.</p>
+        </div>
     `;
 };
 

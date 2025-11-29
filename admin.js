@@ -165,7 +165,7 @@ function createBookingCard(booking) {
 }
 
 function openContract(id) {
-    const link = window.location.origin + '/leieavtale.html?id=' + id;
+    const link = window.location.origin + '/leieavtale.html?id=' + id + '&mode=admin';
     // If requester has signed, open it directly for admin to sign
     // If not, copy link for admin to send (or open to check)
     // For simplicity, we'll just open it in a new tab if signed, or copy if not.
