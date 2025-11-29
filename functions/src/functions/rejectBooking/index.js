@@ -44,7 +44,7 @@ app.http('rejectBooking', {
             }
         }
 
-        const updatedBooking = await updateBookingStatus(id.trim(), 'rejected');
+        const updatedBooking = await updateBookingStatus(id.trim(), null, 'rejected');
         if (!updatedBooking) {
             context.error(`rejectBooking: Failed to update booking status for ID: ${id}`);
             return createJsonResponse(500, { error: 'Failed to reject booking.' });

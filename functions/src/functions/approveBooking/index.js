@@ -30,7 +30,7 @@ app.http('approveBooking', {
             return createHtmlResponse(200, '<p>Booking var allerede godkjent. Bekreftelse er tidligere sendt.</p>');
         }
 
-        const updatedBooking = await updateBookingStatus(id.trim(), 'approved');
+        const updatedBooking = await updateBookingStatus(id.trim(), null, 'approved');
         if (!updatedBooking) {
             context.error(`approveBooking: Failed to update booking status for ID: ${id}`);
             return createJsonResponse(500, { error: 'Failed to approve booking.' });
