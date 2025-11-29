@@ -35,34 +35,60 @@ const sendEmail = async (options) => {
     const urlString = getPlunkApiUrl();
     const payload = buildPayload(options);
 
-    try {
-        const response = await fetch(urlString, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(payload)
-        });
+    let lastError;
+    const maxRetries = 3;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            const response = await fetch(urlString, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Plunk API error: ${response.status} ${response.statusText} - ${errorText}`);
+            if (!response.ok) {
+                // If 4xx error (client error), do not retry
+                if (response.status >= 400 && response.status < 500) {
+                    const errorText = await response.text();
+                    throw new Error(`Plunk API error (Client): ${response.status} ${response.statusText} - ${errorText}`);
+                }
+                
+                // If 5xx error (server error), throw to trigger retry
+                const errorText = await response.text();
+                throw new Error(`Plunk API error (Server): ${response.status} ${response.statusText} - ${errorText}`);
+            }
+
+            const data = await response.json();
+            // Plunk usually returns { success: true, id: "..." }
+            const messageId = data.id || data.messageId; 
+
+            return {
+                messageId,
+                response: data
+            };
+
+        } catch (error) {
+            lastError = error;
+            console.warn(`Email send attempt ${attempt}/${maxRetries} failed: ${error.message}`);
+            
+            // Don't retry if it was a client error (4xx)
+            if (error.message.includes('Plunk API error (Client)')) {
+                throw error;
+            }
+
+            if (attempt < maxRetries) {
+                // Exponential backoff: 500ms, 1000ms, 2000ms...
+                const delay = 500 * Math.pow(2, attempt - 1);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
         }
-
-        const data = await response.json();
-        // Plunk usually returns { success: true, id: "..." }
-        const messageId = data.id || data.messageId; 
-
-        return {
-            messageId,
-            response: data
-        };
-
-    } catch (error) {
-        console.error('Failed to send email via Plunk:', error);
-        throw error;
     }
+
+    console.error('Failed to send email via Plunk after multiple attempts:', lastError);
+    throw lastError;
 };
 
 module.exports = {

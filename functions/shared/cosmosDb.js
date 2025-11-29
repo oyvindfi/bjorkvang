@@ -28,6 +28,9 @@ const initCosmosClient = () => {
 
     // Check if we have enough config to even try Cosmos
     if (!COSMOS_CONNECTION_STRING && !COSMOS_ENDPOINT) {
+        if (process.env.AZURE_FUNCTIONS_ENVIRONMENT === 'Production') {
+            throw new Error('CosmosDB: Critical configuration missing in Production (COSMOS_ENDPOINT or COSMOS_CONNECTION_STRING).');
+        }
         console.log('CosmosDB: No configuration found. Falling back to in-memory store.');
         useInMemory = true;
         return null;
@@ -52,6 +55,10 @@ const initCosmosClient = () => {
         
         return { database, container };
     } catch (error) {
+        if (process.env.AZURE_FUNCTIONS_ENVIRONMENT === 'Production') {
+            console.error('CosmosDB: Critical initialization failure in Production', error);
+            throw error; // Fail hard in production to avoid data loss
+        }
         console.error('CosmosDB: Failed to initialize client, falling back to in-memory store', error);
         useInMemory = true;
         return null;
