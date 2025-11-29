@@ -8,14 +8,16 @@ app.http('signBooking', {
     handler: async (request, context) => {
         try {
             const body = await request.json();
-            const { id } = body;
+            const { id, role, signatureData } = body;
 
             if (!id) {
                 return createJsonResponse(400, { message: 'Missing booking ID' });
             }
 
             // Capture metadata for the signature
-            const signatureData = {
+            const signatureMetadata = {
+                role: role || 'requester', // Default to requester for backward compatibility
+                signatureData: signatureData, // { type: 'draw'|'text', data: '...' }
                 signedAt: new Date().toISOString(),
                 userAgent: request.headers.get('user-agent') || 'Unknown',
                 ipAddress: request.headers.get('x-forwarded-for') || 'Unknown'
@@ -23,7 +25,7 @@ app.http('signBooking', {
 
             // We don't have the partition key (date) in the request, so we rely on the 
             // cross-partition query implemented in cosmosDb.getBooking(id, null) inside addContractSignature
-            const updatedBooking = await addContractSignature(id, null, signatureData);
+            const updatedBooking = await addContractSignature(id, null, signatureMetadata);
 
             if (!updatedBooking) {
                 return createJsonResponse(404, { message: 'Booking not found' });

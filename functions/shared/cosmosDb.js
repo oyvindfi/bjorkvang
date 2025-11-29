@@ -202,41 +202,53 @@ const updateBookingStatus = async (id, partitionKey, status) => {
  * Add contract signature to a booking.
  * @param {string} id - Booking ID
  * @param {string} partitionKey - Partition key value
- * @param {Object} signatureData - Signature details (signedAt, userAgent, ip)
+ * @param {Object} signatureInfo - Signature details (role, signatureData, signedAt, userAgent, ip)
  * @returns {Promise<Object|null>} Updated booking or null if not found
  */
-const addContractSignature = async (id, partitionKey, signatureData) => {
+const addContractSignature = async (id, partitionKey, signatureInfo) => {
     try {
         const db = initCosmosClient();
         
-
-        if (useInMemory || !db) {
-            // Mock implementation for in-memory
-            const booking = inMemoryStore.getBooking(id);
-            if (booking) {
-                booking.contract = signatureData;
-                return booking;
-            }
-            return null;
-        }
-
-        const { container } = db;
-        
-        // Get the existing booking first
+        // Get the existing booking first (needed for both in-memory and cosmos to merge)
         const existing = await getBooking(id, partitionKey);
         if (!existing) {
             return null;
         }
 
+        // Prepare the new contract object
+        const currentContract = existing.contract || {};
+        let newContract = { ...currentContract };
+
+        if (signatureInfo.role === 'landlord') {
+            newContract.landlordSignedAt = signatureInfo.signedAt;
+            newContract.landlordSignature = signatureInfo.signatureData;
+            newContract.landlordIpAddress = signatureInfo.ipAddress;
+            newContract.landlordUserAgent = signatureInfo.userAgent;
+        } else {
+            // Default to requester
+            newContract.signedAt = signatureInfo.signedAt;
+            newContract.requesterSignature = signatureInfo.signatureData;
+            newContract.ipAddress = signatureInfo.ipAddress;
+            newContract.userAgent = signatureInfo.userAgent;
+        }
+
+        if (useInMemory || !db) {
+            // Mock implementation for in-memory
+            existing.contract = newContract;
+            return existing;
+        }
+
+        const { container } = db;
+        
         // Update the booking
         const updated = {
             ...existing,
-            contract: signatureData,
+            contract: newContract,
             updatedAt: new Date().toISOString()
         };
 
         const { resource } = await container.item(id, partitionKey || existing.bjorkvang).replace(updated);
-        console.log(`CosmosDB: Added signature to booking ${id}`);
+        console.log(`CosmosDB: Added signature to booking ${id} (Role: ${signatureInfo.role})`);
         return resource;
     } catch (error) {
         console.error('CosmosDB: Failed to add signature', {

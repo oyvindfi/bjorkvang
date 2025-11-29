@@ -101,12 +101,17 @@ function createBookingCard(booking) {
     const services = Array.isArray(booking.services) ? booking.services.join(', ') : booking.services;
     
     // Check signature status
-    const isSigned = booking.contract && booking.contract.signedAt;
+    const contract = booking.contract || {};
+    const isRequesterSigned = !!contract.signedAt;
+    const isLandlordSigned = !!contract.landlordSignedAt;
+    
     let signatureBadge = '';
     
     if (booking.status === 'approved') {
-        if (isSigned) {
-            signatureBadge = `<span style="background:#d1fae5; color:#065f46; padding:2px 6px; border-radius:4px; font-size:0.8rem; margin-left:5px;">✓ Signert</span>`;
+        if (isLandlordSigned) {
+            signatureBadge = `<span style="background:#d1fae5; color:#065f46; padding:2px 6px; border-radius:4px; font-size:0.8rem; margin-left:5px;">✓ Ferdig signert</span>`;
+        } else if (isRequesterSigned) {
+            signatureBadge = `<span style="background:#dbeafe; color:#1e40af; padding:2px 6px; border-radius:4px; font-size:0.8rem; margin-left:5px;">✎ Signert av leietaker</span>`;
         } else {
             signatureBadge = `<span style="background:#fef3c7; color:#92400e; padding:2px 6px; border-radius:4px; font-size:0.8rem; margin-left:5px;">⚠ Venter på signering</span>`;
         }
@@ -140,7 +145,8 @@ function createBookingCard(booking) {
                 Sendt inn: ${createdStr}<br>
                 ID: ${booking.id} | Status: ${translateStatus(booking.status)}
             </div>
-            ${isSigned ? `<div class="booking-meta" style="color:#059669; font-size:0.8rem;">Signert: ${new Date(booking.contract.signedAt).toLocaleString('nb-NO')}</div>` : ''}
+            ${isRequesterSigned ? `<div class="booking-meta" style="color:#1e40af; font-size:0.8rem;">Leietaker signerte: ${new Date(contract.signedAt).toLocaleString('nb-NO')}</div>` : ''}
+            ${isLandlordSigned ? `<div class="booking-meta" style="color:#059669; font-size:0.8rem;">Utleier signerte: ${new Date(contract.landlordSignedAt).toLocaleString('nb-NO')}</div>` : ''}
         </div>
         <div class="booking-actions">
             ${booking.status === 'pending' ? `
@@ -149,11 +155,23 @@ function createBookingCard(booking) {
             ` : ''}
             ${booking.status === 'approved' ? `
                 <button onclick="rejectBooking('${booking.id}')" class="btn-sm btn-reject">Kanseller</button>
-                ${!isSigned ? `<button onclick="copyContractLink('${booking.id}')" class="btn-sm" style="background:#3b82f6;">Kopier lenke</button>` : ''}
+                <button onclick="openContract('${booking.id}')" class="btn-sm" style="background:${isLandlordSigned ? '#10b981' : '#3b82f6'};">
+                    ${isLandlordSigned ? 'Se avtale' : (isRequesterSigned ? 'Signer som utleier' : 'Kopier lenke')}
+                </button>
             ` : ''}
         </div>
     `;
     return div;
+}
+
+function openContract(id) {
+    const link = window.location.origin + '/leieavtale.html?id=' + id;
+    // If requester has signed, open it directly for admin to sign
+    // If not, copy link for admin to send (or open to check)
+    // For simplicity, we'll just open it in a new tab if signed, or copy if not.
+    // But the button text changes, so let's check the button text or just do both?
+    // Let's just open it.
+    window.open(link, '_blank');
 }
 
 function copyContractLink(id) {

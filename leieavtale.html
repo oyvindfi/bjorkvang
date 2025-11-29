@@ -6,10 +6,24 @@
     <title>Leieavtale – Bjørkvang forsamlingslokale</title>
     <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
     <style>
         /* Contract specific styles */
         body {
             background-color: #f4f4f4;
+        }
+
+        .tab-btn {
+            padding: 8px 16px;
+            border: 1px solid #ccc;
+            background: #f0f0f0;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .tab-btn.active {
+            background: #fff;
+            border-bottom: 2px solid #333;
+            font-weight: bold;
         }
 
         .contract-container {
@@ -262,7 +276,53 @@
                 </label>
             </div>
 
+            <div id="signature-pad-container" style="margin-bottom: 20px; display: none;">
+                <div class="signature-tabs" style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <button type="button" class="tab-btn active" onclick="setSignatureMode('draw')">Tegn signatur</button>
+                    <button type="button" class="tab-btn" onclick="setSignatureMode('text')">Skriv navn</button>
+                </div>
+
+                <div id="draw-mode" class="signature-mode">
+                    <canvas id="signature-canvas" width="500" height="200" style="border: 1px solid #ccc; background: #fff; touch-action: none; width: 100%; max-width: 500px;"></canvas>
+                    <div style="text-align: right; font-size: 0.8rem;">
+                        <button type="button" onclick="clearCanvas()" style="background:none; border:none; color:#666; cursor:pointer; text-decoration:underline;">Tøm felt</button>
+                    </div>
+                </div>
+
+                <div id="text-mode" class="signature-mode" style="display: none;">
+                    <input type="text" id="signature-text-input" placeholder="Skriv ditt fulle navn" style="width: 100%; padding: 15px; font-family: 'Dancing Script', cursive; font-size: 2rem; border: 1px solid #ccc;">
+                    <p style="font-size: 0.8rem; color: #666; margin-top: 5px;">Dette vil gjelde som din signatur.</p>
+                </div>
+            </div>
+
             <button class="btn-sign" id="btn-sign" onclick="signContract()" disabled style="opacity: 0.5; cursor: not-allowed;">Signer avtale digitalt</button>
+        </div>
+
+        <!-- Landlord Signature Section (Hidden by default) -->
+        <div class="signature-section" id="landlord-signature-area" style="display: none; margin-top: 30px; border-color: #cbd5e1; background: #f8fafc;">
+            <h3>Utleiers signatur</h3>
+            <p>Signeres av styret/utleier.</p>
+            
+            <div id="landlord-signature-pad-container">
+                <!-- Re-use logic or duplicate for simplicity? Duplicating for isolation -->
+                <div class="signature-tabs" style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <button type="button" class="tab-btn active" onclick="setLandlordSignatureMode('draw')">Tegn signatur</button>
+                    <button type="button" class="tab-btn" onclick="setLandlordSignatureMode('text')">Skriv navn</button>
+                </div>
+
+                <div id="landlord-draw-mode" class="signature-mode">
+                    <canvas id="landlord-signature-canvas" width="500" height="200" style="border: 1px solid #ccc; background: #fff; touch-action: none; width: 100%; max-width: 500px;"></canvas>
+                    <div style="text-align: right; font-size: 0.8rem;">
+                        <button type="button" onclick="clearLandlordCanvas()" style="background:none; border:none; color:#666; cursor:pointer; text-decoration:underline;">Tøm felt</button>
+                    </div>
+                </div>
+
+                <div id="landlord-text-mode" class="signature-mode" style="display: none;">
+                    <input type="text" id="landlord-signature-text-input" placeholder="Signeres av..." style="width: 100%; padding: 15px; font-family: 'Dancing Script', cursive; font-size: 2rem; border: 1px solid #ccc;">
+                </div>
+            </div>
+
+            <button class="btn-sign" id="btn-sign-landlord" onclick="signContractLandlord()" style="margin-top: 20px; background-color: #3b82f6;">Signer som Utleier</button>
         </div>
     </div>
 

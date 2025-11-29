@@ -40,7 +40,111 @@ const calculatePrice = (rooms, type) => {
     return price;
 };
 
-// Load contract data
+// --- Signature Pad Logic ---
+let isDrawing = false;
+let lastX = 0;
+let lastY = 0;
+
+function initCanvas(canvasId) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    // Set up canvas style
+    ctx.strokeStyle = '#000';
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 2;
+
+    function draw(e) {
+        if (!isDrawing) return;
+        e.preventDefault(); // Prevent scrolling on touch
+        
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+        
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        [lastX, lastY] = [x, y];
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+        isDrawing = true;
+        const rect = canvas.getBoundingClientRect();
+        [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
+    });
+    
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', () => isDrawing = false);
+    canvas.addEventListener('mouseout', () => isDrawing = false);
+
+    // Touch support
+    canvas.addEventListener('touchstart', (e) => {
+        isDrawing = true;
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        [lastX, lastY] = [touch.clientX - rect.left, touch.clientY - rect.top];
+    });
+    canvas.addEventListener('touchmove', draw);
+    canvas.addEventListener('touchend', () => isDrawing = false);
+}
+
+function clearCanvas(id = 'signature-canvas') {
+    const canvas = document.getElementById(id);
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function clearLandlordCanvas() {
+    clearCanvas('landlord-signature-canvas');
+}
+
+function setSignatureMode(mode) {
+    document.getElementById('draw-mode').style.display = mode === 'draw' ? 'block' : 'none';
+    document.getElementById('text-mode').style.display = mode === 'text' ? 'block' : 'none';
+    
+    document.querySelectorAll('#signature-pad-container .tab-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+function setLandlordSignatureMode(mode) {
+    document.getElementById('landlord-draw-mode').style.display = mode === 'draw' ? 'block' : 'none';
+    document.getElementById('landlord-text-mode').style.display = mode === 'text' ? 'block' : 'none';
+    
+    document.querySelectorAll('#landlord-signature-pad-container .tab-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+function getSignatureData(canvasId, inputId) {
+    const canvas = document.getElementById(canvasId);
+    const input = document.getElementById(inputId);
+    
+    // Check if canvas has content (simple check: is it blank?)
+    // For simplicity, we check which mode is visible
+    const isDrawMode = canvas.parentElement.style.display !== 'none';
+    
+    if (isDrawMode) {
+        // Check if canvas is empty (optional, but good)
+        const blank = document.createElement('canvas');
+        blank.width = canvas.width;
+        blank.height = canvas.height;
+        if (canvas.toDataURL() === blank.toDataURL()) return null;
+        return { type: 'draw', data: canvas.toDataURL() };
+    } else {
+        const text = input.value.trim();
+        if (!text) return null;
+        return { type: 'text', data: text };
+    }
+}
+
+// --- Main Logic ---
+
 const loadContract = async () => {
     const id = getQueryParam('id');
     if (!id) {
@@ -87,18 +191,43 @@ const loadContract = async () => {
         const price = booking.price || calculatePrice(booking.spaces, booking.eventType);
         document.getElementById('rental-price').textContent = formatCurrency(price);
 
-        // Check if already signed
-        if (booking.contract && booking.contract.signedAt) {
-            showSignedState(booking.contract.signedAt);
+        // State Management
+        const contract = booking.contract || {};
+        
+        if (contract.signedAt) {
+            // Requester has signed
+            showRequesterSignedState(contract);
+            
+            if (contract.landlordSignedAt) {
+                // Landlord has also signed -> Fully Signed
+                showLandlordSignedState(contract);
+            } else {
+                // Waiting for Landlord
+                // Show Landlord Signature Area
+                document.getElementById('landlord-signature-area').style.display = 'block';
+                initCanvas('landlord-signature-canvas');
+            }
         } else {
-            // Setup checkbox listener only if not signed
+            // Not signed by anyone
+            // Setup checkbox listener
             const checkbox = document.getElementById('payment-confirm');
             const btn = document.getElementById('btn-sign');
+            const sigPad = document.getElementById('signature-pad-container');
+            
             if (checkbox && btn) {
                 checkbox.addEventListener('change', (e) => {
-                    btn.disabled = !e.target.checked;
-                    btn.style.opacity = e.target.checked ? '1' : '0.5';
-                    btn.style.cursor = e.target.checked ? 'pointer' : 'not-allowed';
+                    if (e.target.checked) {
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                        btn.style.cursor = 'pointer';
+                        sigPad.style.display = 'block';
+                        initCanvas('signature-canvas');
+                    } else {
+                        btn.disabled = true;
+                        btn.style.opacity = '0.5';
+                        btn.style.cursor = 'not-allowed';
+                        sigPad.style.display = 'none';
+                    }
                 });
             }
         }
@@ -117,42 +246,136 @@ const loadContract = async () => {
     }
 };
 
-const showSignedState = (date) => {
+const showRequesterSignedState = (contract) => {
     const area = document.getElementById('signature-area');
     area.classList.add('signed');
-    const signedDate = new Date(date).toLocaleString('nb-NO');
+    const signedDate = new Date(contract.signedAt).toLocaleString('nb-NO');
+    
+    let signatureDisplay = '';
+    if (contract.requesterSignature) {
+        if (contract.requesterSignature.type === 'draw') {
+            signatureDisplay = `<img src="${contract.requesterSignature.data}" alt="Signatur" style="max-height: 80px; border-bottom: 1px solid #ccc;">`;
+        } else {
+            signatureDisplay = `<div style="font-family: 'Dancing Script', cursive; font-size: 2rem; border-bottom: 1px solid #ccc; display: inline-block; padding: 0 20px;">${contract.requesterSignature.data}</div>`;
+        }
+    }
+
     area.innerHTML = `
         <div class="signed-stamp">
-            <span>✓</span> Signert digitalt
+            <span>✓</span> Signert av leietaker
         </div>
-        <p>Signert av leietaker: ${signedDate}</p>
-        <p>IP-adresse loggført.</p>
-        <button class="button secondary" onclick="window.print()">Last ned / Skriv ut</button>
+        <div style="margin: 20px 0;">
+            ${signatureDisplay}
+        </div>
+        <p>Dato: ${signedDate}</p>
+        <p style="font-size: 0.8rem; color: #888;">IP: ${contract.ipAddress || 'Loggført'}</p>
+    `;
+};
+
+const showLandlordSignedState = (contract) => {
+    const area = document.getElementById('landlord-signature-area');
+    area.style.display = 'block';
+    area.classList.add('signed');
+    area.style.background = '#fff';
+    area.style.border = '2px solid #10b981'; // Green border like the other one
+
+    const signedDate = new Date(contract.landlordSignedAt).toLocaleString('nb-NO');
+    
+    let signatureDisplay = '';
+    if (contract.landlordSignature) {
+        if (contract.landlordSignature.type === 'draw') {
+            signatureDisplay = `<img src="${contract.landlordSignature.data}" alt="Signatur" style="max-height: 80px; border-bottom: 1px solid #ccc;">`;
+        } else {
+            signatureDisplay = `<div style="font-family: 'Dancing Script', cursive; font-size: 2rem; border-bottom: 1px solid #ccc; display: inline-block; padding: 0 20px;">${contract.landlordSignature.data}</div>`;
+        }
+    }
+
+    area.innerHTML = `
+        <div class="signed-stamp">
+            <span>✓</span> Signert av utleier
+        </div>
+        <div style="margin: 20px 0;">
+            ${signatureDisplay}
+        </div>
+        <p>Dato: ${signedDate}</p>
+        <div style="margin-top: 20px;">
+            <button class="button secondary" onclick="window.print()">Last ned / Skriv ut</button>
+        </div>
     `;
 };
 
 const signContract = async () => {
     const id = getQueryParam('id');
-    const btn = document.querySelector('.btn-sign');
-    const originalText = btn.textContent;
+    const btn = document.getElementById('btn-sign');
     
+    // Validate signature
+    const signature = getSignatureData('signature-canvas', 'signature-text-input');
+    if (!signature) {
+        alert('Du må signere (tegne eller skrive navn) før du kan sende inn.');
+        return;
+    }
+
+    const originalText = btn.textContent;
     btn.disabled = true;
     btn.textContent = 'Signerer...';
 
     try {
-        // Call backend to sign
         const response = await fetch(`${API_BASE}/signBooking`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id })
+            body: JSON.stringify({ 
+                id, 
+                role: 'requester',
+                signatureData: signature 
+            })
         });
         
         if (!response.ok) throw new Error('Signering feilet');
 
         const result = await response.json();
-        showSignedState(result.signedAt);
         
-        alert('Takk! Avtalen er nå signert.');
+        // Reload to show new state
+        location.reload();
+
+    } catch (error) {
+        alert('Noe gikk galt under signering. Prøv igjen.');
+        btn.disabled = false;
+        btn.textContent = originalText;
+    }
+};
+
+const signContractLandlord = async () => {
+    const id = getQueryParam('id');
+    const btn = document.getElementById('btn-sign-landlord');
+    
+    // Validate signature
+    const signature = getSignatureData('landlord-signature-canvas', 'landlord-signature-text-input');
+    if (!signature) {
+        alert('Du må signere (tegne eller skrive navn) før du kan sende inn.');
+        return;
+    }
+
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Signerer...';
+
+    try {
+        const response = await fetch(`${API_BASE}/signBooking`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                id, 
+                role: 'landlord',
+                signatureData: signature 
+            })
+        });
+        
+        if (!response.ok) throw new Error('Signering feilet');
+
+        const result = await response.json();
+        
+        // Reload to show new state
+        location.reload();
 
     } catch (error) {
         alert('Noe gikk galt under signering. Prøv igjen.');
