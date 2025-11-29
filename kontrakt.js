@@ -1,6 +1,6 @@
 const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') 
     ? 'http://127.0.0.1:7071/api' 
-    : '/api';
+    : 'https://bjorkvang-duhsaxahgfe0btgv.westeurope-01.azurewebsites.net/api';
 
 // Helper to get query params
 const getQueryParam = (param) => {
