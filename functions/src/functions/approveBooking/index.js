@@ -7,11 +7,16 @@ const { getBooking, updateBookingStatus } = require('../../../shared/cosmosDb');
  * Approve a booking via a direct link.
  */
 app.http('approveBooking', {
-    methods: ['GET'],
+    methods: ['GET', 'POST', 'OPTIONS'],
     authLevel: 'anonymous',
     route: 'booking/approve',
     handler: async (request, context) => {
+        if (request.method === 'OPTIONS') {
+            return createJsonResponse(204);
+        }
+
         const id = request.query.get('id');
+        const isApiRequest = request.method === 'POST' || request.headers.get('accept')?.includes('application/json');
         
         // Validate booking ID
         if (!id || typeof id !== 'string' || id.trim().length === 0) {
@@ -27,6 +32,9 @@ app.http('approveBooking', {
 
         if (existingBooking.status === 'approved') {
             context.info(`approveBooking: Booking ${id} was already approved`);
+            if (isApiRequest) {
+                return createJsonResponse(200, { message: 'Booking was already approved.' });
+            }
             return createHtmlResponse(200, '<p>Booking var allerede godkjent. Bekreftelse er tidligere sendt.</p>');
         }
 
@@ -75,6 +83,9 @@ app.http('approveBooking', {
             });
         }
 
+        if (isApiRequest) {
+            return createJsonResponse(200, { message: 'Booking approved successfully.' });
+        }
         return createHtmlResponse(200, '<p>Booking er nå godkjent og bekreftelse er sendt til forespørrer.</p>');
     },
 });

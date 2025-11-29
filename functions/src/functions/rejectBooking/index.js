@@ -17,6 +17,8 @@ app.http('rejectBooking', {
         }
 
         const id = request.query.get('id');
+        const isApiRequest = request.method === 'POST' || request.headers.get('accept')?.includes('application/json');
+
         if (!id || typeof id !== 'string' || id.trim().length === 0) {
             context.warn('rejectBooking called with invalid or missing ID');
             return createJsonResponse(400, { error: 'Missing booking id.' });
@@ -30,6 +32,9 @@ app.http('rejectBooking', {
 
         if (existingBooking.status === 'rejected') {
             context.info(`rejectBooking: Booking ${id} was already rejected`);
+            if (isApiRequest) {
+                return createJsonResponse(200, { message: 'Booking was already rejected.' });
+            }
             return createHtmlResponse(200, '<p>Booking var allerede avvist. Forespørrer er informert.</p>');
         }
 
@@ -95,6 +100,9 @@ app.http('rejectBooking', {
             });
         }
 
+        if (isApiRequest) {
+            return createJsonResponse(200, { message: 'Booking rejected successfully.' });
+        }
         return createHtmlResponse(200, '<p>Booking er nå avvist og forespørrer er informert.</p>');
     },
 });
