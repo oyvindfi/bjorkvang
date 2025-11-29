@@ -69,7 +69,11 @@ const loadContract = async () => {
         const booking = await response.json();
 
         // Populate fields
-        document.getElementById('contract-id').textContent = booking.id.substring(0, 8).toUpperCase();
+        // Use the full ID or a cleaner format if available. 
+        // If the ID is "booking-123...", we can just show that, or strip the prefix.
+        const displayId = booking.id.replace('booking-', '').toUpperCase();
+        document.getElementById('contract-id').textContent = displayId;
+
         document.getElementById('renter-name').textContent = booking.name;
         document.getElementById('renter-email').textContent = booking.email;
         document.getElementById('renter-phone').textContent = booking.phone;
@@ -86,6 +90,17 @@ const loadContract = async () => {
         // Check if already signed
         if (booking.contract && booking.contract.signedAt) {
             showSignedState(booking.contract.signedAt);
+        } else {
+            // Setup checkbox listener only if not signed
+            const checkbox = document.getElementById('payment-confirm');
+            const btn = document.getElementById('btn-sign');
+            if (checkbox && btn) {
+                checkbox.addEventListener('change', (e) => {
+                    btn.disabled = !e.target.checked;
+                    btn.style.opacity = e.target.checked ? '1' : '0.5';
+                    btn.style.cursor = e.target.checked ? 'pointer' : 'not-allowed';
+                });
+            }
         }
 
         document.getElementById('loading').style.display = 'none';

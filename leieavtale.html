@@ -251,7 +251,18 @@
         <div class="signature-section" id="signature-area">
             <h3>Signering</h3>
             <p>Jeg bekrefter herved bestillingen og godtar leievilkårene.</p>
-            <button class="btn-sign" onclick="signContract()">Signer avtale digitalt</button>
+            
+            <div style="margin: 20px 0; text-align: left; background: white; padding: 15px; border-radius: 4px; border: 1px solid #ddd;">
+                <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="payment-confirm" style="margin-top: 4px;">
+                    <span>
+                        <strong>Jeg bekrefter at depositum (50% av leiesummen) er innbetalt.</strong><br>
+                        <span style="font-size: 0.9rem; color: #666;">Resterende beløp skal betales før arrangementet starter.</span>
+                    </span>
+                </label>
+            </div>
+
+            <button class="btn-sign" id="btn-sign" onclick="signContract()" disabled style="opacity: 0.5; cursor: not-allowed;">Signer avtale digitalt</button>
         </div>
     </div>
 
