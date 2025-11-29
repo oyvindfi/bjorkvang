@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leieavtale – Bjørkvang forsamlingslokale</title>
+    <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Contract specific styles */
+        body {
+            background-color: #f4f4f4;
+        }
+
+        .contract-container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: white;
+            padding: 60px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 4px;
+        }
+
+        .contract-header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+        }
+
+        .contract-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .contract-title {
+            font-size: 2rem;
+            margin: 0;
+            color: var(--text-main);
+        }
+
+        .contract-meta {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .contract-section {
+            margin-bottom: 30px;
+        }
+
+        .contract-section h2 {
+            font-size: 1.2rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+            color: var(--text-main);
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .detail-item {
+            margin-bottom: 10px;
+        }
+
+        .detail-label {
+            font-weight: bold;
+            display: block;
+            color: #555;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-value {
+            font-size: 1.1rem;
+        }
+
+        .terms-box {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+        }
+
+        .terms-box ul {
+            padding-left: 20px;
+            margin: 10px 0;
+        }
+
+        .signature-section {
+            margin-top: 50px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .signature-section.signed {
+            background: #fff;
+            border: 2px solid #10b981;
+        }
+
+        .btn-sign {
+            background-color: #10b981;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        .btn-sign:hover {
+            background-color: #059669;
+        }
+
+        .signed-stamp {
+            color: #10b981;
+            font-weight: bold;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        @media print {
+            body { background: white; }
+            .contract-container { box-shadow: none; margin: 0; padding: 0; }
+            .btn-sign { display: none; }
+            .terms-box { max-height: none; overflow: visible; border: none; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading" class="loading-overlay">
+        <p>Henter leieavtale...</p>
+    </div>
+
+    <div class="contract-container">
+        <header class="contract-header">
+            <div class="contract-logo">Bjørkvang forsamlingslokale</div>
+            <h1 class="contract-title">Leieavtale</h1>
+            <div class="contract-meta">Avtalenummer: <span id="contract-id">...</span></div>
+        </header>
+
+        <div class="contract-section">
+            <h2>Leietaker</h2>
+            <div class="details-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Navn</span>
+                    <div class="detail-value" id="renter-name">...</div>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">E-post</span>
+                    <div class="detail-value" id="renter-email">...</div>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Telefon</span>
+                    <div class="detail-value" id="renter-phone">...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="contract-section">
+            <h2>Leieobjekt og tidspunkt</h2>
+            <div class="details-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Dato</span>
+                    <div class="detail-value" id="rental-date">...</div>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Tidspunkt</span>
+                    <div class="detail-value" id="rental-time">...</div>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Lokaler</span>
+                    <div class="detail-value" id="rental-rooms">...</div>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Type arrangement</span>
+                    <div class="detail-value" id="rental-type">...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="contract-section">
+            <h2>Pris</h2>
+            <div class="details-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Totalpris (estimert)</span>
+                    <div class="detail-value" id="rental-price">...</div>
+                </div>
+            </div>
+            <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">* Faktura sendes etter gjennomført arrangement. Eventuelle skader eller manglende vask kan medføre tillegg.</p>
+        </div>
+
+        <div class="contract-section">
+            <h2>Vilkår og regler</h2>
+            <div class="terms-box">
+                <p><strong>Ved å signere denne avtalen bekrefter leietaker å ha lest og forstått følgende:</strong></p>
+                
+                <h3>1. Ansvar</h3>
+                <p>Leietaker er ansvarlig for lokalet og inventaret i leieperioden. Leietaker plikter å erstatte skader som oppstår ved uaktsom bruk.</p>
+                
+                <h3>2. Brannvern</h3>
+                <p>Leietaker plikter å sette seg inn i branninstruksen som henger i lokalet. Nødutganger skal ikke blokkeres.</p>
+                
+                <h3>3. Orden og renhold</h3>
+                <p>Lokalet skal forlates i ryddig stand. Bord og stoler settes på plass. Søppel kastes i container ute. Gulv skal feies/vaskes iht. sjekkliste hvis ikke annet er avtalt.</p>
+                
+                <h3>4. Avbestilling</h3>
+                <p>Avbestilling må skje senest 14 dager før leiedato. Ved senere avbestilling kan et gebyr påløpe.</p>
+                
+                <h3>5. Nøkler</h3>
+                <p>Nøkkelutlevering avtales med styret. Tap av nøkkel medfører erstatningsansvar for bytte av låssystem.</p>
+            </div>
+        </div>
+
+        <div class="signature-section" id="signature-area">
+            <h3>Signering</h3>
+            <p>Jeg bekrefter herved bestillingen og godtar leievilkårene.</p>
+            <button class="btn-sign" onclick="signContract()">Signer avtale digitalt</button>
+        </div>
+    </div>
+
+    <script src="kontrakt.js"></script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 const { app } = require('@azure/functions');
 const { sendEmail } = require('../../../shared/email');
-const { createHtmlResponse, createJsonResponse } = require('../../../shared/http');
+const { createHtmlResponse, createJsonResponse, resolveBaseUrl } = require('../../../shared/http');
 const { getBooking, updateBookingStatus } = require('../../../shared/cosmosDb');
 
 /**
@@ -62,18 +62,38 @@ app.http('approveBooking', {
                 const safeDate = escapeHtml(existingBooking.date || '');
                 const safeTime = escapeHtml(existingBooking.time || '');
                 
+                // Generate contract link
+                const baseUrl = resolveBaseUrl(request);
+                // If running locally, resolveBaseUrl might return http://localhost:7071, but frontend is on 3000 or similar.
+                // In production, it's the same domain.
+                // For now, let's assume relative path works if on same domain, or absolute if not.
+                // Ideally, we should have a FRONTEND_URL env var.
+                // Fallback logic:
+                let contractLink = `${baseUrl}/leieavtale.html?id=${existingBooking.id}`;
+                if (baseUrl.includes('localhost:7071')) {
+                    // Local dev hack: point to frontend port 3000
+                    contractLink = `http://localhost:3000/leieavtale.html?id=${existingBooking.id}`;
+                }
+
                 await sendEmail({
                     to: existingBooking.requesterEmail.trim(),
                     from,
-                    subject: 'Din booking er godkjent',
-                    text: `Hei ${safeName}! Booking ${safeDate} kl. ${safeTime} er godkjent. Vi sees!`,
+                    subject: 'Din booking er godkjent – Signering av leieavtale',
+                    text: `Hei ${safeName}!\n\nDin booking for ${safeDate} kl. ${safeTime} er godkjent.\n\nVennligst les og signer leieavtalen digitalt her:\n${contractLink}\n\nVennlig hilsen\nBjørkvang`,
                     html: `
                         <p>Hei ${safeName}!</p>
-                        <p>Booking for ${safeDate} kl. ${safeTime} er nå godkjent.</p>
+                        <p>Din booking for <strong>${safeDate} kl. ${safeTime}</strong> er nå godkjent.</p>
+                        <p>For å bekrefte leieforholdet, vennligst les og signer leieavtalen digitalt:</p>
+                        <p>
+                            <a href="${contractLink}" style="display:inline-block;padding:12px 20px;background:#10b981;color:#ffffff;text-decoration:none;border-radius:4px;font-weight:bold;">
+                                Åpne og signer leieavtale
+                            </a>
+                        </p>
+                        <p>Hvis knappen ikke fungerer, kan du kopiere denne lenken:<br/>${contractLink}</p>
                         <p>Vennlig hilsen<br/>Bjorkvang.no</p>
                     `,
                 });
-                context.info(`approveBooking: Confirmation email sent to ${existingBooking.requesterEmail}`);
+                context.info(`approveBooking: Confirmation email with contract link sent to ${existingBooking.requesterEmail}`);
             }
         } catch (error) {
             context.error('approveBooking: Failed to send booking approval email', {
@@ -86,6 +106,6 @@ app.http('approveBooking', {
         if (isApiRequest) {
             return createJsonResponse(200, { message: 'Booking approved successfully.' });
         }
-        return createHtmlResponse(200, '<p>Booking er nå godkjent og bekreftelse er sendt til forespørrer.</p>');
+        return createHtmlResponse(200, '<p>Booking er nå godkjent og bekreftelse med kontraktlenke er sendt til forespørrer.</p>');
     },
 });

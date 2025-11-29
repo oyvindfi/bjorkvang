@@ -199,6 +199,56 @@ const updateBookingStatus = async (id, partitionKey, status) => {
 };
 
 /**
+ * Add contract signature to a booking.
+ * @param {string} id - Booking ID
+ * @param {string} partitionKey - Partition key value
+ * @param {Object} signatureData - Signature details (signedAt, userAgent, ip)
+ * @returns {Promise<Object|null>} Updated booking or null if not found
+ */
+const addContractSignature = async (id, partitionKey, signatureData) => {
+    try {
+        const db = initCosmosClient();
+        
+
+        if (useInMemory || !db) {
+            // Mock implementation for in-memory
+            const booking = inMemoryStore.getBooking(id);
+            if (booking) {
+                booking.contract = signatureData;
+                return booking;
+            }
+            return null;
+        }
+
+        const { container } = db;
+        
+        // Get the existing booking first
+        const existing = await getBooking(id, partitionKey);
+        if (!existing) {
+            return null;
+        }
+
+        // Update the booking
+        const updated = {
+            ...existing,
+            contract: signatureData,
+            updatedAt: new Date().toISOString()
+        };
+
+        const { resource } = await container.item(id, partitionKey || existing.bjorkvang).replace(updated);
+        console.log(`CosmosDB: Added signature to booking ${id}`);
+        return resource;
+    } catch (error) {
+        console.error('CosmosDB: Failed to add signature', {
+            error: error.message,
+            code: error.code,
+            id
+        });
+        throw error;
+    }
+};
+
+/**
  * List all bookings, optionally filtered by date range.
  * @param {Object} options - Query options
  * @param {string} options.startDate - Optional start date filter (YYYY-MM-DD)
@@ -301,6 +351,7 @@ module.exports = {
     saveBooking,
     getBooking,
     updateBookingStatus,
+    addContractSignature,
     listBookings,
     deleteBooking,
 };

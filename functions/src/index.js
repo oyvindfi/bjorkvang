@@ -13,3 +13,5 @@ require('./functions/emailHttpTriggerBooking');
 require('./functions/getAdminCalendar');
 require('./functions/getCalendar');
 require('./functions/rejectBooking');
+require('./functions/getBooking');
+require('./functions/signBooking');

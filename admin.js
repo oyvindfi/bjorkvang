@@ -100,6 +100,18 @@ function createBookingCard(booking) {
     const spaces = Array.isArray(booking.spaces) ? booking.spaces.join(', ') : booking.spaces;
     const services = Array.isArray(booking.services) ? booking.services.join(', ') : booking.services;
     
+    // Check signature status
+    const isSigned = booking.contract && booking.contract.signedAt;
+    let signatureBadge = '';
+    
+    if (booking.status === 'approved') {
+        if (isSigned) {
+            signatureBadge = `<span style="background:#d1fae5; color:#065f46; padding:2px 6px; border-radius:4px; font-size:0.8rem; margin-left:5px;">✓ Signert</span>`;
+        } else {
+            signatureBadge = `<span style="background:#fef3c7; color:#92400e; padding:2px 6px; border-radius:4px; font-size:0.8rem; margin-left:5px;">⚠ Venter på signering</span>`;
+        }
+    }
+
     // Format created date
     let createdStr = 'Ukjent';
     if (booking.createdAt) {
@@ -115,7 +127,7 @@ function createBookingCard(booking) {
 
     div.innerHTML = `
         <div class="booking-details">
-            <h3>${booking.eventType || 'Reservasjon'} – ${formatDate(booking.date)}</h3>
+            <h3>${booking.eventType || 'Reservasjon'} – ${formatDate(booking.date)} ${signatureBadge}</h3>
             <div class="booking-meta"><strong>Tid:</strong> ${booking.time} (${booking.duration} timer)</div>
             <div class="booking-meta"><strong>Navn:</strong> ${booking.requesterName}</div>
             <div class="booking-meta"><strong>E-post:</strong> <a href="mailto:${booking.requesterEmail}">${booking.requesterEmail}</a></div>
@@ -128,6 +140,7 @@ function createBookingCard(booking) {
                 Sendt inn: ${createdStr}<br>
                 ID: ${booking.id} | Status: ${translateStatus(booking.status)}
             </div>
+            ${isSigned ? `<div class="booking-meta" style="color:#059669; font-size:0.8rem;">Signert: ${new Date(booking.contract.signedAt).toLocaleString('nb-NO')}</div>` : ''}
         </div>
         <div class="booking-actions">
             ${booking.status === 'pending' ? `
@@ -136,10 +149,16 @@ function createBookingCard(booking) {
             ` : ''}
             ${booking.status === 'approved' ? `
                 <button onclick="rejectBooking('${booking.id}')" class="btn-sm btn-reject">Kanseller</button>
+                ${!isSigned ? `<button onclick="copyContractLink('${booking.id}')" class="btn-sm" style="background:#3b82f6;">Kopier lenke</button>` : ''}
             ` : ''}
         </div>
     `;
     return div;
+}
+
+function copyContractLink(id) {
+    const link = window.location.origin + '/leieavtale.html?id=' + id;
+    navigator.clipboard.writeText(link).then(() => alert('Lenke kopiert!'));
 }
 
 async function approveBooking(id) {

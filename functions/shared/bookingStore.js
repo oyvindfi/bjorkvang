@@ -29,7 +29,7 @@ const createBooking = (bookingData) => {
     
     const now = new Date().toISOString();
     const booking = {
-        id: createBookingId(),
+        id: bookingData.id || createBookingId(),
         date: date.trim(),
         time: time.trim(),
         requesterName: requesterName.trim(),
@@ -84,6 +84,16 @@ const updateBookingStatus = (id, status) => {
 };
 
 /**
+ * Delete a booking by id.
+ */
+const deleteBooking = (id) => {
+    if (!id || typeof id !== 'string') {
+        return false;
+    }
+    return bookings.delete(id);
+};
+
+/**
  * Return every booking in a stable array.
  */
 const listBookings = () => {
@@ -105,4 +115,5 @@ module.exports = {
     getBooking,
     listBookings,
     updateBookingStatus,
+    deleteBooking,
 };
