@@ -264,9 +264,15 @@ document.addEventListener('DOMContentLoaded', function () {
           ? Number.parseInt(extended.attendees, 10)
           : null;
     const status = computeSuggestedStatus(spaces, duration, normaliseStatus(extended.status, ''));
+    
+    // Add visual indicator for pending events in the title
+    let title = eventType || 'Reservert';
+    if (status === 'pending') {
+        title = `${title} (Venter)`;
+    }
 
     return {
-      title: eventType || 'Reservert',
+      title: title,
       start: startDate.toISOString(),
       end: safeEnd.toISOString(),
       extendedProps: {
@@ -781,6 +787,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (Number.isNaN(existingStart) || Number.isNaN(existingEnd)) {
           return false;
         }
+        
+        // Only block if the existing event is confirmed/approved
+        const status = normaliseStatus(event.extendedProps?.status, 'pending');
+        if (status !== 'confirmed' && status !== 'approved') {
+            return false;
+        }
+
         return startDate < existingEnd && endDate > existingStart;
       });
 
