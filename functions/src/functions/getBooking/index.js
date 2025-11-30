@@ -9,7 +9,7 @@ app.http('getBooking', {
         const id = request.query.get('id');
 
         if (!id) {
-            return createJsonResponse(400, { message: 'Missing booking ID' });
+            return createJsonResponse(400, { message: 'Missing booking ID' }, request);
         }
 
         try {
@@ -18,15 +18,15 @@ app.http('getBooking', {
             const booking = await getBooking(id, null);
 
             if (!booking) {
-                return createJsonResponse(404, { message: 'Booking not found' });
+                return createJsonResponse(404, { message: 'Booking not found' }, request);
             }
 
             // Return the booking details
-            return createJsonResponse(200, booking);
+            return createJsonResponse(200, booking, request);
 
         } catch (error) {
             context.error(`Error fetching booking ${id}:`, error);
-            return createJsonResponse(500, { message: 'Internal server error' });
+            return createJsonResponse(500, { message: 'Internal server error' }, request);
         }
     }
 });

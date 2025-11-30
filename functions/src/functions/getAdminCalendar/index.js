@@ -15,12 +15,12 @@ app.http('getAdminCalendar', {
         try {
             const bookings = await listBookings();
             context.log(`Successfully retrieved ${bookings.length} bookings for admin calendar.`);
-            return createJsonResponse(200, { bookings });
+            return createJsonResponse(200, { bookings }, request);
         } catch (error) {
             context.log.error('Failed to retrieve admin calendar bookings', error);
             return createJsonResponse(500, {
                 error: 'Kunne ikke hente booking-data. Vennligst prøv igjen senere.',
-            });
+            }, request);
         }
     },
 });

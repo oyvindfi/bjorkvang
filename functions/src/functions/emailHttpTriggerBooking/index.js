@@ -28,7 +28,7 @@ app.http('emailHttpTriggerBooking', {
 
         if (request.method === 'OPTIONS') {
             context.info('emailHttpTriggerBooking handled CORS preflight');
-            return createJsonResponse(204);
+            return createJsonResponse(204, {}, request);
         }
 
         const body = await parseBody(request);
@@ -36,12 +36,12 @@ app.http('emailHttpTriggerBooking', {
         // Basic validation to prevent abuse
         if (body?.html && body.html.length > 100000) {
             context.warn('emailHttpTriggerBooking rejected: HTML too large');
-            return createJsonResponse(413, { error: 'Email content too large.' });
+            return createJsonResponse(413, { error: 'Email content too large.' }, request);
         }
         
         if (body?.text && body.text.length > 50000) {
             context.warn('emailHttpTriggerBooking rejected: Text too large');
-            return createJsonResponse(413, { error: 'Email content too large.' });
+            return createJsonResponse(413, { error: 'Email content too large.' }, request);
         }
         
         context.info('emailHttpTriggerBooking payload received', {
@@ -70,7 +70,7 @@ app.http('emailHttpTriggerBooking', {
                 hasTo: Boolean(to),
                 hasFrom: Boolean(from),
             });
-            return createJsonResponse(400, { error: 'Missing "to" or "from" field.' });
+            return createJsonResponse(400, { error: 'Missing "to" or "from" field.' }, request);
         }
 
         try {
@@ -92,7 +92,7 @@ app.http('emailHttpTriggerBooking', {
             return createJsonResponse(202, {
                 success: true,
                 response: result,
-            });
+            }, request);
         } catch (error) {
             context.error('emailHttpTriggerBooking failed to send email', {
                 error: error.message,
@@ -109,7 +109,7 @@ app.http('emailHttpTriggerBooking', {
             return createJsonResponse(500, { 
                 error: errorMessage,
                 retryable: !error.message?.includes('PLUNK')
-            });
+            }, request);
         }
     },
 });

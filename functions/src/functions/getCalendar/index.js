@@ -25,7 +25,7 @@ app.http('getCalendar', {
             }));
             
             context.log(`getCalendar: Successfully retrieved ${bookings.length} bookings`);
-            return createJsonResponse(200, { bookings });
+            return createJsonResponse(200, { bookings }, request);
         } catch (error) {
             context.log.error('getCalendar: Failed to retrieve calendar bookings', {
                 error: error.message,
@@ -33,7 +33,7 @@ app.http('getCalendar', {
             });
             return createJsonResponse(500, {
                 error: 'Kunne ikke hente kalenderdata. Vennligst prøv igjen senere.',
-            });
+            }, request);
         }
     },
 });

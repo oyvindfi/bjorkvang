@@ -14,7 +14,7 @@ app.http('bookingRequest', {
     handler: async (request, context) => {
         if (request.method === 'OPTIONS') {
             context.log('bookingRequest: Handled CORS preflight');
-            return createJsonResponse(204);
+            return createJsonResponse(204, {}, request);
         }
 
         const body = await parseBody(request);
@@ -28,21 +28,21 @@ app.http('bookingRequest', {
                 hasName: Boolean(requesterName),
                 hasEmail: Boolean(requesterEmail)
             });
-            return createJsonResponse(400, { error: 'Missing one of required fields: date, time, requesterName, requesterEmail.' });
+            return createJsonResponse(400, { error: 'Missing one of required fields: date, time, requesterName, requesterEmail.' }, request);
         }
         
         // Validate field types and formats
         if (typeof date !== 'string' || typeof time !== 'string' || 
             typeof requesterName !== 'string' || typeof requesterEmail !== 'string') {
             context.warn('bookingRequest: Invalid field types');
-            return createJsonResponse(400, { error: 'Invalid field types.' });
+            return createJsonResponse(400, { error: 'Invalid field types.' }, request);
         }
         
         // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(requesterEmail.trim())) {
             context.warn('bookingRequest: Invalid email format', { email: requesterEmail });
-            return createJsonResponse(400, { error: 'Invalid email format.' });
+            return createJsonResponse(400, { error: 'Invalid email format.' }, request);
         }
         
         // Validate and sanitize inputs
@@ -60,18 +60,18 @@ app.http('bookingRequest', {
         // Length validation
         if (trimmedName.length > 100) {
             context.warn('bookingRequest: Name too long');
-            return createJsonResponse(400, { error: 'Name must be less than 100 characters.' });
+            return createJsonResponse(400, { error: 'Name must be less than 100 characters.' }, request);
         }
         
         if (trimmedMessage.length > 2000) {
             context.warn('bookingRequest: Message too long');
-            return createJsonResponse(400, { error: 'Message must be less than 2000 characters.' });
+            return createJsonResponse(400, { error: 'Message must be less than 2000 characters.' }, request);
         }
         
         // Date format validation (basic ISO date check)
         if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmedDate)) {
             context.warn('bookingRequest: Invalid date format', { date: trimmedDate });
-            return createJsonResponse(400, { error: 'Invalid date format. Expected YYYY-MM-DD.' });
+            return createJsonResponse(400, { error: 'Invalid date format. Expected YYYY-MM-DD.' }, request);
         }
 
         // Validate that booking is not too far in the future (max 2 years)
@@ -81,13 +81,13 @@ app.http('bookingRequest', {
         
         if (bookingDateObj > maxDate) {
             context.warn('bookingRequest: Date too far in future', { date: trimmedDate });
-            return createJsonResponse(400, { error: 'Bookings can only be made up to 2 years in advance.' });
+            return createJsonResponse(400, { error: 'Bookings can only be made up to 2 years in advance.' }, request);
         }
         
         // Time format validation (HH:MM)
         if (!/^\d{2}:\d{2}$/.test(trimmedTime)) {
             context.warn('bookingRequest: Invalid time format', { time: trimmedTime });
-            return createJsonResponse(400, { error: 'Invalid time format. Expected HH:MM.' });
+            return createJsonResponse(400, { error: 'Invalid time format. Expected HH:MM.' }, request);
         }
 
         context.info('bookingRequest: Validation passed, attempting to save booking...');
@@ -132,7 +132,7 @@ app.http('bookingRequest', {
                     hasTo: Boolean(to), 
                     hasFrom: Boolean(from) 
                 });
-                return createJsonResponse(500, { error: 'Email configuration missing. Please contact an administrator.' });
+                return createJsonResponse(500, { error: 'Email configuration missing. Please contact an administrator.' }, request);
             }
             
             // Escape HTML to prevent XSS
@@ -223,7 +223,7 @@ app.http('bookingRequest', {
             return createJsonResponse(202, {
                 id: booking.id,
                 status: booking.status,
-            });
+            }, request);
         } catch (error) {
             context.error('bookingRequest: Failed to process booking request', {
                 error: error.message,
@@ -235,7 +235,7 @@ app.http('bookingRequest', {
             // DEBUG: Exposing full error for troubleshooting
             const userMessage = error.message || 'Unable to process booking right now.';
                 
-            return createJsonResponse(500, { error: userMessage, details: error.stack });
+            return createJsonResponse(500, { error: userMessage, details: error.stack }, request);
         }
     },
 });

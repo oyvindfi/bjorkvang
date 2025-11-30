@@ -13,7 +13,7 @@ app.http('rejectBooking', {
     handler: async (request, context) => {
         if (request.method === 'OPTIONS') {
             context.log('rejectBooking: Handled CORS preflight');
-            return createJsonResponse(204);
+            return createJsonResponse(204, {}, request);
         }
 
         const id = request.query.get('id');
@@ -21,21 +21,21 @@ app.http('rejectBooking', {
 
         if (!id || typeof id !== 'string' || id.trim().length === 0) {
             context.warn('rejectBooking called with invalid or missing ID');
-            return createJsonResponse(400, { error: 'Missing booking id.' });
+            return createJsonResponse(400, { error: 'Missing booking id.' }, request);
         }
 
         const existingBooking = await getBooking(id.trim());
         if (!existingBooking) {
             context.warn(`rejectBooking: Booking not found for ID: ${id}`);
-            return createJsonResponse(404, { error: 'Booking not found.' });
+            return createJsonResponse(404, { error: 'Booking not found.' }, request);
         }
 
         if (existingBooking.status === 'rejected') {
             context.info(`rejectBooking: Booking ${id} was already rejected`);
             if (isApiRequest) {
-                return createJsonResponse(200, { message: 'Booking was already rejected.' });
+                return createJsonResponse(200, { message: 'Booking was already rejected.' }, request);
             }
-            return createHtmlResponse(200, '<p>Booking var allerede avvist. Forespørrer er informert.</p>');
+            return createHtmlResponse(200, '<p>Booking var allerede avvist. Forespørrer er informert.</p>', request);
         }
 
         let rejectionMessage = '';
@@ -52,7 +52,7 @@ app.http('rejectBooking', {
         const updatedBooking = await updateBookingStatus(id.trim(), null, 'rejected');
         if (!updatedBooking) {
             context.error(`rejectBooking: Failed to update booking status for ID: ${id}`);
-            return createJsonResponse(500, { error: 'Failed to reject booking.' });
+            return createJsonResponse(500, { error: 'Failed to reject booking.' }, request);
         }
         
         context.info(`rejectBooking: Successfully rejected booking ${id} for ${existingBooking.requesterEmail}`);
@@ -101,8 +101,8 @@ app.http('rejectBooking', {
         }
 
         if (isApiRequest) {
-            return createJsonResponse(200, { message: 'Booking rejected successfully.' });
+            return createJsonResponse(200, { message: 'Booking rejected successfully.' }, request);
         }
-        return createHtmlResponse(200, '<p>Booking er nå avvist og forespørrer er informert.</p>');
+        return createHtmlResponse(200, '<p>Booking er nå avvist og forespørrer er informert.</p>', request);
     },
 });

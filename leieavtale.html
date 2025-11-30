@@ -277,6 +277,11 @@
             </div>
 
             <div id="signature-pad-container" style="margin-bottom: 20px; display: none;">
+                <div style="margin-bottom: 15px;">
+                    <label for="signer-name-input" style="display: block; font-weight: bold; margin-bottom: 5px;">Navn med blokkbokstaver</label>
+                    <input type="text" id="signer-name-input" placeholder="Ditt fulle navn" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+
                 <div class="signature-tabs" style="display: flex; gap: 10px; margin-bottom: 10px;">
                     <button type="button" class="tab-btn active" onclick="setSignatureMode('draw')">Tegn signatur</button>
                     <button type="button" class="tab-btn" onclick="setSignatureMode('text')">Skriv navn</button>

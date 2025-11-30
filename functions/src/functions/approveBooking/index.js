@@ -12,7 +12,7 @@ app.http('approveBooking', {
     route: 'booking/approve',
     handler: async (request, context) => {
         if (request.method === 'OPTIONS') {
-            return createJsonResponse(204);
+            return createJsonResponse(204, {}, request);
         }
 
         const id = request.query.get('id');
@@ -21,27 +21,27 @@ app.http('approveBooking', {
         // Validate booking ID
         if (!id || typeof id !== 'string' || id.trim().length === 0) {
             context.warn('approveBooking called with invalid or missing ID');
-            return createJsonResponse(400, { error: 'Missing booking id.' });
+            return createJsonResponse(400, { error: 'Missing booking id.' }, request);
         }
 
         const existingBooking = await getBooking(id.trim());
         if (!existingBooking) {
             context.warn(`approveBooking: Booking not found for ID: ${id}`);
-            return createJsonResponse(404, { error: 'Booking not found.' });
+            return createJsonResponse(404, { error: 'Booking not found.' }, request);
         }
 
         if (existingBooking.status === 'approved') {
             context.info(`approveBooking: Booking ${id} was already approved`);
             if (isApiRequest) {
-                return createJsonResponse(200, { message: 'Booking was already approved.' });
+                return createJsonResponse(200, { message: 'Booking was already approved.' }, request);
             }
-            return createHtmlResponse(200, '<p>Booking var allerede godkjent. Bekreftelse er tidligere sendt.</p>');
+            return createHtmlResponse(200, '<p>Booking var allerede godkjent. Bekreftelse er tidligere sendt.</p>', request);
         }
 
         const updatedBooking = await updateBookingStatus(id.trim(), null, 'approved');
         if (!updatedBooking) {
             context.error(`approveBooking: Failed to update booking status for ID: ${id}`);
-            return createJsonResponse(500, { error: 'Failed to approve booking.' });
+            return createJsonResponse(500, { error: 'Failed to approve booking.' }, request);
         }
         
         context.info(`approveBooking: Successfully approved booking ${id} for ${existingBooking.requesterEmail}`);
@@ -71,8 +71,8 @@ app.http('approveBooking', {
                     contractLink = `http://localhost:3000/leieavtale.html?id=${existingBooking.id}`;
                 } else {
                     // Production: point to the main domain
-                    // We assume the frontend is hosted at bjorkvang.no
-                    contractLink = `https://bjorkvang.no/leieavtale.html?id=${existingBooking.id}`;
+                    // We assume the frontend is hosted at bjorkvang.no (punycode: xn--bjrkvang-64a.no)
+                    contractLink = `https://xn--bjrkvang-64a.no/leieavtale.html?id=${existingBooking.id}`;
                 }
 
                 await sendEmail({
@@ -104,8 +104,8 @@ app.http('approveBooking', {
         }
 
         if (isApiRequest) {
-            return createJsonResponse(200, { message: 'Booking approved successfully.' });
+            return createJsonResponse(200, { message: 'Booking approved successfully.' }, request);
         }
-        return createHtmlResponse(200, '<p>Booking er nå godkjent og bekreftelse med kontraktlenke er sendt til forespørrer.</p>');
+        return createHtmlResponse(200, '<p>Booking er nå godkjent og bekreftelse med kontraktlenke er sendt til forespørrer.</p>', request);
     },
 });

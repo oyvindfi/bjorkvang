@@ -11,7 +11,7 @@ app.http('signBooking', {
             const { id, role, signatureData, signerName } = body;
 
             if (!id) {
-                return createJsonResponse(400, { message: 'Missing booking ID' });
+                return createJsonResponse(400, { message: 'Missing booking ID' }, request);
             }
 
             // Capture metadata for the signature
@@ -29,18 +29,18 @@ app.http('signBooking', {
             const updatedBooking = await addContractSignature(id, null, signatureMetadata);
 
             if (!updatedBooking) {
-                return createJsonResponse(404, { message: 'Booking not found' });
+                return createJsonResponse(404, { message: 'Booking not found' }, request);
             }
 
             // Return the signature details
             return createJsonResponse(200, { 
                 message: 'Contract signed successfully',
                 signedAt: signatureData.signedAt 
-            });
+            }, request);
 
         } catch (error) {
             context.error(`Error signing booking:`, error);
-            return createJsonResponse(500, { message: 'Internal server error' });
+            return createJsonResponse(500, { message: 'Internal server error' }, request);
         }
     }
 });
