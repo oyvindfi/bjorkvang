@@ -222,12 +222,14 @@ const addContractSignature = async (id, partitionKey, signatureInfo) => {
         if (signatureInfo.role === 'landlord') {
             newContract.landlordSignedAt = signatureInfo.signedAt;
             newContract.landlordSignature = signatureInfo.signatureData;
+            newContract.landlordName = signatureInfo.signerName; // Printed name
             newContract.landlordIpAddress = signatureInfo.ipAddress;
             newContract.landlordUserAgent = signatureInfo.userAgent;
         } else {
             // Default to requester
             newContract.signedAt = signatureInfo.signedAt;
             newContract.requesterSignature = signatureInfo.signatureData;
+            newContract.requesterName = signatureInfo.signerName; // Printed name
             newContract.ipAddress = signatureInfo.ipAddress;
             newContract.userAgent = signatureInfo.userAgent;
         }

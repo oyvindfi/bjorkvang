@@ -8,7 +8,7 @@ app.http('signBooking', {
     handler: async (request, context) => {
         try {
             const body = await request.json();
-            const { id, role, signatureData } = body;
+            const { id, role, signatureData, signerName } = body;
 
             if (!id) {
                 return createJsonResponse(400, { message: 'Missing booking ID' });
@@ -18,6 +18,7 @@ app.http('signBooking', {
             const signatureMetadata = {
                 role: role || 'requester', // Default to requester for backward compatibility
                 signatureData: signatureData, // { type: 'draw'|'text', data: '...' }
+                signerName: signerName, // Printed name
                 signedAt: new Date().toISOString(),
                 userAgent: request.headers.get('user-agent') || 'Unknown',
                 ipAddress: request.headers.get('x-forwarded-for') || 'Unknown'

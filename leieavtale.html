@@ -293,6 +293,11 @@
                     <input type="text" id="signature-text-input" placeholder="Skriv ditt fulle navn" style="width: 100%; padding: 15px; font-family: 'Dancing Script', cursive; font-size: 2rem; border: 1px solid #ccc;">
                     <p style="font-size: 0.8rem; color: #666; margin-top: 5px;">Dette vil gjelde som din signatur.</p>
                 </div>
+
+                <div style="margin-top: 15px; text-align: left;">
+                    <label for="signer-name" style="display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem;">Navn med blokkbokstaver:</label>
+                    <input type="text" id="signer-name" placeholder="Ditt navn" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
             </div>
 
             <button class="btn-sign" id="btn-sign" onclick="signContract()" disabled style="opacity: 0.5; cursor: not-allowed;">Signer avtale digitalt</button>
@@ -303,7 +308,13 @@
             <h3>Utleiers signatur</h3>
             <p>Signeres av styret/utleier.</p>
             
-            <div id="landlord-signature-pad-container">
+            <div id="landlord-auth-container" style="margin-bottom: 20px;">
+                <p style="margin-bottom: 10px;">Vennligst oppgi admin-kode for å låse opp signering.</p>
+                <input type="password" id="admin-pin-input" placeholder="Admin kode" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <button onclick="unlockLandlordSigning()" style="padding: 8px 16px; background: #333; color: white; border: none; border-radius: 4px; cursor: pointer;">Lås opp</button>
+            </div>
+
+            <div id="landlord-signature-pad-container" style="display: none;">
                 <!-- Re-use logic or duplicate for simplicity? Duplicating for isolation -->
                 <div class="signature-tabs" style="display: flex; gap: 10px; margin-bottom: 10px;">
                     <button type="button" class="tab-btn active" onclick="setLandlordSignatureMode('draw')">Tegn signatur</button>
@@ -320,9 +331,14 @@
                 <div id="landlord-text-mode" class="signature-mode" style="display: none;">
                     <input type="text" id="landlord-signature-text-input" placeholder="Signeres av..." style="width: 100%; padding: 15px; font-family: 'Dancing Script', cursive; font-size: 2rem; border: 1px solid #ccc;">
                 </div>
-            </div>
 
-            <button class="btn-sign" id="btn-sign-landlord" onclick="signContractLandlord()" style="margin-top: 20px; background-color: #3b82f6;">Signer som Utleier</button>
+                <div style="margin-top: 15px; text-align: left;">
+                    <label for="landlord-signer-name" style="display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem;">Navn med blokkbokstaver:</label>
+                    <input type="text" id="landlord-signer-name" placeholder="Ditt navn" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+
+                <button class="btn-sign" id="btn-sign-landlord" onclick="signContractLandlord()" style="margin-top: 20px; background-color: #3b82f6;">Signer som Utleier</button>
+            </div>
         </div>
     </div>
 

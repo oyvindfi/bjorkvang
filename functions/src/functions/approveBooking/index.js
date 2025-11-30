@@ -64,15 +64,15 @@ app.http('approveBooking', {
                 
                 // Generate contract link
                 const baseUrl = resolveBaseUrl(request);
-                // If running locally, resolveBaseUrl might return http://localhost:7071, but frontend is on 3000 or similar.
-                // In production, it's the same domain.
-                // For now, let's assume relative path works if on same domain, or absolute if not.
-                // Ideally, we should have a FRONTEND_URL env var.
-                // Fallback logic:
-                let contractLink = `${baseUrl}/leieavtale.html?id=${existingBooking.id}`;
-                if (baseUrl.includes('localhost:7071')) {
-                    // Local dev hack: point to frontend port 3000
+                
+                let contractLink;
+                if (baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1')) {
+                    // Local dev: point to frontend port 3000
                     contractLink = `http://localhost:3000/leieavtale.html?id=${existingBooking.id}`;
+                } else {
+                    // Production: point to the main domain
+                    // We assume the frontend is hosted at bjorkvang.no
+                    contractLink = `https://bjorkvang.no/leieavtale.html?id=${existingBooking.id}`;
                 }
 
                 await sendEmail({

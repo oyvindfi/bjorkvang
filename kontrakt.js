@@ -143,6 +143,20 @@ function getSignatureData(canvasId, inputId) {
     }
 }
 
+// --- Admin Security ---
+const ADMIN_PIN = 'bjorkvang-admin';
+
+function unlockLandlordSigning() {
+    const input = document.getElementById('admin-pin-input').value;
+    if (input === ADMIN_PIN) {
+        document.getElementById('landlord-auth-container').style.display = 'none';
+        document.getElementById('landlord-signature-pad-container').style.display = 'block';
+        initCanvas('landlord-signature-canvas');
+    } else {
+        alert('Feil kode');
+    }
+}
+
 // --- Main Logic ---
 
 const loadContract = async () => {
@@ -206,7 +220,7 @@ const loadContract = async () => {
                 if (getQueryParam('mode') === 'admin') {
                     // Show Landlord Signature Area for signing (Only for admin)
                     document.getElementById('landlord-signature-area').style.display = 'block';
-                    initCanvas('landlord-signature-canvas');
+                    // Don't init canvas yet, wait for unlock
                 } else {
                     // Show waiting message for regular users
                     showWaitingForLandlordState();
@@ -265,6 +279,8 @@ const showRequesterSignedState = (contract) => {
         }
     }
 
+    const signerName = contract.requesterName || 'Ukjent';
+
     area.innerHTML = `
         <div class="signed-stamp">
             <span>✓</span> Signert av leietaker
@@ -272,6 +288,7 @@ const showRequesterSignedState = (contract) => {
         <div style="margin: 20px 0;">
             ${signatureDisplay}
         </div>
+        <p style="font-weight: bold; margin-bottom: 5px;">${signerName}</p>
         <p>Dato: ${signedDate}</p>
         <p style="font-size: 0.8rem; color: #888;">IP: ${contract.ipAddress || 'Loggført'}</p>
     `;
@@ -309,6 +326,8 @@ const showLandlordSignedState = (contract) => {
         }
     }
 
+    const signerName = contract.landlordName || 'Styret';
+
     area.innerHTML = `
         <div class="signed-stamp">
             <span>✓</span> Signert av utleier
@@ -316,6 +335,7 @@ const showLandlordSignedState = (contract) => {
         <div style="margin: 20px 0;">
             ${signatureDisplay}
         </div>
+        <p style="font-weight: bold; margin-bottom: 5px;">${signerName}</p>
         <p>Dato: ${signedDate}</p>
         <div style="margin-top: 20px;">
             <button class="button secondary" onclick="window.print()">Last ned / Skriv ut</button>
@@ -326,11 +346,19 @@ const showLandlordSignedState = (contract) => {
 const signContract = async () => {
     const id = getQueryParam('id');
     const btn = document.getElementById('btn-sign');
+    const nameInput = document.getElementById('signer-name');
     
     // Validate signature
     const signature = getSignatureData('signature-canvas', 'signature-text-input');
     if (!signature) {
         alert('Du må signere (tegne eller skrive navn) før du kan sende inn.');
+        return;
+    }
+
+    const signerName = nameInput.value.trim();
+    if (!signerName) {
+        alert('Vennligst skriv navnet ditt med blokkbokstaver.');
+        nameInput.focus();
         return;
     }
 
@@ -345,7 +373,8 @@ const signContract = async () => {
             body: JSON.stringify({ 
                 id, 
                 role: 'requester',
-                signatureData: signature 
+                signatureData: signature,
+                signerName: signerName
             })
         });
         
@@ -366,11 +395,19 @@ const signContract = async () => {
 const signContractLandlord = async () => {
     const id = getQueryParam('id');
     const btn = document.getElementById('btn-sign-landlord');
+    const nameInput = document.getElementById('landlord-signer-name');
     
     // Validate signature
     const signature = getSignatureData('landlord-signature-canvas', 'landlord-signature-text-input');
     if (!signature) {
         alert('Du må signere (tegne eller skrive navn) før du kan sende inn.');
+        return;
+    }
+
+    const signerName = nameInput.value.trim();
+    if (!signerName) {
+        alert('Vennligst skriv navnet ditt med blokkbokstaver.');
+        nameInput.focus();
         return;
     }
 
@@ -385,7 +422,8 @@ const signContractLandlord = async () => {
             body: JSON.stringify({ 
                 id, 
                 role: 'landlord',
-                signatureData: signature 
+                signatureData: signature,
+                signerName: signerName
             })
         });
         
