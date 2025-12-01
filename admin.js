@@ -158,6 +158,7 @@ function createBookingCard(booking) {
                 <button onclick="openContract('${booking.id}')" class="btn-sm" style="background:${isLandlordSigned ? '#10b981' : '#3b82f6'};">
                     ${isLandlordSigned ? 'Se avtale' : (isRequesterSigned ? 'Signer som utleier' : 'Kopier lenke')}
                 </button>
+                <button onclick="sendReminder('${booking.id}')" class="btn-sm" style="background:#f59e0b; color:black;">Påminnelse</button>
             ` : ''}
         </div>
     `;
@@ -177,6 +178,31 @@ function openContract(id) {
 function copyContractLink(id) {
     const link = window.location.origin + '/leieavtale.html?id=' + id;
     navigator.clipboard.writeText(link).then(() => alert('Lenke kopiert!'));
+}
+
+async function sendReminder(id) {
+    const comment = prompt('Vil du legge til en kommentar i påminnelsen? (Valgfritt)');
+    if (comment === null) return; // Cancelled
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/booking/remind`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ id, comment })
+        });
+        
+        if (response.ok) {
+            alert('Påminnelse sendt!');
+        } else {
+            alert('Noe gikk galt. Prøv igjen.');
+        }
+    } catch (error) {
+        console.error(error);
+        alert('Feil ved kommunikasjon med server.');
+    }
 }
 
 async function approveBooking(id) {
