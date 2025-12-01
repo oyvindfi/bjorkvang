@@ -553,6 +553,11 @@ document.addEventListener('DOMContentLoaded', function () {
         minute: '2-digit',
         hour12: false
       },
+      slotLabelFormat: {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      },
       eventClassNames: function (arg) {
         const status = normaliseStatus(arg.event.extendedProps?.status, 'pending');
         const classes = [`fc-event--${status}`];
@@ -897,4 +902,31 @@ document.addEventListener('DOMContentLoaded', function () {
       isSubmitting = false;
     });
   }
+
+  // --- NEW: Handle Bryllupspakke logic ---
+  const spacesCheckboxes = document.querySelectorAll('input[name="spaces"]');
+  spacesCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', (e) => {
+      if (e.target.value === 'Bryllupspakke' && e.target.checked) {
+        // Uncheck others to avoid confusion
+        spacesCheckboxes.forEach(cb => {
+          if (cb !== e.target) cb.checked = false;
+        });
+        // Suggest duration (e.g. whole weekend = 48+ hours)
+        if (durationInputEl) durationInputEl.value = 48; 
+        // Auto-select event type
+        if (eventTypeSelect) eventTypeSelect.value = 'Familiefeiring';
+        
+        showStatus('Bryllupspakke valgt. Varighet satt til helg (48t).', 'info');
+      } else if (e.target.checked && e.target.value !== 'Bryllupspakke') {
+        // If selecting regular spaces, uncheck Bryllupspakke
+        const wedding = document.querySelector('input[name="spaces"][value="Bryllupspakke"]');
+        if (wedding && wedding.checked) {
+            wedding.checked = false;
+            if (durationInputEl) durationInputEl.value = 4; // Reset to default
+        }
+      }
+    });
+  });
+  // ----------------------------------------
 });

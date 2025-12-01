@@ -71,8 +71,8 @@ app.http('approveBooking', {
                     contractLink = `http://localhost:3000/leieavtale.html?id=${existingBooking.id}`;
                 } else {
                     // Production: point to the main domain
-                    // We assume the frontend is hosted at bjorkvang.no
-                    contractLink = `https://bjorkvang.no/leieavtale.html?id=${existingBooking.id}`;
+                    // We assume the frontend is hosted at bjørkvang.no
+                    contractLink = `https://bjørkvang.no/leieavtale.html?id=${existingBooking.id}`;
                 }
 
                 await sendEmail({
