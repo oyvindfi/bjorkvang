@@ -25,11 +25,11 @@ app.http('vippsInitiate', {
                 phoneNumber, // Optional, pre-fills number in Vipps
                 returnUrl,
                 orderId,
-                text: 'Medlemskap Helgøens Vel'
+                text: 'Medlemskap Helgøens Vel (årlig fornyelse)'
             });
 
             return createJsonResponse(200, {
-                url: paymentResponse.url,
+                url: paymentResponse.redirectUrl,
                 orderId: orderId
             });
 

@@ -15,7 +15,7 @@ const getAccessToken = async () => {
         throw new Error('Missing Vipps configuration (CLIENT_ID, CLIENT_SECRET, or SUBSCRIPTION_KEY)');
     }
 
-    const response = await fetch(`${VIPPS_BASE_URL}/accessToken/get`, {
+    const response = await fetch(`${VIPPS_BASE_URL}/accesstoken/get`, {
         method: 'POST',
         headers: {
             'client_id': VIPPS_CLIENT_ID,
@@ -47,30 +47,33 @@ const initiatePayment = async ({ amount, phoneNumber, returnUrl, orderId, text }
     const accessToken = await getAccessToken();
 
     const payload = {
-        merchantInfo: {
-            merchantSerialNumber: VIPPS_MERCHANT_SERIAL_NUMBER,
-            callbackPrefix: `${process.env.PUBLIC_FUNCTION_BASE_URL}/api/vipps/callback`,
-            fallBack: returnUrl,
+        amount: {
+            currency: 'NOK',
+            value: amount // Amount in øre
         },
-        customerInfo: {},
-        transaction: {
-            orderId: orderId,
-            amount: amount, // Amount in øre
-            transactionText: text,
+        paymentMethod: {
+            type: 'WALLET'
         },
+        reference: orderId,
+        returnUrl: returnUrl,
+        userFlow: 'WEB_REDIRECT',
+        paymentDescription: text
     };
 
     if (phoneNumber) {
-        payload.customerInfo.mobileNumber = phoneNumber;
+        payload.customer = {
+            phoneNumber: phoneNumber
+        };
     }
 
-    const response = await fetch(`${VIPPS_BASE_URL}/ecomm/v2/payments`, {
+    const response = await fetch(`${VIPPS_BASE_URL}/epayment/v1/payments`, {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${accessToken}`,
             'Ocp-Apim-Subscription-Key': VIPPS_SUBSCRIPTION_KEY,
             'Content-Type': 'application/json',
-            'Merchant-Serial-Number': VIPPS_MERCHANT_SERIAL_NUMBER
+            'Merchant-Serial-Number': VIPPS_MERCHANT_SERIAL_NUMBER,
+            'Idempotency-Key': orderId
         },
         body: JSON.stringify(payload)
     });
@@ -85,12 +88,12 @@ const initiatePayment = async ({ amount, phoneNumber, returnUrl, orderId, text }
 
 /**
  * Get payment details/status.
- * @param {string} orderId 
+ * @param {string} reference 
  */
-const getPaymentDetails = async (orderId) => {
+const getPayment = async (reference) => {
     const accessToken = await getAccessToken();
 
-    const response = await fetch(`${VIPPS_BASE_URL}/ecomm/v2/payments/${orderId}/details`, {
+    const response = await fetch(`${VIPPS_BASE_URL}/epayment/v1/payments/${reference}`, {
         method: 'GET',
         headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -101,7 +104,42 @@ const getPaymentDetails = async (orderId) => {
 
     if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Failed to get payment details: ${response.status} ${errorText}`);
+        throw new Error(`Failed to get payment: ${response.status} ${errorText}`);
+    }
+
+    return await response.json();
+};
+
+/**
+ * Capture a payment.
+ * @param {string} reference
+ * @param {number} amount - Amount in øre
+ */
+const capturePayment = async (reference, amount) => {
+    const accessToken = await getAccessToken();
+
+    const payload = {
+        modificationAmount: {
+            currency: 'NOK',
+            value: amount
+        }
+    };
+
+    const response = await fetch(`${VIPPS_BASE_URL}/epayment/v1/payments/${reference}/capture`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Ocp-Apim-Subscription-Key': VIPPS_SUBSCRIPTION_KEY,
+            'Content-Type': 'application/json',
+            'Merchant-Serial-Number': VIPPS_MERCHANT_SERIAL_NUMBER,
+            'Idempotency-Key': `${reference}-capture`
+        },
+        body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to capture payment: ${response.status} ${errorText}`);
     }
 
     return await response.json();
@@ -109,5 +147,6 @@ const getPaymentDetails = async (orderId) => {
 
 module.exports = {
     initiatePayment,
-    getPaymentDetails
+    getPayment,
+    capturePayment
 };
