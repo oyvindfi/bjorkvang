@@ -80,11 +80,6 @@
                     <div class="vipps-payment-container">
                         <p>Betal enkelt med Vipps for å registrere ditt medlemskap:</p>
                         
-                        <div class="form-group" style="max-width: 300px; margin: 0 auto 1rem;">
-                            <label for="phone" class="sr-only">Mobilnummer (valgfritt)</label>
-                            <input type="tel" id="phone" name="phone" placeholder="Mobilnummer (valgfritt)" style="width: 100%; padding: 0.8rem; border: 1px solid #ccc; border-radius: 4px;">
-                        </div>
-
                         <button id="vipps-pay-btn" class="button vipps-button">
                             <span class="vipps-icon">V</span>
                             Betal med Vipps
@@ -206,7 +201,6 @@
         document.addEventListener('DOMContentLoaded', async () => {
             const payBtn = document.getElementById('vipps-pay-btn');
             const statusEl = document.getElementById('vipps-status');
-            const phoneInput = document.getElementById('phone');
 
             // Check for return from Vipps
             const urlParams = new URLSearchParams(window.location.search);
@@ -231,7 +225,6 @@
                         statusEl.textContent = 'Takk! Ditt medlemskap er betalt og registrert.';
                         statusEl.className = 'form-status is-success';
                         payBtn.style.display = 'none';
-                        phoneInput.style.display = 'none';
                     } else {
                         statusEl.textContent = 'Betalingen ble ikke fullført. Prøv igjen.';
                         statusEl.className = 'form-status is-error';
@@ -248,13 +241,11 @@
                 payBtn.textContent = 'Starter Vipps...';
                 statusEl.style.display = 'none';
 
-                const phoneNumber = phoneInput.value.replace(/\s+/g, '');
-
                 try {
                     const response = await fetch('/api/vipps/initiate', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ phoneNumber })
+                        body: JSON.stringify({})
                     });
 
                     if (!response.ok) throw new Error('Kunne ikke starte betaling');
