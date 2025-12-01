@@ -2,18 +2,35 @@ const API_BASE_URL = window.location.hostname === '127.0.0.1' || window.location
     ? 'http://localhost:7071/api' 
     : 'https://bjorkvang-duhsaxahgfe0btgv.westeurope-01.azurewebsites.net/api';
 
-// Simple client-side "security" - NOT SECURE, just to hide UI
-const ADMIN_PASSWORD = 'bjorkvang-admin'; 
-
-function checkLogin() {
+async function checkLogin() {
     const input = document.getElementById('password-input').value;
-    if (input === ADMIN_PASSWORD) {
-        document.getElementById('login-overlay').classList.add('hidden');
-        document.getElementById('dashboard').classList.remove('hidden');
-        sessionStorage.setItem('admin_auth', 'true');
-        loadDashboard();
-    } else {
-        alert('Feil passord');
+    const btn = document.querySelector('#login-overlay button');
+    const originalText = btn.textContent;
+    
+    btn.disabled = true;
+    btn.textContent = 'Sjekker...';
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/admin/verify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: input })
+        });
+
+        if (response.ok) {
+            document.getElementById('login-overlay').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            sessionStorage.setItem('admin_auth', 'true');
+            loadDashboard();
+        } else {
+            alert('Feil passord');
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        alert('Kunne ikke logge inn. Sjekk nettverkstilkoblingen.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
     }
 }
 
