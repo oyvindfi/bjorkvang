@@ -2,6 +2,7 @@ const { app } = require('@azure/functions');
 const { sendEmail } = require('../../../shared/email');
 const { createHtmlResponse, createJsonResponse, resolveBaseUrl } = require('../../../shared/http');
 const { getBooking, updateBookingStatus } = require('../../../shared/cosmosDb');
+const { generateEmailHtml } = require('../../../shared/emailTemplate');
 
 /**
  * Approve a booking via a direct link.
@@ -75,23 +76,32 @@ app.http('approveBooking', {
                     contractLink = `https://bjørkvang.no/leieavtale.html?id=${existingBooking.id}`;
                 }
 
+                const htmlContent = `
+                    <p>Hei ${safeName},</p>
+                    <p>Gode nyheter! Din bookingforespørsel er godkjent.</p>
+                    <ul class="info-list">
+                        <li><span class="info-label">Dato</span> <span class="info-value">${safeDate}</span></li>
+                        <li><span class="info-label">Tid</span> <span class="info-value">${safeTime}</span></li>
+                    </ul>
+                    <p>For å bekrefte leieforholdet må du lese og signere leieavtalen digitalt. Dette gjøres enkelt ved å klikke på knappen under.</p>
+                `;
+
+                const html = generateEmailHtml({
+                    title: 'Din booking er godkjent',
+                    content: htmlContent,
+                    action: {
+                        text: 'Signer leieavtale',
+                        url: contractLink
+                    },
+                    previewText: `Din booking for ${safeDate} er godkjent. Vennligst signer avtalen.`
+                });
+
                 await sendEmail({
                     to: existingBooking.requesterEmail.trim(),
                     from,
                     subject: 'Din booking er godkjent – Signering av leieavtale',
                     text: `Hei ${safeName}!\n\nDin booking for ${safeDate} kl. ${safeTime} er godkjent.\n\nVennligst les og signer leieavtalen digitalt her:\n${contractLink}\n\nVennlig hilsen\nBjørkvang`,
-                    html: `
-                        <p>Hei ${safeName}!</p>
-                        <p>Din booking for <strong>${safeDate} kl. ${safeTime}</strong> er nå godkjent.</p>
-                        <p>For å bekrefte leieforholdet, vennligst les og signer leieavtalen digitalt:</p>
-                        <p>
-                            <a href="${contractLink}" style="display:inline-block;padding:12px 20px;background:#10b981;color:#ffffff;text-decoration:none;border-radius:4px;font-weight:bold;">
-                                Åpne og signer leieavtale
-                            </a>
-                        </p>
-                        <p>Hvis knappen ikke fungerer, kan du kopiere denne lenken:<br/>${contractLink}</p>
-                        <p>Vennlig hilsen<br/>Bjorkvang.no</p>
-                    `,
+                    html: html,
                 });
                 context.info(`approveBooking: Confirmation email with contract link sent to ${existingBooking.requesterEmail}`);
             }

@@ -2,6 +2,7 @@ const { app } = require('@azure/functions');
 const { sendEmail } = require('../../shared/email');
 const { createJsonResponse, parseBody, resolveBaseUrl } = require('../../shared/http');
 const { saveBooking } = require('../../shared/cosmosDb');
+const { generateEmailHtml } = require('../../shared/emailTemplate');
 
 /**
  * Handle incoming booking submissions from the public website.
@@ -149,28 +150,36 @@ app.http('bookingRequest', {
             const safeSpacesStr = escapeHtml(booking.spaces.join(', ') || 'Ingen valgt');
             const safeServicesStr = escapeHtml(booking.services.join(', ') || 'Ingen valgt');
 
-            const html = `
-                <p>Hei styret,</p>
-                <p>Det har kommet en ny bookingforespørsel som venter på godkjenning:</p>
-                <ul>
-                    <li><strong>Dato:</strong> ${safeDate}</li>
-                    <li><strong>Tid:</strong> ${safeTime}</li>
-                    <li><strong>Type:</strong> ${safeEventType}</li>
-                    <li><strong>Varighet:</strong> ${booking.duration} timer</li>
-                    <li><strong>Navn:</strong> ${safeName}</li>
-                    <li><strong>E-post:</strong> ${safeEmail}</li>
-                    <li><strong>Arealer:</strong> ${safeSpacesStr}</li>
-                    <li><strong>Tjenester:</strong> ${safeServicesStr}</li>
-                    <li><strong>Antall:</strong> ${booking.attendees || 'Ikke oppgitt'}</li>
-                    <li><strong>Melding:</strong> ${safeMessage}</li>
+            // --- Board Notification Email ---
+            const boardHtmlContent = `
+                <p>Det har kommet en ny bookingforespørsel som venter på godkjenning.</p>
+                <ul class="info-list">
+                    <li><span class="info-label">Dato</span> <span class="info-value">${safeDate}</span></li>
+                    <li><span class="info-label">Tid</span> <span class="info-value">${safeTime}</span></li>
+                    <li><span class="info-label">Type</span> <span class="info-value">${safeEventType}</span></li>
+                    <li><span class="info-label">Varighet</span> <span class="info-value">${booking.duration} timer</span></li>
+                    <li><span class="info-label">Navn</span> <span class="info-value">${safeName}</span></li>
+                    <li><span class="info-label">E-post</span> <span class="info-value">${safeEmail}</span></li>
+                    <li><span class="info-label">Arealer</span> <span class="info-value">${safeSpacesStr}</span></li>
+                    <li><span class="info-label">Tjenester</span> <span class="info-value">${safeServicesStr}</span></li>
+                    <li><span class="info-label">Antall</span> <span class="info-value">${booking.attendees || 'Ikke oppgitt'}</span></li>
                 </ul>
-                <p>Bruk knappene under for å godkjenne eller avvise:</p>
-                <p>
-                    <a href="${escapeHtml(approveLink)}" style="display:inline-block;padding:10px 16px;margin-right:12px;background:#1a823b;color:#ffffff;text-decoration:none;border-radius:4px;">Godkjenn booking</a>
-                    <a href="${escapeHtml(rejectLink)}" style="display:inline-block;padding:10px 16px;background:#b3261e;color:#ffffff;text-decoration:none;border-radius:4px;">Avvis booking</a>
-                </p>
-                <p>Vennlig hilsen<br/>Bjorkvang.no</p>
+                <div style="background-color: #f9fafb; padding: 16px; border-radius: 6px; margin-top: 16px;">
+                    <strong>Melding:</strong><br>
+                    ${safeMessage}
+                </div>
+                <p style="margin-top: 24px;">Bruk knappene under for å behandle forespørselen:</p>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <a href="${escapeHtml(approveLink)}" style="display:inline-block;padding:10px 20px;background:#1a823b;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">Godkjenn booking</a>
+                    <a href="${escapeHtml(rejectLink)}" style="display:inline-block;padding:10px 20px;background:#b91c1c;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">Avvis booking</a>
+                </div>
             `;
+
+            const boardHtml = generateEmailHtml({
+                title: 'Ny bookingforespørsel',
+                content: boardHtmlContent,
+                previewText: `Ny forespørsel fra ${safeName} for ${safeDate}`
+            });
 
             const text = `Ny bookingforespørsel:\nDato: ${booking.date}\nTid: ${booking.time}\nType: ${booking.eventType}\nNavn: ${booking.requesterName}\nE-post: ${booking.requesterEmail}\nMelding: ${booking.message || 'Ingen melding'}\nGodkjenn: ${approveLink}\nAvvis: ${rejectLink}`;
 
@@ -179,26 +188,36 @@ app.http('bookingRequest', {
                 from,
                 subject: `Ny bookingforespørsel: ${booking.eventType} – ${booking.date}`,
                 text,
-                html,
+                html: boardHtml,
             });
             
             context.info('bookingRequest: Board notification email sent');
 
+            // --- Requester Confirmation Email ---
             const confirmationSubject = 'Vi har mottatt bookingforespørselen din';
-            const confirmationHtml = `
+            
+            const confirmationHtmlContent = `
                 <p>Hei ${safeName},</p>
-                <p>Takk for din forespørsel om å booke Bjørkvang.</p>
-                <p>Her er en oppsummering av hva du har sendt inn:</p>
-                <ul>
-                    <li><strong>Dato:</strong> ${safeDate}</li>
-                    <li><strong>Tid:</strong> ${safeTime}</li>
-                    <li><strong>Type:</strong> ${safeEventType}</li>
-                    <li><strong>Arealer:</strong> ${safeSpacesStr}</li>
-                    <li><strong>Melding:</strong> ${safeMessage}</li>
+                <p>Takk for din forespørsel om å booke Bjørkvang. Vi har mottatt følgende detaljer:</p>
+                <ul class="info-list">
+                    <li><span class="info-label">Dato</span> <span class="info-value">${safeDate}</span></li>
+                    <li><span class="info-label">Tid</span> <span class="info-value">${safeTime}</span></li>
+                    <li><span class="info-label">Type</span> <span class="info-value">${safeEventType}</span></li>
+                    <li><span class="info-label">Arealer</span> <span class="info-value">${safeSpacesStr}</span></li>
                 </ul>
-                <p>Styret vil se gjennom forespørselen og ta kontakt med deg så snart som mulig.</p>
-                <p>Vennlig hilsen<br/>Bjørkvang</p>
+                <div style="background-color: #f9fafb; padding: 16px; border-radius: 6px; margin-top: 16px;">
+                    <strong>Din melding:</strong><br>
+                    ${safeMessage}
+                </div>
+                <p style="margin-top: 24px;"><strong>Hva skjer nå?</strong><br>
+                Styret vil se gjennom forespørselen din. Du vil motta en e-post så snart bookingen er behandlet (vanligvis innen 2-3 dager).</p>
             `;
+
+            const confirmationHtml = generateEmailHtml({
+                title: 'Forespørsel mottatt',
+                content: confirmationHtmlContent,
+                previewText: 'Takk for din forespørsel om å booke Bjørkvang.'
+            });
 
             const confirmationText = `Hei ${booking.requesterName},\n\nTakk for din forespørsel om å booke Bjørkvang.\n\nOppsummering av forespørselen:\n- Dato: ${booking.date}\n- Tid: ${booking.time}\n- Type: ${booking.eventType}\n- Melding: ${booking.message || 'Ingen melding oppgitt.'}\n\nStyret vil ta kontakt med deg så snart som mulig.\n\nVennlig hilsen\nBjørkvang`;
 
