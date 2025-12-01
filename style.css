@@ -1114,7 +1114,7 @@ button {
 
 #calendar {
     margin: clamp(1.25rem, 3vw, 2rem) 0;
-    padding: 1.5rem;
+    padding: 0.75rem;
     background: var(--surface);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-card);
@@ -1649,6 +1649,20 @@ button[type="submit"] {
         justify-content: center;
     }
 
+    #calendar {
+        padding: 0.75rem;
+    }
+
+    .fc-toolbar {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .fc-toolbar-chunk {
+        display: flex;
+        justify-content: center;
+    }
+
     .hero-badges {
         margin-bottom: 1.5rem;
     }
@@ -1852,10 +1866,6 @@ button[type="submit"] {
     .callout,
     .membership-card {
         padding: 1.25rem 1.35rem;
-    }
-
-    #calendar {
-        padding: 1.1rem;
     }
 
     .footer-grid {

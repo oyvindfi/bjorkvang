@@ -535,13 +535,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (calendarEl) {
     try {
+      const isMobile = window.innerWidth < 768;
+      
       calendar = new FullCalendar.Calendar(calendarEl, {
       initialView: 'dayGridMonth',
       height: 'auto',
       headerToolbar: {
-        left: 'prev,next today',
+        left: isMobile ? 'prev,next' : 'prev,next today',
         center: 'title',
-        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        right: isMobile ? 'dayGridMonth,listMonth' : 'dayGridMonth,timeGridWeek,timeGridDay'
+      },
+      views: {
+        listMonth: { buttonText: 'Liste' }
       },
       locale: 'nb',
       selectable: true,
