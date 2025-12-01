@@ -74,17 +74,81 @@
         <section class="page-section" id="betal">
             <div class="container">
                 <div class="vipps-callout" aria-labelledby="vipps-heading">
-                    <h2 id="vipps-heading">Slik blir du medlem</h2>
-                    <p><strong>1. Betal medlemskontingenten (250 kr/år)</strong></p>
-                    <ul class="vipps-steps">
-                        <li><strong>Vipps:</strong> Send 250 kr til <strong>#104631</strong> og merk betalingen «Medlemskap»</li>
-                        <li><strong>Bank:</strong> Sett inn på konto <strong>1822.40.12345</strong> og merk betalingen «Medlemskap»</li>
-                    </ul>
-                    <p><strong>2. Ferdig!</strong> Du er nå medlem. Gi beskjed til <a href="mailto:styret@bjørkvang.no">styret@bjørkvang.no</a> hvis du trenger kvittering.</p>
+                    <h2 id="vipps-heading">Bli medlem</h2>
+                    <p>Medlemskap koster <strong>250 kr</strong> per år.</p>
+                    
+                    <div class="vipps-payment-container">
+                        <p>Betal enkelt med Vipps for å registrere ditt medlemskap:</p>
+                        <button id="vipps-pay-btn" class="button vipps-button">
+                            <span class="vipps-icon">V</span>
+                            Betal med Vipps
+                        </button>
+                        <p id="vipps-error" class="form-status is-error" style="display:none; margin-top: 1rem;"></p>
+                    </div>
+
+                    <div class="manual-payment-details">
+                        <p class="small-text">Alternativt kan du betale manuelt:</p>
+                        <ul class="vipps-steps small-text">
+                            <li><strong>Vipps-nummer:</strong> #104631 (merk med «Medlemskap»)</li>
+                            <li><strong>Konto:</strong> 1822.40.12345 (merk med «Medlemskap»)</li>
+                        </ul>
+                    </div>
+                    
                     <p class="membership-note">Kontingenten gjelder per kalenderår. Velkommen som medlem!</p>
                 </div>
             </div>
         </section>
+
+        <script>
+            document.getElementById('vipps-pay-btn').addEventListener('click', async () => {
+                const btn = document.getElementById('vipps-pay-btn');
+                const errorEl = document.getElementById('vipps-error');
+                
+                btn.disabled = true;
+                btn.textContent = 'Laster...';
+                errorEl.style.display = 'none';
+
+                try {
+                    // Determine API URL based on environment
+                    const isLocal = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost';
+                    const apiBase = isLocal ? 'http://localhost:7071' : 'https://bjorkvang-duhsaxahgfe0btgv.westeurope-01.azurewebsites.net';
+                    
+                    const response = await fetch(`${apiBase}/api/vipps/initiate`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({}) 
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.url) {
+                        window.location.href = data.url;
+                    } else {
+                        throw new Error(data.error || 'Kunne ikke starte Vipps-betaling');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    errorEl.textContent = 'Beklager, noe gikk galt. Vennligst prøv manuell betaling.';
+                    errorEl.style.display = 'block';
+                    btn.disabled = false;
+                    btn.innerHTML = '<span class="vipps-icon">V</span> Betal med Vipps';
+                }
+            });
+
+            // Check for success query param
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('status') === 'success') {
+                const container = document.querySelector('.vipps-payment-container');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="success-message" style="text-align: center; color: var(--brand-600);">
+                            <h3 style="margin-top:0;">Takk for din betaling!</h3>
+                            <p>Ditt medlemskap er nå registrert.</p>
+                        </div>
+                    `;
+                }
+            }
+        </script>
 
         <section class="page-section">
             <div class="container">

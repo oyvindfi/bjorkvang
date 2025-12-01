@@ -1883,3 +1883,53 @@ button[type="submit"] {
         scroll-behavior: auto !important;
     }
 }
+
+.vipps-button {
+    background-color: #ff5b24; /* Vipps orange */
+    color: white;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+}
+
+.vipps-button:hover {
+    background-color: #e04e1d;
+    color: white;
+}
+
+.vipps-icon {
+    font-weight: 900;
+    font-style: italic;
+    background: white;
+    color: #ff5b24;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.vipps-payment-container {
+    background: white;
+    padding: 2rem;
+    border-radius: var(--radius-md);
+    text-align: center;
+    margin: 1.5rem 0;
+    box-shadow: var(--shadow-card);
+}
+
+.manual-payment-details {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(0,0,0,0.1);
+}
+
+.small-text {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
