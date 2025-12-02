@@ -15,3 +15,8 @@ require('./functions/getCalendar');
 require('./functions/rejectBooking');
 require('./functions/getBooking');
 require('./functions/signBooking');
+require('./functions/verifyAdmin');
+require('./functions/sendReminder');
+require('./functions/vippsInitiate');
+require('./functions/vippsCheckStatus');
+require('./functions/vippsCallback');
