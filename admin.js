@@ -11,7 +11,7 @@ async function checkLogin() {
     btn.textContent = 'Sjekker...';
 
     try {
-        const response = await fetch(`${API_BASE_URL}/admin/verify`, {
+        const response = await fetch(`${API_BASE_URL}/auth/verify-admin`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ password: input })

@@ -4,7 +4,7 @@ const { createJsonResponse, parseBody } = require('../../../shared/http');
 app.http('verifyAdmin', {
     methods: ['POST'],
     authLevel: 'anonymous',
-    route: 'admin/verify',
+    route: 'auth/verify-admin',
     handler: async (request, context) => {
         try {
             const body = await parseBody(request);
