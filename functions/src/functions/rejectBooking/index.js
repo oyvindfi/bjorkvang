@@ -84,6 +84,7 @@ app.http('rejectBooking', {
                     <p>Vi må dessverre informere om at din bookingforespørsel for <strong>${safeDate} kl. ${safeTime}</strong> ikke kunne godkjennes.</p>
                     ${reasonHtml}
                     <p style="margin-top: 24px;">Du er velkommen til å prøve å finne en annen dato i kalenderen vår.</p>
+                    <p>Vennlig hilsen<br>Helgøens Vel</p>
                 `;
 
                 const html = generateEmailHtml({

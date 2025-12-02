@@ -66,7 +66,7 @@ const generateEmailHtml = ({ title, content, action, previewText }) => {
     <div style="padding: 24px 12px;">
         <div class="container">
             <div class="header">
-                <h1>Bjørkvang</h1>
+                <h1>Helgøens Vel</h1>
             </div>
             <div class="content">
                 <h2 style="margin-top: 0; font-size: 20px; color: ${textColor};">${title}</h2>
@@ -74,7 +74,8 @@ const generateEmailHtml = ({ title, content, action, previewText }) => {
                 ${buttonHtml}
             </div>
             <div class="footer">
-                <p>Dette er en automatisk melding fra Bjørkvang.</p>
+                <p>Dette er en automatisk melding fra Helgøens Vel.</p>
+                <p>Organisasjonsnummer: 995 519 240</p>
                 <p><a href="https://bjørkvang.no">bjørkvang.no</a></p>
             </div>
         </div>

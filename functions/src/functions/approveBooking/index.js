@@ -100,7 +100,7 @@ app.http('approveBooking', {
                     to: existingBooking.requesterEmail.trim(),
                     from,
                     subject: 'Din booking er godkjent – Signering av leieavtale',
-                    text: `Hei ${safeName}!\n\nDin booking for ${safeDate} kl. ${safeTime} er godkjent.\n\nVennligst les og signer leieavtalen digitalt her:\n${contractLink}\n\nVennlig hilsen\nBjørkvang`,
+                    text: `Hei ${safeName}!\n\nDin booking for ${safeDate} kl. ${safeTime} er godkjent.\n\nVennligst les og signer leieavtalen digitalt her:\n${contractLink}\n\nVennlig hilsen\nHelgøens Vel`,
                     html: html,
                 });
                 context.info(`approveBooking: Confirmation email with contract link sent to ${existingBooking.requesterEmail}`);

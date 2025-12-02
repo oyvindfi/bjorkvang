@@ -57,6 +57,7 @@ app.http('sendReminder', {
 
             htmlContent += `
                 <p>Vennligst sjekk status på din booking og signer leieavtalen hvis du ikke allerede har gjort det.</p>
+                <p>Vennlig hilsen<br>Helgøens Vel</p>
             `;
 
             const html = generateEmailHtml({
