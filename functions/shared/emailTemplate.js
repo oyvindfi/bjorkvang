@@ -76,7 +76,7 @@ const generateEmailHtml = ({ title, content, action, previewText }) => {
             <div class="footer">
                 <p>Dette er en automatisk melding fra Helgøens Vel.</p>
                 <p>Organisasjonsnummer: 995 519 240</p>
-                <p><a href="https://xn--bjrkvang-64a.no">bjørkvang.no</a></p>
+                <p><a href="https://bjørkvang.no">bjørkvang.no</a></p>
             </div>
         </div>
     </div>
