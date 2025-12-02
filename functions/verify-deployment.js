@@ -85,6 +85,13 @@ const functionFiles = [
     'src/functions/approveBooking/index.js',
     'src/functions/rejectBooking/index.js',
     'src/functions/emailHttpTriggerBooking/index.js',
+    'src/functions/getBooking/index.js',
+    'src/functions/signBooking/index.js',
+    'src/functions/verifyAdmin/index.js',
+    'src/functions/sendReminder/index.js',
+    'src/functions/vippsInitiate/index.js',
+    'src/functions/vippsCheckStatus/index.js',
+    'src/functions/vippsCallback/index.js',
     'shared/cosmosDb.js',
     'shared/email.js',
     'shared/http.js'
