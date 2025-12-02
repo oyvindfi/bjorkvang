@@ -23,7 +23,13 @@ async function checkLogin() {
             sessionStorage.setItem('admin_auth', 'true');
             loadDashboard();
         } else {
-            alert('Feil passord');
+            if (response.status === 404) {
+                alert('Kunne ikke kontakte serveren (404). Er funksjonene deployet?');
+            } else if (response.status === 401) {
+                alert('Feil passord');
+            } else {
+                alert(`Noe gikk galt (Status: ${response.status})`);
+            }
         }
     } catch (error) {
         console.error('Login error:', error);
@@ -183,7 +189,7 @@ function createBookingCard(booking) {
 }
 
 function openContract(id) {
-    const link = window.location.origin + '/leieavtale.html?id=' + id + '&mode=admin';
+    const link = window.location.origin + '/leieavtale?id=' + id + '&mode=admin';
     // If requester has signed, open it directly for admin to sign
     // If not, copy link for admin to send (or open to check)
     // For simplicity, we'll just open it in a new tab if signed, or copy if not.
@@ -193,7 +199,7 @@ function openContract(id) {
 }
 
 function copyContractLink(id) {
-    const link = window.location.origin + '/leieavtale.html?id=' + id;
+    const link = window.location.origin + '/leieavtale?id=' + id;
     navigator.clipboard.writeText(link).then(() => alert('Lenke kopiert!'));
 }
 

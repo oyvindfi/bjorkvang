@@ -29,9 +29,9 @@ app.http('sendReminder', {
             const baseUrl = resolveBaseUrl(request);
             let contractLink;
             if (baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1')) {
-                contractLink = `http://localhost:3000/leieavtale.html?id=${booking.id}`;
+                contractLink = `http://localhost:3000/leieavtale?id=${booking.id}`;
             } else {
-                contractLink = `https://bjørkvang.no/leieavtale.html?id=${booking.id}`;
+                contractLink = `https://bjørkvang.no/leieavtale?id=${booking.id}`;
             }
 
             const escapeHtml = (str) => String(str).replace(/[&<>"']/g, (m) => ({

@@ -17,8 +17,8 @@ app.http('vippsInitiate', {
             const baseUrl = resolveBaseUrl(request);
             
             // In production, this should point to a dedicated success page
-            // For now, we redirect back to medlemskap.html with a query param
-            const returnUrl = `${baseUrl.replace('/api', '')}/medlemskap.html?status=success&orderId=${orderId}`;
+            // For now, we redirect back to medlemskap with a query param
+            const returnUrl = `${baseUrl.replace('/api', '')}/medlemskap?status=success&orderId=${orderId}`;
 
             const paymentResponse = await initiatePayment({
                 amount,

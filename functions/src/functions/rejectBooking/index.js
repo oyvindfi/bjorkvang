@@ -91,7 +91,7 @@ app.http('rejectBooking', {
                     content: htmlContent,
                     action: {
                         text: 'Se kalender',
-                        url: 'https://bjørkvang.no/booking.html'
+                        url: 'https://bjørkvang.no/booking'
                     },
                     previewText: `Din booking for ${safeDate} ble dessverre avvist.`
                 });

@@ -69,11 +69,11 @@ app.http('approveBooking', {
                 let contractLink;
                 if (baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1')) {
                     // Local dev: point to frontend port 3000
-                    contractLink = `http://localhost:3000/leieavtale.html?id=${existingBooking.id}`;
+                    contractLink = `http://localhost:3000/leieavtale?id=${existingBooking.id}`;
                 } else {
                     // Production: point to the main domain
                     // We assume the frontend is hosted at bjørkvang.no
-                    contractLink = `https://bjørkvang.no/leieavtale.html?id=${existingBooking.id}`;
+                    contractLink = `https://bjørkvang.no/leieavtale?id=${existingBooking.id}`;
                 }
 
                 const htmlContent = `

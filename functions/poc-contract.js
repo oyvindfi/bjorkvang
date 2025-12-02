@@ -39,9 +39,9 @@ async function runPoc() {
         console.log('✅ Booking created successfully!');
         console.log(`🆔 Booking ID: ${bookingId}`);
         
-        // const absolutePath = path.resolve(__dirname, '../kontrakt.html');
+        // const absolutePath = path.resolve(__dirname, '../leieavtale.html');
         // const fileUrl = `file://${absolutePath.replace(/\\/g, '/')}?id=${bookingId}`;
-        const localhostUrl = `http://localhost:3000/kontrakt.html?id=${bookingId}`;
+        const localhostUrl = `http://localhost:3000/leieavtale?id=${bookingId}`;
 
         console.log('\n---------------------------------------------------');
         console.log('🚀 HOW TO TEST:');
