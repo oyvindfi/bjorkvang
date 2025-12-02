@@ -7,6 +7,8 @@ app.setup({
     enableHttpStream: true,
 });
 
+// Trigger redeploy
+
 require('./functions/approveBooking');
 require('./functions/bookingRequest');
 require('./functions/emailHttpTriggerBooking');
