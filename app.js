@@ -86,18 +86,47 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   highlightActiveLink();
-  window.addEventListener('hashchange', highlightActiveLink);
-  window.addEventListener('popstate', highlightActiveLink);
 
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
-      closeNav();
-    }
-  });
+  // Copy Link Functionality
+  const setupCopyLinkButtons = () => {
+    const copyButtons = document.querySelectorAll('.copy-link-btn');
+    
+    copyButtons.forEach(btn => {
+      btn.addEventListener('click', async () => {
+        try {
+          // Always copy the pretty version of the current URL
+          // decodeURI ensures we get 'bjørkvang.no' instead of 'xn--...'
+          const prettyUrl = decodeURI(window.location.href);
+          await navigator.clipboard.writeText(prettyUrl);
+          
+          const originalText = btn.textContent;
+          btn.textContent = 'Lenke kopiert!';
+          btn.classList.add('success');
+          
+          setTimeout(() => {
+            btn.textContent = originalText;
+            btn.classList.remove('success');
+          }, 2000);
+        } catch (err) {
+          console.error('Failed to copy link:', err);
+          // Fallback for older browsers or if permission denied
+          const textArea = document.createElement('textarea');
+          textArea.value = decodeURI(window.location.href);
+          document.body.appendChild(textArea);
+          textArea.select();
+          try {
+            document.execCommand('copy');
+            btn.textContent = 'Lenke kopiert!';
+            setTimeout(() => btn.textContent = 'Kopier lenke', 2000);
+          } catch (e) {
+            console.error('Fallback copy failed', e);
+            btn.textContent = 'Kunne ikke kopiere';
+          }
+          document.body.removeChild(textArea);
+        }
+      });
+    });
+  };
 
-  window.addEventListener('resize', () => {
-    if (window.innerWidth > 900 && toggle.getAttribute('aria-expanded') === 'true') {
-      closeNav(true);
-    }
-  });
+  setupCopyLinkButtons();
 });
