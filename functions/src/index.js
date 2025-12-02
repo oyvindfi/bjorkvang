@@ -3,6 +3,20 @@ const { getPlunkApiUrl } = require('../shared/email');
 
 console.log(`Azure Functions runtime starting on Node ${process.version} with Plunk endpoint ${getPlunkApiUrl()}`);
 
+const loadingErrors = {};
+const loadedFunctions = [];
+
+const loadFunction = (name, path) => {
+    try {
+        require(path);
+        loadedFunctions.push(name);
+        console.log(`Successfully registered function: ${name}`);
+    } catch (error) {
+        console.error(`Failed to register function: ${name}`, error);
+        loadingErrors[name] = error.message + '\n' + error.stack;
+    }
+};
+
 app.setup({
     enableHttpStream: true,
 });
@@ -13,18 +27,20 @@ app.http('healthCheck', {
     authLevel: 'anonymous',
     route: 'health',
     handler: async (request, context) => {
-        return { body: 'OK', status: 200 };
+        return { 
+            body: JSON.stringify({
+                status: 'OK',
+                version: process.version,
+                loadedFunctions,
+                loadingErrors
+            }, null, 2), 
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            status: 200 
+        };
     }
 });
-
-const loadFunction = (name, path) => {
-    try {
-        require(path);
-        console.log(`Successfully registered function: ${name}`);
-    } catch (error) {
-        console.error(`Failed to register function: ${name}`, error);
-    }
-};
 
 loadFunction('approveBooking', './functions/approveBooking');
 loadFunction('bookingRequest', './functions/bookingRequest');
