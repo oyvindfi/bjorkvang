@@ -1,5 +1,5 @@
 const { app } = require('@azure/functions');
-const { createJsonResponse } = require('../../shared/http');
+const { createJsonResponse } = require('../../../shared/http');
 
 app.http('vippsCallback', {
     methods: ['POST'],

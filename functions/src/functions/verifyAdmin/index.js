@@ -1,5 +1,5 @@
 const { app } = require('@azure/functions');
-const { createJsonResponse, parseBody } = require('../../shared/http');
+const { createJsonResponse, parseBody } = require('../../../shared/http');
 
 app.http('verifyAdmin', {
     methods: ['POST'],

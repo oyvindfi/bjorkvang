@@ -1,6 +1,6 @@
 const { app } = require('@azure/functions');
-const { createJsonResponse, parseBody } = require('../../shared/http');
-const { getPayment, capturePayment } = require('../../shared/vipps');
+const { createJsonResponse, parseBody } = require('../../../shared/http');
+const { getPayment, capturePayment } = require('../../../shared/vipps');
 
 app.http('vippsCheckStatus', {
     methods: ['POST'],
