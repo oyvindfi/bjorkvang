@@ -15,7 +15,7 @@ on:
           - production
 
 env:
-  AZURE_FUNCTIONAPP_NAME: bjorkvang
+  AZURE_FUNCTIONAPP_NAME: bjorkvang-duhsaxahgfe0btgv
   AZURE_FUNCTIONAPP_PACKAGE_PATH: 'functions'
   NODE_VERSION: '18.x'
 
