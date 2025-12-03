@@ -1596,6 +1596,48 @@ button[type="submit"] {
     color: rgba(245, 247, 246, 0.7);
 }
 
+/* Share Button */
+.btn-share {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    color: inherit;
+    font-family: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none !important;
+    width: fit-content;
+    margin-top: 0.5rem;
+}
+
+.btn-share:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+    color: white;
+}
+
+.btn-share:active {
+    transform: translateY(0);
+}
+
+.btn-share svg {
+    width: 1.1em;
+    height: 1.1em;
+    fill: currentColor;
+    opacity: 0.9;
+}
+
+.btn-share.success {
+    background: var(--brand-500);
+    border-color: var(--brand-500);
+    color: white;
+}
+
 /* Responsive adjustments */
 
 @media (max-width: 768px) {

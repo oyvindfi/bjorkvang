@@ -92,19 +92,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const copyButtons = document.querySelectorAll('.copy-link-btn');
     
     copyButtons.forEach(btn => {
+      const textSpan = btn.querySelector('span') || btn;
+      const originalText = textSpan.textContent;
+
       btn.addEventListener('click', async () => {
         try {
           // Always copy the pretty version of the current URL
-          // decodeURI ensures we get 'bjørkvang.no' instead of 'xn--...'
-          const prettyUrl = decodeURI(window.location.href);
+          let url = window.location.href;
+          
+          // WORKAROUND: Explicitly replace punycode with 'ø' for sharing
+          // This ensures that when pasted into Teams/Facebook, it displays 'bjørkvang.no'
+          url = url.replace('xn--bjrkvang-64a.no', 'bjørkvang.no');
+          
+          // decodeURI ensures other characters are also readable
+          const prettyUrl = decodeURI(url);
+          
           await navigator.clipboard.writeText(prettyUrl);
           
-          const originalText = btn.textContent;
-          btn.textContent = 'Lenke kopiert!';
+          textSpan.textContent = 'Lenke kopiert!';
           btn.classList.add('success');
           
           setTimeout(() => {
-            btn.textContent = originalText;
+            textSpan.textContent = originalText;
             btn.classList.remove('success');
           }, 2000);
         } catch (err) {
@@ -116,11 +125,15 @@ document.addEventListener('DOMContentLoaded', () => {
           textArea.select();
           try {
             document.execCommand('copy');
-            btn.textContent = 'Lenke kopiert!';
-            setTimeout(() => btn.textContent = 'Kopier lenke', 2000);
+            textSpan.textContent = 'Lenke kopiert!';
+            btn.classList.add('success');
+            setTimeout(() => {
+                textSpan.textContent = originalText;
+                btn.classList.remove('success');
+            }, 2000);
           } catch (e) {
             console.error('Fallback copy failed', e);
-            btn.textContent = 'Kunne ikke kopiere';
+            textSpan.textContent = 'Kunne ikke kopiere';
           }
           document.body.removeChild(textArea);
         }
