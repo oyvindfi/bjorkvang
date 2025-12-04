@@ -91,22 +91,26 @@ document.addEventListener('DOMContentLoaded', () => {
   const setupCopyLinkButtons = () => {
     const copyButtons = document.querySelectorAll('.copy-link-btn');
     
+    const getPrettyUrl = () => {
+        let url = window.location.href;
+        try {
+            // First decode any percent-encoding (e.g. %C3%B8 -> ø)
+            url = decodeURI(url);
+        } catch (e) {
+            console.warn('Could not decode URI:', e);
+        }
+        // Then explicitly replace the Punycode domain if present
+        return url.replace('xn--bjrkvang-64a.no', 'bjørkvang.no');
+    };
+
     copyButtons.forEach(btn => {
       const textSpan = btn.querySelector('span') || btn;
       const originalText = textSpan.textContent;
 
       btn.addEventListener('click', async () => {
+        const prettyUrl = getPrettyUrl();
+        
         try {
-          // Always copy the pretty version of the current URL
-          let url = window.location.href;
-          
-          // WORKAROUND: Explicitly replace punycode with 'ø' for sharing
-          // This ensures that when pasted into Teams/Facebook, it displays 'bjørkvang.no'
-          url = url.replace('xn--bjrkvang-64a.no', 'bjørkvang.no');
-          
-          // decodeURI ensures other characters are also readable
-          const prettyUrl = decodeURI(url);
-          
           await navigator.clipboard.writeText(prettyUrl);
           
           textSpan.textContent = 'Lenke kopiert!';
@@ -120,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
           console.error('Failed to copy link:', err);
           // Fallback for older browsers or if permission denied
           const textArea = document.createElement('textarea');
-          textArea.value = decodeURI(window.location.href);
+          textArea.value = prettyUrl; // Use the same pretty URL here!
           document.body.appendChild(textArea);
           textArea.select();
           try {
