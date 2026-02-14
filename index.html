@@ -4,6 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bjørkvang forsamlingslokale og Helgøens Vel</title>
+    <meta name="description" content="Bjørkvang forsamlingslokale på Helgøya. Selskapslokaler til leie for bryllup, konfirmasjon og fest. Drives av Helgøens Vel.">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://bjørkvang.no/">
+    <meta property="og:title" content="Bjørkvang forsamlingslokale og Helgøens Vel">
+    <meta property="og:description" content="Bjørkvang forsamlingslokale på Helgøya. Selskapslokaler til leie for bryllup, konfirmasjon og fest. Drives av Helgøens Vel.">
+    <meta property="og:image" content="https://bjørkvang.no/images/bjorkvang-sommer.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://bjørkvang.no/">
+    <meta property="twitter:title" content="Bjørkvang forsamlingslokale og Helgøens Vel">
+    <meta property="twitter:description" content="Bjørkvang forsamlingslokale på Helgøya. Selskapslokaler til leie for bryllup, konfirmasjon og fest. Drives av Helgøens Vel.">
+    <meta property="twitter:image" content="https://bjørkvang.no/images/bjorkvang-sommer.png">
+
+    <link rel="canonical" href="https://bjørkvang.no/">
     <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -12,7 +29,7 @@
     <header class="site-header">
         <div class="container nav-container">
             <div class="branding">
-                <a class="logo" href="index.html">
+                <a class="logo" href="/">
                     <span class="logo-mark" aria-hidden="true">BV</span>
                     <span class="logo-text">
                         <span class="logo-title">Bjørkvang forsamlingslokale</span>
@@ -28,13 +45,13 @@
             </button>
             <nav class="site-nav" id="primary-nav" aria-label="Hovedmeny">
                 <ul>
-                    <li><a href="index.html" aria-current="page">Hjem</a></li>
-                    <li><a href="lokaler.html">Våre lokaler</a></li>
-                    <li><a href="booking.html#calendar">Kalender</a></li>
-                    <li><a href="booking.html">Lei lokalet</a></li>
-                    <li><a href="medlemskap.html">Medlemskap</a></li>
-                    <li><a href="nyheter.html">Nyheter</a></li>
-                    <li><a href="kontakt.html">Kontakt</a></li>
+                    <li><a href="/" aria-current="page">Hjem</a></li>
+                    <li><a href="lokaler">Våre lokaler</a></li>
+                    <li><a href="booking#calendar">Kalender</a></li>
+                    <li><a href="booking">Lei lokalet</a></li>
+                    <li><a href="medlemskap">Medlemskap</a></li>
+                    <li><a href="nyheter">Nyheter</a></li>
+                    <li><a href="kontakt">Kontakt</a></li>
                 </ul>
             </nav>
         </div>
@@ -45,10 +62,10 @@
             <div class="hero-content">
                 <span class="hero-eyebrow">Bjørkvang forsamlingslokale og Helgøens Vel</span>
                 <h1 id="hero-title">Selskapslokale midt i Mjøsa</h1>
-                <p>Planlegg selskap i storstua på Helgøy, med utsikt og god plass til flere anledninger.</p>
+                <p>Planlegg selskap i storstua på Helgøya, med utsikt og god plass til flere anledninger.</p>
                 <div class="hero-actions">
-                    <a class="button accent" href="booking.html#calendar">Se tilgjengelighet</a>
-                    <a class="button secondary" href="medlemskap.html">Bli medlem</a>
+                    <a class="button accent" href="booking#calendar">Se tilgjengelighet</a>
+                    <a class="button secondary" href="medlemskap">Bli medlem</a>
                 </div>
             </div>
             <figure class="hero-media">
@@ -64,17 +81,17 @@
                     <article class="info-card">
                         <h3>Lei lokalet</h3>
                         <p>Se ledige datoer, velg rom og send forespørsel. Vi har plass til små og store arrangementer.</p>
-                        <p><a class="text-link" href="booking.html#calendar">Sjekk kalenderen</a></p>
+                        <p><a class="text-link" href="booking#calendar">Sjekk kalenderen</a></p>
                     </article>
                     <article class="info-card highlight">
                         <h3>Bli medlem</h3>
                         <p>Støtt Bjørkvang og få rabatt på leie. Medlemskap koster 250 kr i året.</p>
-                        <p><a class="text-link" href="medlemskap.html">Les mer</a></p>
+                        <p><a class="text-link" href="medlemskap">Les mer</a></p>
                     </article>
                     <article class="info-card">
                         <h3>Priser fra 1 500 kr</h3>
                         <p>Velg mellom peisestue, sal eller hele lokalet. Medlemmer av Helgøens vel får redusert pris.</p>
-                        <p><a class="text-link" href="booking.html#priser">Se alle priser</a></p>
+                        <p><a class="text-link" href="booking#priser">Se alle priser</a></p>
                     </article>
                 </div>
             </div>
@@ -104,10 +121,16 @@
             <div>
                 <h2 class="footer-title">Snarveier</h2>
                 <ul class="footer-links">
-                    <li><a href="lokaler.html">Våre lokaler</a></li>
-                    <li><a href="booking.html">Lei lokalet</a></li>
-                    <li><a href="medlemskap.html">Medlemskap</a></li>
-                    <li><a href="nyheter.html">Nyheter</a></li>
+                    <li><a href="lokaler">Våre lokaler</a></li>
+                    <li><a href="booking">Lei lokalet</a></li>
+                    <li><a href="medlemskap">Medlemskap</a></li>
+                    <li><a href="nyheter">Nyheter</a></li>
+                    <li>
+                        <button type="button" class="copy-link-btn btn-share" aria-label="Kopier lenke til denne siden">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.12 17.023l-4.199-2.29a4 4 0 1 1 0-5.465l4.2-2.29a4 4 0 1 1 .959 1.755l-4.2 2.29a4.008 4.008 0 0 1 0 1.954l4.199 2.29a4 4 0 1 1-.959 1.755zM6 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm11-6a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></svg>
+                            <span>Del siden</span>
+                        </button>
+                    </li>
                 </ul>
             </div>
             <div>

@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lei lokalet – Bjørkvang forsamlingslokale</title>
+    <meta name="description" content="Sjekk ledige datoer og send forespørsel om leie av Bjørkvang forsamlingslokale.">
+    
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://bjørkvang.no/booking">
+    <meta property="og:title" content="Lei lokalet – Bjørkvang forsamlingslokale">
+    <meta property="og:description" content="Sjekk ledige datoer og send forespørsel om leie av Bjørkvang forsamlingslokale.">
+    <meta property="og:image" content="https://bjørkvang.no/images/bjorkvang-sommer.png">
+
+    <link rel="canonical" href="https://bjørkvang.no/booking">
     <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="style.css">
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet">
@@ -13,7 +22,7 @@
     <header class="site-header">
         <div class="container nav-container">
             <div class="branding">
-                <a class="logo" href="index.html">
+                <a class="logo" href="/">
                     <span class="logo-mark" aria-hidden="true">BV</span>
                     <span class="logo-text">
                         <span class="logo-title">Bjørkvang forsamlingslokale</span>
@@ -29,13 +38,13 @@
             </button>
             <nav class="site-nav" id="primary-nav" aria-label="Hovedmeny">
                 <ul>
-                    <li><a href="index.html">Hjem</a></li>
-                    <li><a href="lokaler.html">Våre lokaler</a></li>
-                    <li><a href="booking.html#calendar">Kalender</a></li>
-                    <li><a href="booking.html" aria-current="page">Lei lokalet</a></li>
-                    <li><a href="medlemskap.html">Medlemskap</a></li>
-                    <li><a href="nyheter.html">Nyheter</a></li>
-                    <li><a href="kontakt.html">Kontakt</a></li>
+                    <li><a href="/">Hjem</a></li>
+                    <li><a href="lokaler">Våre lokaler</a></li>
+                    <li><a href="booking#calendar">Kalender</a></li>
+                    <li><a href="booking" aria-current="page">Lei lokalet</a></li>
+                    <li><a href="medlemskap">Medlemskap</a></li>
+                    <li><a href="nyheter">Nyheter</a></li>
+                    <li><a href="kontakt">Kontakt</a></li>
                 </ul>
             </nav>
         </div>
@@ -152,6 +161,10 @@
                                 <input type="checkbox" name="spaces" value="Hele lokalet">
                                 <span>Hele lokalet (4 000 kr)</span>
                             </label>
+                            <label class="option-pill highlight-option">
+                                <input type="checkbox" name="spaces" value="Bryllupspakke">
+                                <span>Bryllupspakke (6 000 kr)</span>
+                            </label>
                             <label class="option-pill">
                                 <input type="checkbox" name="spaces" value="Små møter">
                                 <span>Små møter/minnesamvær (30 kr/pers)</span>
@@ -180,13 +193,33 @@
                     <div class="form-grid">
                         <div class="form-field">
                             <label for="attendees">Antall deltakere (ca.)</label>
-                            <input type="number" id="attendees" name="attendees" min="1" placeholder="Hvor mange kommer?">
+                            <input type="number" id="attendees" name="attendees" min="1" placeholder="Antall gjester (maks 100 i Storsalen)">
                         </div>
                         <div class="form-field form-field--full">
                             <label for="message">Tilleggsinformasjon</label>
                             <textarea id="message" name="message" rows="3" placeholder="Har du spesielle behov eller spørsmål?"></textarea>
                         </div>
                     </div>
+
+                    <fieldset class="form-fieldset form-fieldset--full" aria-labelledby="payment-label">
+                        <legend id="payment-label">Betaling</legend>
+                        <div class="payment-info">
+                            <p id="calculated-price" class="price-display">Estimert pris: Velg lokaler</p>
+                            <div class="payment-options">
+                                <label class="option-pill">
+                                    <input type="radio" name="paymentMethod" value="later" checked>
+                                    <span>Betal etter godkjenning</span>
+                                </label>
+                                <label class="option-pill">
+                                    <input type="radio" name="paymentMethod" value="vipps">
+                                    <span>
+                                        <span class="vipps-icon-small">V</span> Betal nå med Vipps
+                                    </span>
+                                </label>
+                            </div>
+                            <p class="small-text">Ved betaling nå får du raskere bekreftelse på bookingen.</p>
+                        </div>
+                    </fieldset>
 
                     <div class="form-actions">
                         <button class="button" type="submit">Send forespørsel</button>
@@ -200,7 +233,7 @@
             <div class="container">
                 <div class="section-heading">
                     <h2 id="pricing-heading">Priser og pakker</h2>
-                    <p>Medlemmer sparer opptil 500 kr per leie. <a href="medlemskap.html">Bli medlem for 250 kr/år</a>.</p>
+                    <p>Medlemmer sparer opptil 500 kr per leie. <a href="medlemskap">Bli medlem for 250 kr/år</a>.</p>
                 </div>
                 <div class="products-grid">
                     <article class="product-card">
@@ -280,10 +313,16 @@
             <div>
                 <h2 class="footer-title">Snarveier</h2>
                 <ul class="footer-links">
-                    <li><a href="lokaler.html">Våre lokaler</a></li>
-                    <li><a href="booking.html" aria-current="page">Lei lokalet</a></li>
-                    <li><a href="medlemskap.html">Medlemskap</a></li>
-                    <li><a href="nyheter.html">Nyheter</a></li>
+                    <li><a href="lokaler">Våre lokaler</a></li>
+                    <li><a href="booking" aria-current="page">Lei lokalet</a></li>
+                    <li><a href="medlemskap">Medlemskap</a></li>
+                    <li><a href="nyheter">Nyheter</a></li>
+                    <li>
+                        <button type="button" class="copy-link-btn btn-share" aria-label="Kopier lenke til denne siden">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.12 17.023l-4.199-2.29a4 4 0 1 1 0-5.465l4.2-2.29a4 4 0 1 1 .959 1.755l-4.2 2.29a4.008 4.008 0 0 1 0 1.954l4.199 2.29a4 4 0 1 1-.959 1.755zM6 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm11-6a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></svg>
+                            <span>Del siden</span>
+                        </button>
+                    </li>
                 </ul>
             </div>
             <div>

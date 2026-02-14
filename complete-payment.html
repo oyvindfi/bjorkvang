@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fullfør betaling – Bjørkvang forsamlingslokale</title>
+    <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .payment-container {
+            max-width: 600px;
+            width: 100%;
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-card);
+            padding: 40px;
+        }
+
+        .payment-header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+        }
+
+        .payment-header h1 {
+            font-size: 2rem;
+            margin: 0 0 10px 0;
+            color: var(--brand-600);
+        }
+
+        .success-icon {
+            width: 60px;
+            height: 60px;
+            background: #10b981;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .success-icon::before {
+            content: "✓";
+            color: white;
+            font-size: 36px;
+            font-weight: bold;
+        }
+
+        .booking-details {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: var(--radius-md);
+            margin-bottom: 30px;
+        }
+
+        .booking-details h2 {
+            font-size: 1.2rem;
+            margin: 0 0 15px 0;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .detail-value {
+            color: #000;
+        }
+
+        .amount-highlight {
+            background: #fef3c7;
+            padding: 15px;
+            border-radius: var(--radius-sm);
+            text-align: center;
+            margin: 20px 0;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .amount-highlight .amount {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #000;
+        }
+
+        .vipps-button-large {
+            width: 100%;
+            padding: 20px;
+            background: #ff5b24;
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: background 0.2s;
+        }
+
+        .vipps-button-large:hover {
+            background: #e04e1d;
+        }
+
+        .vipps-button-large:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .vipps-icon-large {
+            background: white;
+            color: #ff5b24;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-weight: 900;
+            font-style: italic;
+            font-size: 1.5rem;
+        }
+
+        .status-message {
+            text-align: center;
+            padding: 15px;
+            border-radius: var(--radius-sm);
+            margin-top: 20px;
+            display: none;
+        }
+
+        .status-message.success {
+            background: #d1fae5;
+            color: #065f46;
+            display: block;
+        }
+
+        .status-message.error {
+            background: #fee2e2;
+            color: #991b1b;
+            display: block;
+        }
+
+        .status-message.info {
+            background: #dbeafe;
+            color: #1e40af;
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #10b981;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .back-link a {
+            color: var(--brand-600);
+            text-decoration: none;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="payment-container">
+        <div id="loading-state" class="loading">
+            <div class="spinner"></div>
+            <p>Henter bookingdetaljer...</p>
+        </div>
+
+        <div id="payment-view" style="display: none;">
+            <div class="payment-header">
+                <h1>Fullfør betaling</h1>
+                <p>Kontrakten er signert – betal for å aktivere bookingen</p>
+            </div>
+
+            <div class="booking-details">
+                <h2>Bookingdetaljer</h2>
+                <div class="detail-row">
+                    <span class="detail-label">Booking ID:</span>
+                    <span class="detail-value" id="booking-id">...</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Dato:</span>
+                    <span class="detail-value" id="booking-date">...</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Tidspunkt:</span>
+                    <span class="detail-value" id="booking-time">...</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Lokaler:</span>
+                    <span class="detail-value" id="booking-spaces">...</span>
+                </div>
+            </div>
+
+            <div class="amount-highlight">
+                <div style="font-size: 0.9rem; color: #666; margin-bottom: 5px;">Beløp å betale</div>
+                <div class="amount" id="payment-amount">... kr</div>
+            </div>
+
+            <button id="vipps-pay-btn" class="vipps-button-large">
+                <span class="vipps-icon-large">V</span>
+                <span>Betal med Vipps</span>
+            </button>
+
+            <div id="status-message" class="status-message"></div>
+
+            <div class="back-link">
+                <a href="leieavtale.html">← Tilbake til avtale</a>
+            </div>
+        </div>
+
+        <div id="success-view" style="display: none;">
+            <div class="payment-header">
+                <div class="success-icon"></div>
+                <h1>Betaling fullført!</h1>
+                <p>Din booking er nå aktiv</p>
+            </div>
+
+            <div class="booking-details">
+                <p style="text-align: center; margin: 0;">
+                    Takk for betalingen! Du vil motta en bekreftelse på e-post.
+                </p>
+            </div>
+
+            <div class="back-link">
+                <a href="/">← Tilbake til forsiden</a>
+            </div>
+        </div>
+
+        <div id="error-view" style="display: none; text-align: center; padding: 40px;">
+            <p style="color: #991b1b; font-weight: bold; margin-bottom: 20px;">Kunne ikke laste bookingdetaljer</p>
+            <p id="error-message" style="color: #666;">...</p>
+            <button onclick="location.reload()" class="button" style="margin-top: 20px;">Prøv igjen</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+            ? 'http://127.0.0.1:7071/api'
+            : 'https://bjorkvang-duhsaxahgfe0btgv.westeurope-01.azurewebsites.net/api';
+
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const bookingId = urlParams.get('bookingId');
+        const status = urlParams.get('status');
+        const orderId = urlParams.get('orderId');
+
+        // Handle return from Vipps
+        if (status === 'success' && orderId) {
+            handleVippsReturn(orderId);
+        } else if (bookingId) {
+            loadBookingDetails(bookingId);
+        } else {
+            showError('Ingen booking ID spesifisert');
+        }
+
+        async function loadBookingDetails(bookingId) {
+            try {
+                const response = await fetch(`${API_BASE}/getBooking?id=${bookingId}`);
+
+                if (!response.ok) {
+                    throw new Error('Kunne ikke hente booking');
+                }
+
+                const booking = await response.json();
+
+                // Check if payment is already done
+                if (booking.paymentStatus === 'paid') {
+                    showSuccess();
+                    return;
+                }
+
+                // Check if contract is signed
+                const contract = booking.contract || {};
+                if (!contract.signedAt || !contract.landlordSignedAt) {
+                    throw new Error('Kontrakten må signeres av begge parter før betaling');
+                }
+
+                // Display booking details
+                document.getElementById('booking-id').textContent = bookingId.replace('booking-', '').toUpperCase();
+                document.getElementById('booking-date').textContent = new Date(booking.date).toLocaleDateString('nb-NO');
+                document.getElementById('booking-time').textContent = `${booking.time} (${booking.duration} timer)`;
+                document.getElementById('booking-spaces').textContent = Array.isArray(booking.spaces) ? booking.spaces.join(', ') : booking.spaces;
+
+                // Calculate and display amount
+                const amount = booking.paymentAmount ? booking.paymentAmount / 100 : calculateAmount(booking);
+                document.getElementById('payment-amount').textContent = amount.toLocaleString('nb-NO') + ' kr';
+
+                // Setup payment button
+                document.getElementById('vipps-pay-btn').addEventListener('click', () => initiatePayment(bookingId));
+
+                // Show payment view
+                document.getElementById('loading-state').style.display = 'none';
+                document.getElementById('payment-view').style.display = 'block';
+
+            } catch (error) {
+                console.error(error);
+                showError(error.message);
+            }
+        }
+
+        function calculateAmount(booking) {
+            const PRICING = {
+                'Peisestue': 1500,
+                'Salen': 3000,
+                'Hele lokalet': 4000,
+                'Bryllupspakke': 6000,
+                'Små møter': 30
+            };
+
+            let total = 0;
+            const spaces = Array.isArray(booking.spaces) ? booking.spaces : [booking.spaces];
+
+            spaces.forEach(space => {
+                if (space === 'Små møter') {
+                    total += PRICING[space] * (booking.attendees || 10);
+                } else if (PRICING[space]) {
+                    total += PRICING[space];
+                }
+            });
+
+            return total;
+        }
+
+        async function initiatePayment(bookingId) {
+            const btn = document.getElementById('vipps-pay-btn');
+            const statusMsg = document.getElementById('status-message');
+
+            btn.disabled = true;
+            btn.textContent = 'Starter Vipps...';
+
+            try {
+                const response = await fetch(`${API_BASE}/vipps/initiate-contract-payment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ bookingId })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Kunne ikke starte betaling');
+                }
+
+                const data = await response.json();
+
+                // Redirect to Vipps
+                window.location.href = data.url;
+
+            } catch (error) {
+                console.error(error);
+                statusMsg.textContent = error.message;
+                statusMsg.className = 'status-message error';
+                btn.disabled = false;
+                btn.innerHTML = '<span class="vipps-icon-large">V</span><span>Betal med Vipps</span>';
+            }
+        }
+
+        async function handleVippsReturn(orderId) {
+            document.getElementById('loading-state').innerHTML = '<div class="spinner"></div><p>Verifiserer betaling...</p>';
+
+            try {
+                // Verify payment status
+                const response = await fetch(`${API_BASE}/vipps/check-status`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderId })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Kunne ikke verifisere betaling');
+                }
+
+                const data = await response.json();
+
+                if (data.status === 'AUTHORIZED' || data.status === 'CAPTURED') {
+                    // Payment successful - update booking
+                    // Note: The vippsCheckStatus endpoint should handle updating the booking
+                    showSuccess();
+                } else {
+                    throw new Error('Betalingen ble ikke fullført');
+                }
+
+            } catch (error) {
+                console.error(error);
+                showError(error.message);
+            }
+        }
+
+        function showSuccess() {
+            document.getElementById('loading-state').style.display = 'none';
+            document.getElementById('payment-view').style.display = 'none';
+            document.getElementById('success-view').style.display = 'block';
+        }
+
+        function showError(message) {
+            document.getElementById('loading-state').style.display = 'none';
+            document.getElementById('payment-view').style.display = 'none';
+            document.getElementById('error-view').style.display = 'block';
+            document.getElementById('error-message').textContent = message;
+        }
+    </script>
+</body>
+</html>

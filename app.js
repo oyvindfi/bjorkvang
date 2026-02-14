@@ -86,18 +86,64 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   highlightActiveLink();
-  window.addEventListener('hashchange', highlightActiveLink);
-  window.addEventListener('popstate', highlightActiveLink);
 
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
-      closeNav();
-    }
-  });
+  // Copy Link Functionality
+  const setupCopyLinkButtons = () => {
+    const copyButtons = document.querySelectorAll('.copy-link-btn');
+    
+    const getPrettyUrl = () => {
+        let url = window.location.href;
+        try {
+            // First decode any percent-encoding (e.g. %C3%B8 -> ø)
+            url = decodeURI(url);
+        } catch (e) {
+            console.warn('Could not decode URI:', e);
+        }
+        // Then explicitly replace the Punycode domain if present
+        return url.replace('xn--bjrkvang-64a.no', 'bjørkvang.no');
+    };
 
-  window.addEventListener('resize', () => {
-    if (window.innerWidth > 900 && toggle.getAttribute('aria-expanded') === 'true') {
-      closeNav(true);
-    }
-  });
+    copyButtons.forEach(btn => {
+      const textSpan = btn.querySelector('span') || btn;
+      const originalText = textSpan.textContent;
+
+      btn.addEventListener('click', async () => {
+        const prettyUrl = getPrettyUrl();
+        
+        try {
+          await navigator.clipboard.writeText(prettyUrl);
+          
+          textSpan.textContent = 'Lenke kopiert!';
+          btn.classList.add('success');
+          
+          setTimeout(() => {
+            textSpan.textContent = originalText;
+            btn.classList.remove('success');
+          }, 2000);
+        } catch (err) {
+          console.error('Failed to copy link:', err);
+          // Fallback for older browsers or if permission denied
+          const textArea = document.createElement('textarea');
+          textArea.value = prettyUrl; // Use the same pretty URL here!
+          document.body.appendChild(textArea);
+          textArea.select();
+          try {
+            document.execCommand('copy');
+            textSpan.textContent = 'Lenke kopiert!';
+            btn.classList.add('success');
+            setTimeout(() => {
+                textSpan.textContent = originalText;
+                btn.classList.remove('success');
+            }, 2000);
+          } catch (e) {
+            console.error('Fallback copy failed', e);
+            textSpan.textContent = 'Kunne ikke kopiere';
+          }
+          document.body.removeChild(textArea);
+        }
+      });
+    });
+  };
+
+  setupCopyLinkButtons();
 });

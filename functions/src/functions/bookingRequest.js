@@ -2,6 +2,7 @@ const { app } = require('@azure/functions');
 const { sendEmail } = require('../../shared/email');
 const { createJsonResponse, parseBody, resolveBaseUrl } = require('../../shared/http');
 const { saveBooking } = require('../../shared/cosmosDb');
+const { generateEmailHtml } = require('../../shared/emailTemplate');
 
 /**
  * Handle incoming booking submissions from the public website.
@@ -18,7 +19,7 @@ app.http('bookingRequest', {
         }
 
         const body = await parseBody(request);
-        const { date, time, requesterName, requesterEmail, message, duration, eventType, spaces, services, attendees } = body;
+        const { date, time, requesterName, requesterEmail, message, duration, eventType, spaces, services, attendees, paymentOrderId, paymentStatus } = body;
 
         // Validate required fields
         if (!date || !time || !requesterName || !requesterEmail) {
@@ -95,23 +96,51 @@ app.http('bookingRequest', {
         try {
             // Generate unique booking ID
             const bookingId = `booking-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-            
+
             context.info(`bookingRequest: Generated ID ${bookingId}, calling saveBooking...`);
 
+            // Determine status: paid bookings are auto-approved
+            const bookingStatus = paymentStatus === 'paid' ? 'approved' : 'pending';
+            const isPaid = paymentStatus === 'paid';
+
+            // Calculate payment amount and store it (in øre)
+            const PRICING = {
+                'Peisestue': 1500,
+                'Salen': 3000,
+                'Hele lokalet': 4000,
+                'Bryllupspakke': 6000,
+                'Små møter': 30 // per person
+            };
+
+            let paymentAmount = 0;
+            safeSpaces.forEach(space => {
+                if (space === 'Små møter') {
+                    paymentAmount += PRICING[space] * (safeAttendees || 10);
+                } else if (PRICING[space]) {
+                    paymentAmount += PRICING[space];
+                }
+            });
+
+            // Convert to øre for storage
+            paymentAmount = paymentAmount * 100;
+
             // Create booking with sanitized inputs
-            const booking = await saveBooking({ 
+            const booking = await saveBooking({
                 id: bookingId,
-                date: trimmedDate, 
-                time: trimmedTime, 
-                requesterName: trimmedName, 
-                requesterEmail: trimmedEmail, 
+                date: trimmedDate,
+                time: trimmedTime,
+                requesterName: trimmedName,
+                requesterEmail: trimmedEmail,
                 message: trimmedMessage,
                 eventType: trimmedEventType,
                 duration: safeDuration,
                 attendees: safeAttendees,
                 spaces: safeSpaces,
                 services: safeServices,
-                status: 'pending'
+                status: bookingStatus,
+                paymentOrderId: paymentOrderId || null,
+                paymentStatus: paymentStatus || 'unpaid',
+                paymentAmount: paymentAmount // Store amount in øre
             });
             
             context.info('bookingRequest: Created booking', {
@@ -125,7 +154,7 @@ app.http('bookingRequest', {
             const rejectLink = `${baseUrl}/api/booking/reject?id=${encodeURIComponent(booking.id)}`;
 
             const to = process.env.BOARD_TO_ADDRESS || process.env.DEFAULT_TO_ADDRESS || 'skype.oyvind@hotmail.com';
-            let from = process.env.DEFAULT_FROM_ADDRESS || 'styret@xn--bjrkvang-64a.no';
+            let from = process.env.DEFAULT_FROM_ADDRESS || 'styret@bjørkvang.no';
 
             if (!to || !from) {
                 context.error('bookingRequest: Missing email configuration', { 
@@ -149,28 +178,46 @@ app.http('bookingRequest', {
             const safeSpacesStr = escapeHtml(booking.spaces.join(', ') || 'Ingen valgt');
             const safeServicesStr = escapeHtml(booking.services.join(', ') || 'Ingen valgt');
 
-            const html = `
-                <p>Hei styret,</p>
-                <p>Det har kommet en ny bookingforespørsel som venter på godkjenning:</p>
-                <ul>
-                    <li><strong>Dato:</strong> ${safeDate}</li>
-                    <li><strong>Tid:</strong> ${safeTime}</li>
-                    <li><strong>Type:</strong> ${safeEventType}</li>
-                    <li><strong>Varighet:</strong> ${booking.duration} timer</li>
-                    <li><strong>Navn:</strong> ${safeName}</li>
-                    <li><strong>E-post:</strong> ${safeEmail}</li>
-                    <li><strong>Arealer:</strong> ${safeSpacesStr}</li>
-                    <li><strong>Tjenester:</strong> ${safeServicesStr}</li>
-                    <li><strong>Antall:</strong> ${booking.attendees || 'Ikke oppgitt'}</li>
-                    <li><strong>Melding:</strong> ${safeMessage}</li>
+            // --- Board Notification Email ---
+            const paymentInfo = isPaid
+                ? `<li style="color: #1a823b;"><strong>Betaling: Betalt via Vipps (${paymentOrderId})</strong></li>`
+                : '';
+
+            const statusNote = isPaid
+                ? '<p style="background-color: #d1fae5; padding: 12px; border-radius: 6px; color: #065f46;"><strong>✓ Betaling mottatt:</strong> Denne bookingen er allerede betalt via Vipps og kan godkjennes direkte.</p>'
+                : '';
+
+            const boardHtmlContent = `
+                <p>Det har kommet en ny bookingforespørsel som venter på godkjenning.</p>
+                ${statusNote}
+                <ul class="info-list">
+                    <li><span class="info-label">Dato</span> <span class="info-value">${safeDate}</span></li>
+                    <li><span class="info-label">Tid</span> <span class="info-value">${safeTime}</span></li>
+                    <li><span class="info-label">Type</span> <span class="info-value">${safeEventType}</span></li>
+                    <li><span class="info-label">Varighet</span> <span class="info-value">${booking.duration} timer</span></li>
+                    <li><span class="info-label">Navn</span> <span class="info-value">${safeName}</span></li>
+                    <li><span class="info-label">E-post</span> <span class="info-value">${safeEmail}</span></li>
+                    <li><span class="info-label">Arealer</span> <span class="info-value">${safeSpacesStr}</span></li>
+                    <li><span class="info-label">Tjenester</span> <span class="info-value">${safeServicesStr}</span></li>
+                    <li><span class="info-label">Antall</span> <span class="info-value">${booking.attendees || 'Ikke oppgitt'}</span></li>
+                    ${paymentInfo}
                 </ul>
-                <p>Bruk knappene under for å godkjenne eller avvise:</p>
-                <p>
-                    <a href="${escapeHtml(approveLink)}" style="display:inline-block;padding:10px 16px;margin-right:12px;background:#1a823b;color:#ffffff;text-decoration:none;border-radius:4px;">Godkjenn booking</a>
-                    <a href="${escapeHtml(rejectLink)}" style="display:inline-block;padding:10px 16px;background:#b3261e;color:#ffffff;text-decoration:none;border-radius:4px;">Avvis booking</a>
-                </p>
-                <p>Vennlig hilsen<br/>Bjorkvang.no</p>
+                <div style="background-color: #f9fafb; padding: 16px; border-radius: 6px; margin-top: 16px;">
+                    <strong>Melding:</strong><br>
+                    ${safeMessage}
+                </div>
+                <p style="margin-top: 24px;">Bruk knappene under for å behandle forespørselen:</p>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <a href="${escapeHtml(approveLink)}" style="display:inline-block;padding:10px 20px;background:#1a823b;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">Godkjenn booking</a>
+                    <a href="${escapeHtml(rejectLink)}" style="display:inline-block;padding:10px 20px;background:#b91c1c;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">Avvis booking</a>
+                </div>
             `;
+
+            const boardHtml = generateEmailHtml({
+                title: 'Ny bookingforespørsel',
+                content: boardHtmlContent,
+                previewText: `Ny forespørsel fra ${safeName} for ${safeDate}`
+            });
 
             const text = `Ny bookingforespørsel:\nDato: ${booking.date}\nTid: ${booking.time}\nType: ${booking.eventType}\nNavn: ${booking.requesterName}\nE-post: ${booking.requesterEmail}\nMelding: ${booking.message || 'Ingen melding'}\nGodkjenn: ${approveLink}\nAvvis: ${rejectLink}`;
 
@@ -179,28 +226,48 @@ app.http('bookingRequest', {
                 from,
                 subject: `Ny bookingforespørsel: ${booking.eventType} – ${booking.date}`,
                 text,
-                html,
+                html: boardHtml,
             });
             
             context.info('bookingRequest: Board notification email sent');
 
-            const confirmationSubject = 'Vi har mottatt bookingforespørselen din';
-            const confirmationHtml = `
+            // --- Requester Confirmation Email ---
+            const confirmationSubject = isPaid
+                ? 'Booking bekreftet – betaling mottatt'
+                : 'Vi har mottatt bookingforespørselen din';
+
+            const paymentConfirmation = isPaid
+                ? '<p style="background-color: #d1fae5; padding: 12px; border-radius: 6px; color: #065f46;"><strong>✓ Betaling bekreftet:</strong> Din betaling via Vipps er mottatt og booking er bekreftet.</p>'
+                : '';
+
+            const nextStepsText = isPaid
+                ? '<p style="margin-top: 24px;"><strong>Hva skjer nå?</strong><br>Din booking er bekreftet! Du vil få en leieavtale til signering i nær framtid.</p>'
+                : '<p style="margin-top: 24px;"><strong>Hva skjer nå?</strong><br>Styret vil se gjennom forespørselen din. Du vil motta en e-post så snart bookingen er behandlet (vanligvis innen 2-3 dager).</p>';
+
+            const confirmationHtmlContent = `
                 <p>Hei ${safeName},</p>
-                <p>Takk for din forespørsel om å booke Bjørkvang.</p>
-                <p>Her er en oppsummering av hva du har sendt inn:</p>
-                <ul>
-                    <li><strong>Dato:</strong> ${safeDate}</li>
-                    <li><strong>Tid:</strong> ${safeTime}</li>
-                    <li><strong>Type:</strong> ${safeEventType}</li>
-                    <li><strong>Arealer:</strong> ${safeSpacesStr}</li>
-                    <li><strong>Melding:</strong> ${safeMessage}</li>
+                <p>Takk for din forespørsel om å booke Bjørkvang. Vi har mottatt følgende detaljer:</p>
+                ${paymentConfirmation}
+                <ul class="info-list">
+                    <li><span class="info-label">Dato</span> <span class="info-value">${safeDate}</span></li>
+                    <li><span class="info-label">Tid</span> <span class="info-value">${safeTime}</span></li>
+                    <li><span class="info-label">Type</span> <span class="info-value">${safeEventType}</span></li>
+                    <li><span class="info-label">Arealer</span> <span class="info-value">${safeSpacesStr}</span></li>
                 </ul>
-                <p>Styret vil se gjennom forespørselen og ta kontakt med deg så snart som mulig.</p>
-                <p>Vennlig hilsen<br/>Bjørkvang</p>
+                <div style="background-color: #f9fafb; padding: 16px; border-radius: 6px; margin-top: 16px;">
+                    <strong>Din melding:</strong><br>
+                    ${safeMessage}
+                </div>
+                ${nextStepsText}
             `;
 
-            const confirmationText = `Hei ${booking.requesterName},\n\nTakk for din forespørsel om å booke Bjørkvang.\n\nOppsummering av forespørselen:\n- Dato: ${booking.date}\n- Tid: ${booking.time}\n- Type: ${booking.eventType}\n- Melding: ${booking.message || 'Ingen melding oppgitt.'}\n\nStyret vil ta kontakt med deg så snart som mulig.\n\nVennlig hilsen\nBjørkvang`;
+            const confirmationHtml = generateEmailHtml({
+                title: 'Forespørsel mottatt',
+                content: confirmationHtmlContent,
+                previewText: 'Takk for din forespørsel om å booke Bjørkvang.'
+            });
+
+            const confirmationText = `Hei ${booking.requesterName},\n\nTakk for din forespørsel om å booke Bjørkvang.\n\nOppsummering av forespørselen:\n- Dato: ${booking.date}\n- Tid: ${booking.time}\n- Type: ${booking.eventType}\n- Melding: ${booking.message || 'Ingen melding oppgitt.'}\n\nStyret vil ta kontakt med deg så snart som mulig.\n\nVennlig hilsen\nHelgøens Vel`;
 
             try {
                 await sendEmail({

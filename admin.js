@@ -2,18 +2,41 @@ const API_BASE_URL = window.location.hostname === '127.0.0.1' || window.location
     ? 'http://localhost:7071/api' 
     : 'https://bjorkvang-duhsaxahgfe0btgv.westeurope-01.azurewebsites.net/api';
 
-// Simple client-side "security" - NOT SECURE, just to hide UI
-const ADMIN_PASSWORD = 'bjorkvang-admin'; 
-
-function checkLogin() {
+async function checkLogin() {
     const input = document.getElementById('password-input').value;
-    if (input === ADMIN_PASSWORD) {
-        document.getElementById('login-overlay').classList.add('hidden');
-        document.getElementById('dashboard').classList.remove('hidden');
-        sessionStorage.setItem('admin_auth', 'true');
-        loadDashboard();
-    } else {
-        alert('Feil passord');
+    const btn = document.querySelector('#login-overlay button');
+    const originalText = btn.textContent;
+    
+    btn.disabled = true;
+    btn.textContent = 'Sjekker...';
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/verify-admin`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: input })
+        });
+
+        if (response.ok) {
+            document.getElementById('login-overlay').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            sessionStorage.setItem('admin_auth', 'true');
+            loadDashboard();
+        } else {
+            if (response.status === 404) {
+                alert('Kunne ikke kontakte serveren (404). Er funksjonene deployet?');
+            } else if (response.status === 401) {
+                alert('Feil passord');
+            } else {
+                alert(`Noe gikk galt (Status: ${response.status})`);
+            }
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        alert('Kunne ikke logge inn. Sjekk nettverkstilkoblingen.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
     }
 }
 
@@ -158,6 +181,7 @@ function createBookingCard(booking) {
                 <button onclick="openContract('${booking.id}')" class="btn-sm" style="background:${isLandlordSigned ? '#10b981' : '#3b82f6'};">
                     ${isLandlordSigned ? 'Se avtale' : (isRequesterSigned ? 'Signer som utleier' : 'Kopier lenke')}
                 </button>
+                <button onclick="sendReminder('${booking.id}')" class="btn-sm" style="background:#f59e0b; color:black;">Påminnelse</button>
             ` : ''}
         </div>
     `;
@@ -165,7 +189,7 @@ function createBookingCard(booking) {
 }
 
 function openContract(id) {
-    const link = window.location.origin + '/leieavtale.html?id=' + id + '&mode=admin';
+    const link = window.location.origin + '/leieavtale?id=' + id + '&mode=admin';
     // If requester has signed, open it directly for admin to sign
     // If not, copy link for admin to send (or open to check)
     // For simplicity, we'll just open it in a new tab if signed, or copy if not.
@@ -175,8 +199,33 @@ function openContract(id) {
 }
 
 function copyContractLink(id) {
-    const link = window.location.origin + '/leieavtale.html?id=' + id;
+    const link = window.location.origin + '/leieavtale?id=' + id;
     navigator.clipboard.writeText(link).then(() => alert('Lenke kopiert!'));
+}
+
+async function sendReminder(id) {
+    const comment = prompt('Vil du legge til en kommentar i påminnelsen? (Valgfritt)');
+    if (comment === null) return; // Cancelled
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/booking/remind`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ id, comment })
+        });
+        
+        if (response.ok) {
+            alert('Påminnelse sendt!');
+        } else {
+            alert('Noe gikk galt. Prøv igjen.');
+        }
+    } catch (error) {
+        console.error(error);
+        alert('Feil ved kommunikasjon med server.');
+    }
 }
 
 async function approveBooking(id) {

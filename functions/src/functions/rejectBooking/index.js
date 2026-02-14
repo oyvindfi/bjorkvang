@@ -2,6 +2,7 @@ const { app } = require('@azure/functions');
 const { sendEmail } = require('../../../shared/email');
 const { createHtmlResponse, createJsonResponse, parseBody } = require('../../../shared/http');
 const { getBooking, updateBookingStatus } = require('../../../shared/cosmosDb');
+const { generateEmailHtml } = require('../../../shared/emailTemplate');
 
 /**
  * Reject a booking via link or API call. Accepts optional message via POST.
@@ -74,21 +75,34 @@ app.http('rejectBooking', {
                 const safeTime = escapeHtml(existingBooking.time || '');
                 const safeReason = escapeHtml(rejectionMessage);
                 
-                const htmlMessage = rejectionMessage
-                    ? `<p>Årsak: ${safeReason}</p>`
+                const reasonHtml = rejectionMessage
+                    ? `<div style="background-color: #fef2f2; border: 1px solid #fecaca; padding: 16px; border-radius: 6px; margin-top: 16px; color: #991b1b;"><strong>Årsak:</strong><br>${safeReason}</div>`
                     : '<p>Ta gjerne kontakt om du har spørsmål.</p>';
+
+                const htmlContent = `
+                    <p>Hei ${safeName},</p>
+                    <p>Vi må dessverre informere om at din bookingforespørsel for <strong>${safeDate} kl. ${safeTime}</strong> ikke kunne godkjennes.</p>
+                    ${reasonHtml}
+                    <p style="margin-top: 24px;">Du er velkommen til å prøve å finne en annen dato i kalenderen vår.</p>
+                    <p>Vennlig hilsen<br>Helgøens Vel</p>
+                `;
+
+                const html = generateEmailHtml({
+                    title: 'Oppdatering på din booking',
+                    content: htmlContent,
+                    action: {
+                        text: 'Se kalender',
+                        url: 'https://bjørkvang.no/booking'
+                    },
+                    previewText: `Din booking for ${safeDate} ble dessverre avvist.`
+                });
 
                 await sendEmail({
                     to: existingBooking.requesterEmail.trim(),
                     from,
                     subject: 'Din booking ble dessverre avvist',
                     text: `Hei ${safeName}. Booking ${safeDate} kl. ${safeTime} ble avvist. ${rejectionMessage}`.trim(),
-                    html: `
-                        <p>Hei ${safeName},</p>
-                        <p>Vi må dessverre avvise booking for ${safeDate} kl. ${safeTime}.</p>
-                        ${htmlMessage}
-                        <p>Vennlig hilsen<br/>Bjorkvang.no</p>
-                    `,
+                    html: html,
                 });
                 context.info(`rejectBooking: Rejection email sent to ${existingBooking.requesterEmail}`);
             }

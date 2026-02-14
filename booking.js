@@ -12,8 +12,63 @@ document.addEventListener('DOMContentLoaded', function () {
   const timeInput = document.getElementById('time');
   const durationInputEl = document.getElementById('duration');
   const eventTypeSelect = document.getElementById('event-type');
+  const calculatedPriceEl = document.getElementById('calculated-price');
+  const attendeesInput = document.getElementById('attendees');
 
   const STATUS_VALUES = ['pending', 'confirmed', 'blocked'];
+
+  // Pricing structure
+  const PRICING = {
+    'Peisestue': 1500,
+    'Salen': 3000,
+    'Hele lokalet': 4000,
+    'Bryllupspakke': 6000,
+    'Små møter': 30 // per person
+  };
+
+  // Calculate total price based on selected spaces and attendees
+  const calculatePrice = () => {
+    const spacesCheckboxes = form.querySelectorAll('input[name="spaces"]:checked');
+    const selectedSpaces = Array.from(spacesCheckboxes).map(cb => cb.value);
+    const attendees = parseInt(attendeesInput?.value) || 10;
+
+    let total = 0;
+    selectedSpaces.forEach(space => {
+      if (space === 'Små møter') {
+        total += PRICING[space] * attendees;
+      } else if (PRICING[space]) {
+        total += PRICING[space];
+      }
+    });
+
+    return total;
+  };
+
+  // Update price display
+  const updatePriceDisplay = () => {
+    if (!calculatedPriceEl) return;
+
+    const total = calculatePrice();
+    if (total > 0) {
+      calculatedPriceEl.textContent = `Estimert pris: ${total.toLocaleString('nb-NO')} kr`;
+      calculatedPriceEl.style.fontWeight = 'bold';
+    } else {
+      calculatedPriceEl.textContent = 'Estimert pris: Velg lokaler';
+      calculatedPriceEl.style.fontWeight = 'normal';
+    }
+  };
+
+  // Watch for changes to spaces and attendees
+  if (form) {
+    const spacesCheckboxes = form.querySelectorAll('input[name="spaces"]');
+    spacesCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', updatePriceDisplay);
+    });
+
+    if (attendeesInput) {
+      attendeesInput.addEventListener('input', updatePriceDisplay);
+    }
+  }
 
   // Debounce utility to prevent excessive function calls
   const debounce = (func, wait) => {
@@ -65,6 +120,96 @@ document.addEventListener('DOMContentLoaded', function () {
   const BOOKING_API_ENDPOINT = `${API_BASE_URL}/api/booking`;
   const CALENDAR_API_ENDPOINT = `${API_BASE_URL}/api/booking/calendar`;
 
+  // Check if returning from Vipps payment
+  const urlParams = new URLSearchParams(window.location.search);
+  const vippsStatus = urlParams.get('status');
+  const vippsOrderId = urlParams.get('orderId');
+
+  // Store Vipps return parameters to handle after initialization
+  let pendingVippsReturn = null;
+  if (vippsStatus === 'success' && vippsOrderId) {
+    pendingVippsReturn = vippsOrderId;
+  }
+
+  async function handleVippsReturn(orderId) {
+    try {
+      // Show status message
+      if (statusEl) {
+        showStatus('Verifiserer betaling ...', 'info');
+      }
+
+      // Check payment status with Vipps
+      const statusResponse = await fetch(`${API_BASE_URL}/api/vipps/check-status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId })
+      });
+
+      if (!statusResponse.ok) {
+        throw new Error('Kunne ikke verifisere betaling');
+      }
+
+      const statusData = await statusResponse.json();
+
+      if (statusData.status === 'AUTHORIZED' || statusData.status === 'CAPTURED') {
+        // Payment successful - submit the booking
+        const pendingBooking = sessionStorage.getItem('pendingBooking');
+        if (pendingBooking) {
+          const bookingDetails = JSON.parse(pendingBooking);
+
+          // Add payment information
+          bookingDetails.paymentOrderId = orderId;
+          bookingDetails.paymentStatus = 'paid';
+
+          await submitBooking(bookingDetails);
+
+          // Clean up session storage
+          sessionStorage.removeItem('pendingBooking');
+          sessionStorage.removeItem('vippsOrderId');
+
+          // Add to events
+          const { startDate: startDateObj, endDate: endDateObj, ...restDetails } = bookingDetails;
+          const startDate = new Date(startDateObj);
+          const endDate = new Date(endDateObj);
+
+          const newEvent = {
+            title: bookingDetails.eventType || 'Reservert',
+            start: startDate.toISOString(),
+            end: endDate.toISOString(),
+            extendedProps: {
+              ...restDetails,
+              status: 'confirmed', // Paid bookings are auto-confirmed
+              createdAt: new Date().toISOString(),
+              paymentStatus: 'paid'
+            }
+          };
+
+          events.push(newEvent);
+          events.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+          if (calendar) {
+            calendar.addEvent(newEvent);
+            highlightDayCells();
+          }
+
+          updateReservationList();
+
+          showStatus('Betaling godkjent! Din booking er bekreftet. Du vil motta e-post med bekreftelse.', 'success');
+        } else {
+          showStatus('Betaling godkjent, men bookingdetaljer mangler. Ta kontakt med styret.', 'error');
+        }
+      } else {
+        showStatus('Betalingen ble ikke fullført. Prøv igjen eller velg "Betal etter godkjenning".', 'error');
+      }
+    } catch (error) {
+      console.error('Error handling Vipps return:', error);
+      showStatus('Kunne ikke verifisere betalingen. Ta kontakt med styret hvis beløpet er trukket.', 'error');
+    }
+
+    // Clean URL
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
   async function submitBooking(bookingDetails) {
       const payload = {
           date: bookingDetails.startDate.toISOString().split('T')[0],
@@ -77,7 +222,9 @@ document.addEventListener('DOMContentLoaded', function () {
           eventType: bookingDetails.eventType,
           spaces: bookingDetails.spaces,
           services: bookingDetails.services,
-          attendees: bookingDetails.attendees
+          attendees: bookingDetails.attendees,
+          paymentOrderId: bookingDetails.paymentOrderId || null,
+          paymentStatus: bookingDetails.paymentStatus || 'unpaid'
       };
 
       console.log('Sender booking til API:', payload);
@@ -424,6 +571,12 @@ document.addEventListener('DOMContentLoaded', function () {
       } catch (error) {
           console.error('Feil ved initialisering av hendelser:', error);
       }
+
+      // Handle Vipps return if returning from payment
+      if (pendingVippsReturn) {
+        await handleVippsReturn(pendingVippsReturn);
+        pendingVippsReturn = null;
+      }
   };
 
   initializeEvents();
@@ -535,13 +688,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (calendarEl) {
     try {
+      const isMobile = window.innerWidth < 768;
+      
       calendar = new FullCalendar.Calendar(calendarEl, {
       initialView: 'dayGridMonth',
       height: 'auto',
       headerToolbar: {
-        left: 'prev,next today',
+        left: isMobile ? 'prev,next' : 'prev,next today',
         center: 'title',
-        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        right: isMobile ? 'dayGridMonth,listMonth' : 'dayGridMonth,timeGridWeek,timeGridDay'
+      },
+      views: {
+        listMonth: { buttonText: 'Liste' }
       },
       locale: 'nb',
       selectable: true,
@@ -549,6 +707,11 @@ document.addEventListener('DOMContentLoaded', function () {
       dayMaxEvents: true,
       events: events,
       eventTimeFormat: {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      },
+      slotLabelFormat: {
         hour: '2-digit',
         minute: '2-digit',
         hour12: false
@@ -738,6 +901,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const selectedSpaces = Array.from(form.querySelectorAll('input[name="spaces"]:checked')).map((input) => input.value);
       const selectedServices = Array.from(form.querySelectorAll('input[name="services"]:checked')).map((input) => input.value);
       const notificationEmailRaw = (formValues.notificationEmail || '').trim();
+      const paymentMethod = formValues.paymentMethod || 'later';
 
       const notificationRecipients = notificationEmailRaw
         ? notificationEmailRaw
@@ -824,6 +988,51 @@ document.addEventListener('DOMContentLoaded', function () {
         endDate
       };
 
+      // If user chose Vipps payment, redirect to Vipps first
+      if (paymentMethod === 'vipps') {
+        try {
+          showStatus('Starter Vipps-betaling ...', 'info');
+
+          const vippsResponse = await fetch(`${API_BASE_URL}/api/vipps/initiate-booking`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              phoneNumber: phone,
+              spaces: selectedSpaces,
+              attendees: attendeeCount,
+              date: dateValue,
+              time: timeValue,
+              requesterName: name,
+              eventType: eventType
+            })
+          });
+
+          if (!vippsResponse.ok) {
+            const errorData = await vippsResponse.json();
+            throw new Error(errorData.error || 'Kunne ikke starte Vipps-betaling');
+          }
+
+          const vippsData = await vippsResponse.json();
+
+          // Store booking details in sessionStorage so we can submit after payment
+          sessionStorage.setItem('pendingBooking', JSON.stringify(bookingDetails));
+          sessionStorage.setItem('vippsOrderId', vippsData.orderId);
+
+          // Redirect to Vipps
+          window.location.href = vippsData.url;
+          return;
+        } catch (error) {
+          console.error('Vipps payment error:', error);
+          showStatus('Kunne ikke starte Vipps-betaling. Prøv "Betal etter godkjenning" i stedet.', 'error');
+          isSubmitting = false;
+          return;
+        }
+      }
+
+      // Regular booking submission without Vipps payment
+
       try {
         showStatus('Sender forespørselen ...', 'info');
         await submitBooking(bookingDetails);
@@ -897,4 +1106,31 @@ document.addEventListener('DOMContentLoaded', function () {
       isSubmitting = false;
     });
   }
+
+  // --- NEW: Handle Bryllupspakke logic ---
+  const spacesCheckboxes = document.querySelectorAll('input[name="spaces"]');
+  spacesCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', (e) => {
+      if (e.target.value === 'Bryllupspakke' && e.target.checked) {
+        // Uncheck others to avoid confusion
+        spacesCheckboxes.forEach(cb => {
+          if (cb !== e.target) cb.checked = false;
+        });
+        // Suggest duration (e.g. whole weekend = 48+ hours)
+        if (durationInputEl) durationInputEl.value = 48; 
+        // Auto-select event type
+        if (eventTypeSelect) eventTypeSelect.value = 'Familiefeiring';
+        
+        showStatus('Bryllupspakke valgt. Varighet satt til helg (48t).', 'info');
+      } else if (e.target.checked && e.target.value !== 'Bryllupspakke') {
+        // If selecting regular spaces, uncheck Bryllupspakke
+        const wedding = document.querySelector('input[name="spaces"][value="Bryllupspakke"]');
+        if (wedding && wedding.checked) {
+            wedding.checked = false;
+            if (durationInputEl) durationInputEl.value = 4; // Reset to default
+        }
+      }
+    });
+  });
+  // ----------------------------------------
 });

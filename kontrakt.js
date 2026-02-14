@@ -144,16 +144,40 @@ function getSignatureData(canvasId, inputId) {
 }
 
 // --- Admin Security ---
-const ADMIN_PIN = 'bjorkvang-admin';
 
-function unlockLandlordSigning() {
+async function unlockLandlordSigning() {
     const input = document.getElementById('admin-pin-input').value;
-    if (input === ADMIN_PIN) {
-        document.getElementById('landlord-auth-container').style.display = 'none';
-        document.getElementById('landlord-signature-pad-container').style.display = 'block';
-        initCanvas('landlord-signature-canvas');
-    } else {
-        alert('Feil kode');
+    const btn = document.querySelector('#landlord-auth-container button');
+    
+    if (!input) {
+        alert('Vennligst skriv inn kode.');
+        return;
+    }
+
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Verifiserer...';
+
+    try {
+        const response = await fetch(`${API_BASE}/admin/verify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: input })
+        });
+
+        if (response.ok) {
+            document.getElementById('landlord-auth-container').style.display = 'none';
+            document.getElementById('landlord-signature-pad-container').style.display = 'block';
+            initCanvas('landlord-signature-canvas');
+        } else {
+            alert('Feil kode.');
+        }
+    } catch (error) {
+        console.error('Verification error:', error);
+        alert('Kunne ikke verifisere kode.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
     }
 }
 

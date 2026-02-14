@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Våre lokaler – Bjørkvang forsamlingslokale</title>
+    <meta name="description" content="Se bilder og informasjon om våre selskapslokaler. Storsal, lillesal og kjøkken.">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://bjørkvang.no/lokaler">
+    <meta property="og:title" content="Våre lokaler – Bjørkvang forsamlingslokale">
+    <meta property="og:description" content="Se bilder og informasjon om våre selskapslokaler. Storsal, lillesal og kjøkken.">
+    <meta property="og:image" content="https://bjørkvang.no/images/bjorkvang-sommer.png">
+
+    <link rel="canonical" href="https://bjørkvang.no/lokaler">
     <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -12,7 +21,7 @@
     <header class="site-header">
         <div class="container nav-container">
             <div class="branding">
-                <a class="logo" href="index.html">
+                <a class="logo" href="/">
                     <span class="logo-mark" aria-hidden="true">BV</span>
                     <span class="logo-text">
                         <span class="logo-title">Bjørkvang forsamlingslokale</span>
@@ -28,13 +37,13 @@
             </button>
             <nav class="site-nav" id="primary-nav" aria-label="Hovedmeny">
                 <ul>
-                    <li><a href="index.html">Hjem</a></li>
-                    <li><a href="lokaler.html" aria-current="page">Våre lokaler</a></li>
-                    <li><a href="booking.html#calendar">Kalender</a></li>
-                    <li><a href="booking.html">Lei lokalet</a></li>
-                    <li><a href="medlemskap.html">Medlemskap</a></li>
-                    <li><a href="nyheter.html">Nyheter</a></li>
-                    <li><a href="kontakt.html">Kontakt</a></li>
+                    <li><a href="/">Hjem</a></li>
+                    <li><a href="lokaler" aria-current="page">Våre lokaler</a></li>
+                    <li><a href="booking#calendar">Kalender</a></li>
+                    <li><a href="booking">Lei lokalet</a></li>
+                    <li><a href="medlemskap">Medlemskap</a></li>
+                    <li><a href="nyheter">Nyheter</a></li>
+                    <li><a href="kontakt">Kontakt</a></li>
                 </ul>
             </nav>
         </div>
@@ -59,16 +68,16 @@
                         <p>Vår romslige sal er hjertet i huset. Med god takhøyde, scene og god akustikk passer den perfekt til større selskaper, konserter, teater og konferanser.</p>
                         <ul class="feature-list">
                             <li>Plass til ca. 100 personer til bords</li>
-                            <li>Stor scene med sceneteppe</li>
+                            <li>Stor scene</li>
                             <li>God plass til dansegulv</li>
                             <li>Direkte tilgang til kjøkken og toaletter</li>
                         </ul>
                         <div class="action-row">
-                            <a class="button" href="booking.html">Lei Salen (3 000 kr)</a>
+                            <a class="button" href="booking">Lei Salen (3 000 kr)</a>
                         </div>
                     </div>
                     <figure class="hero-media">
-                        <img src="images/67A6972D-DA19-4F40-B0AC-0C283E59D9F2.jpeg" alt="Salen dekket til fest">
+                        <img src="https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=800&q=80" alt="Illustrasjonsbilde av selskapslokale">
                     </figure>
                 </div>
             </div>
@@ -92,7 +101,7 @@
                             <li>Kan leies separat eller sammen med salen</li>
                         </ul>
                         <div class="action-row">
-                            <a class="button" href="booking.html">Lei Peisestua (1 500 kr)</a>
+                            <a class="button" href="booking">Lei Peisestua (1 500 kr)</a>
                         </div>
                     </div>
                 </div>
@@ -134,8 +143,8 @@
                     <h2>Klar for å booke?</h2>
                     <p>Sjekk kalenderen for ledige datoer og send oss en forespørsel i dag.</p>
                     <div class="button-group" style="justify-content: center;">
-                        <a class="button accent" href="booking.html#calendar">Gå til booking</a>
-                        <a class="button secondary" href="kontakt.html">Kontakt oss</a>
+                        <a class="button accent" href="booking#calendar">Gå til booking</a>
+                        <a class="button secondary" href="kontakt">Kontakt oss</a>
                     </div>
                 </div>
             </div>
@@ -152,10 +161,16 @@
             <div>
                 <h2 class="footer-title">Snarveier</h2>
                 <ul class="footer-links">
-                    <li><a href="lokaler.html" aria-current="page">Våre lokaler</a></li>
-                    <li><a href="booking.html">Lei lokalet</a></li>
-                    <li><a href="medlemskap.html">Medlemskap</a></li>
-                    <li><a href="nyheter.html">Nyheter</a></li>
+                    <li><a href="lokaler" aria-current="page">Våre lokaler</a></li>
+                    <li><a href="booking">Lei lokalet</a></li>
+                    <li><a href="medlemskap">Medlemskap</a></li>
+                    <li><a href="nyheter">Nyheter</a></li>
+                    <li>
+                        <button type="button" class="copy-link-btn btn-share" aria-label="Kopier lenke til denne siden">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.12 17.023l-4.199-2.29a4 4 0 1 1 0-5.465l4.2-2.29a4 4 0 1 1 .959 1.755l-4.2 2.29a4.008 4.008 0 0 1 0 1.954l4.199 2.29a4 4 0 1 1-.959 1.755zM6 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm11-6a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></svg>
+                            <span>Del siden</span>
+                        </button>
+                    </li>
                 </ul>
             </div>
             <div>

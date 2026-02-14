@@ -1114,7 +1114,7 @@ button {
 
 #calendar {
     margin: clamp(1.25rem, 3vw, 2rem) 0;
-    padding: 1.5rem;
+    padding: 0.75rem;
     background: var(--surface);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-card);
@@ -1285,6 +1285,19 @@ label {
 .option-pill:focus-within {
     background: rgba(37, 120, 90, 0.16);
     box-shadow: inset 0 0 0 1px rgba(37, 120, 90, 0.25);
+}
+
+/* Highlight option for Wedding Package */
+.option-pill.highlight-option span {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    font-weight: 600;
+}
+
+.option-pill.highlight-option input:checked + span {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
+    color: white;
 }
 
 .form-actions {
@@ -1583,6 +1596,48 @@ button[type="submit"] {
     color: rgba(245, 247, 246, 0.7);
 }
 
+/* Share Button */
+.btn-share {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    color: inherit;
+    font-family: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none !important;
+    width: fit-content;
+    margin-top: 0.5rem;
+}
+
+.btn-share:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+    color: white;
+}
+
+.btn-share:active {
+    transform: translateY(0);
+}
+
+.btn-share svg {
+    width: 1.1em;
+    height: 1.1em;
+    fill: currentColor;
+    opacity: 0.9;
+}
+
+.btn-share.success {
+    background: var(--brand-500);
+    border-color: var(--brand-500);
+    color: white;
+}
+
 /* Responsive adjustments */
 
 @media (max-width: 768px) {
@@ -1633,6 +1688,20 @@ button[type="submit"] {
     }
 
     .calendar-cta {
+        justify-content: center;
+    }
+
+    #calendar {
+        padding: 0.75rem;
+    }
+
+    .fc-toolbar {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .fc-toolbar-chunk {
+        display: flex;
         justify-content: center;
     }
 
@@ -1841,10 +1910,6 @@ button[type="submit"] {
         padding: 1.25rem 1.35rem;
     }
 
-    #calendar {
-        padding: 1.1rem;
-    }
-
     .footer-grid {
         gap: 2rem;
     }
@@ -1859,4 +1924,88 @@ button[type="submit"] {
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
     }
+}
+
+.vipps-button {
+    background-color: #ff5b24; /* Vipps orange */
+    color: white;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+}
+
+.vipps-button:hover {
+    background-color: #e04e1d;
+    color: white;
+}
+
+.vipps-icon {
+    font-weight: 900;
+    font-style: italic;
+    background: white;
+    color: #ff5b24;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.vipps-payment-container {
+    background: white;
+    padding: 2rem;
+    border-radius: var(--radius-md);
+    text-align: center;
+    margin: 1.5rem 0;
+    box-shadow: var(--shadow-card);
+}
+
+.manual-payment-details {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(0,0,0,0.1);
+}
+
+.small-text {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* Booking payment section */
+.payment-info {
+    display: grid;
+    gap: 1rem;
+}
+
+.price-display {
+    font-size: 1.25rem;
+    color: var(--brand-600);
+    margin: 0;
+    padding: 1rem;
+    background: var(--brand-50);
+    border-radius: var(--radius-sm);
+    text-align: center;
+}
+
+.payment-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.vipps-icon-small {
+    font-weight: 900;
+    font-style: italic;
+    background: #ff5b24;
+    color: white;
+    padding: 0.15rem 0.35rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    display: inline-block;
+    margin-right: 0.25rem;
 }
