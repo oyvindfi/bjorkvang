@@ -2009,3 +2009,31 @@ button[type="submit"] {
     display: inline-block;
     margin-right: 0.25rem;
 }
+
+/* ==========================================
+   Facebook Feed Styling
+   ========================================== */
+
+.facebook-feed-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 2rem auto;
+    max-width: 500px;
+}
+
+.facebook-feed-wrapper .fb-page {
+    width: 100%;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .facebook-feed-wrapper {
+        max-width: 100%;
+    }
+}
+
+/* Gray background section for Facebook feed */
+.bg-gray {
+    background: #f9fafb;
+}
