@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^for file in \\$\\(find \\. -name \"\\*\\.html\" -not -path \"\\./node_modules/\\*\" -not -path \"\\./functions/\\*\"\\); do\n  if grep -q \"Lei lokalet\" \"\\$file\"; then\n    sed -i 's/Lei lokalet/Lei\\\\&nbsp;lokalet/g' \"\\$file\"\n    echo \"Updated: \\$file\"\n  fi\ndone$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}
