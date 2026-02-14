@@ -307,6 +307,81 @@ body.nav-open {
     }
 }
 
+/* Header shortcuts */
+
+.header-shortcuts {
+    background: var(--brand-50);
+    border-bottom: 1px solid rgba(37, 120, 90, 0.12);
+    padding: 0.75rem 0;
+}
+
+.shortcuts-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.shortcut-link {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.6rem 1rem;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(37, 120, 90, 0.1);
+    transition: all var(--transition);
+    text-decoration: none;
+    color: var(--text-primary);
+    min-width: 85px;
+}
+
+.shortcut-link:hover,
+.shortcut-link:focus-visible {
+    background: #fff;
+    border-color: var(--brand-400);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(24, 61, 44, 0.12);
+    color: var(--brand-600);
+}
+
+.shortcut-icon {
+    font-size: 1.4rem;
+    line-height: 1;
+}
+
+.shortcut-text {
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+}
+
+@media (max-width: 600px) {
+    .header-shortcuts {
+        padding: 0.5rem 0;
+    }
+    
+    .shortcuts-container {
+        gap: 0.35rem;
+    }
+    
+    .shortcut-link {
+        padding: 0.45rem 0.65rem;
+        min-width: 70px;
+    }
+    
+    .shortcut-icon {
+        font-size: 1.2rem;
+    }
+    
+    .shortcut-text {
+        font-size: 0.7rem;
+    }
+}
+
 /* Buttons */
 
 .button,
@@ -2256,24 +2331,5 @@ img[loading="lazy"].loaded {
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
-    }
-}
-
-/* Dark mode support (future-ready) */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --text-primary: #e8f0eb;
-        --text-secondary: #b8c9c0;
-        --text-muted: #8fa89e;
-        --surface: #1a2420;
-        --surface-muted: #222d28;
-    }
-    
-    body {
-        color-scheme: dark;
-    }
-    
-    img {
-        opacity: 0.9;
     }
 }
