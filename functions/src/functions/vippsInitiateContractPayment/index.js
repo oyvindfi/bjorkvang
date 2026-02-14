@@ -8,7 +8,7 @@ const { getBooking } = require('../../../shared/cosmosDb');
  * Uses the stored paymentAmount from the booking record.
  */
 app.http('vippsInitiateContractPayment', {
-    methods: ['POST'],
+    methods: ['POST', 'OPTIONS'],
     authLevel: 'anonymous',
     route: 'vipps/initiate-contract-payment',
     handler: async (request, context) => {

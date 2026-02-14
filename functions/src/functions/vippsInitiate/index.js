@@ -3,7 +3,7 @@ const { createJsonResponse, parseBody, resolveBaseUrl } = require('../../../shar
 const { initiatePayment } = require('../../../shared/vipps');
 
 app.http('vippsInitiate', {
-    methods: ['POST'],
+    methods: ['POST', 'OPTIONS'],
     authLevel: 'anonymous',
     route: 'vipps/initiate',
     handler: async (request, context) => {

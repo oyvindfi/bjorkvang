@@ -111,21 +111,21 @@
         <script>
             document.getElementById('vipps-pay-btn').addEventListener('click', async () => {
                 const btn = document.getElementById('vipps-pay-btn');
-                const errorEl = document.getElementById('vipps-error');
-                
+                const statusEl = document.getElementById('vipps-status');
+
                 btn.disabled = true;
                 btn.textContent = 'Laster...';
-                errorEl.style.display = 'none';
+                if (statusEl) statusEl.style.display = 'none';
 
                 try {
                     // Determine API URL based on environment
                     const isLocal = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost';
                     const apiBase = isLocal ? 'http://localhost:7071' : 'https://bjorkvang-duhsaxahgfe0btgv.westeurope-01.azurewebsites.net';
-                    
+
                     const response = await fetch(`${apiBase}/api/vipps/initiate`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({}) 
+                        body: JSON.stringify({})
                     });
 
                     const data = await response.json();
@@ -137,8 +137,11 @@
                     }
                 } catch (err) {
                     console.error(err);
-                    errorEl.textContent = 'Beklager, noe gikk galt. Vennligst prøv manuell betaling.';
-                    errorEl.style.display = 'block';
+                    if (statusEl) {
+                        statusEl.textContent = 'Beklager, noe gikk galt. Vennligst prøv manuell betaling.';
+                        statusEl.style.display = 'block';
+                        statusEl.classList.add('is-error');
+                    }
                     btn.disabled = false;
                     btn.innerHTML = '<span class="vipps-icon">V</span> Betal med Vipps';
                 }

@@ -29,7 +29,7 @@ const calculateAmount = (spaces, attendees) => {
 };
 
 app.http('vippsInitiateBooking', {
-    methods: ['POST'],
+    methods: ['POST', 'OPTIONS'],
     authLevel: 'anonymous',
     route: 'vipps/initiate-booking',
     handler: async (request, context) => {

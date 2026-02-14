@@ -6,7 +6,7 @@ const { sendEmail } = require('../../../shared/email');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
 
 app.http('vippsCheckStatus', {
-    methods: ['POST'],
+    methods: ['POST', 'OPTIONS'],
     authLevel: 'anonymous',
     route: 'vipps/check-status',
     handler: async (request, context) => {
