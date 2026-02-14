@@ -42,24 +42,12 @@ jobs:
         npm run build --if-present
         popd
 
-    - name: 'Login to Azure'
-      uses: azure/login@v1
+    - name: 'Deploy to Azure Functions'
+      uses: Azure/functions-action@v1
       with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-    - name: 'Deploy to Azure Functions via CLI'
-      shell: bash
-      run: |
-        cd ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
-        
-        # Install Azure Functions Core Tools
-        npm install -g azure-functions-core-tools@4 --unsafe-perm true
-        
-        # Prune dev dependencies for production build
-        npm prune --production
-
-        # Deploy using func CLI (local build to avoid conflict)
-        func azure functionapp publish ${{ env.AZURE_FUNCTIONAPP_NAME }} --javascript
+        app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+        package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+        publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
 
     - name: 'Post-deployment verification'
       shell: bash
@@ -70,8 +58,8 @@ jobs:
         # Test calendar endpoint
         echo "Testing calendar endpoint..."
         response=$(curl -s -o /dev/null -w "%{http_code}" \
-          https://${{ env.AZURE_FUNCTIONAPP_NAME }}.azurewebsites.net/api/booking/calendar)
-        
+          https://${{ env.AZURE_FUNCTIONAPP_NAME }}.westeurope-01.azurewebsites.net/api/booking/calendar)
+
         if [ "$response" -eq 200 ]; then
           echo "✅ Health check passed! Calendar endpoint responding."
         else
@@ -79,11 +67,11 @@ jobs:
           echo "Functions may still be starting up..."
           exit 1
         fi
-        
+
         # Test booking endpoint (should return 400 for empty POST)
         echo "Testing booking endpoint..."
         booking_response=$(curl -s -o /dev/null -w "%{http_code}" \
-          -X POST https://${{ env.AZURE_FUNCTIONAPP_NAME }}.azurewebsites.net/api/booking \
+          -X POST https://${{ env.AZURE_FUNCTIONAPP_NAME }}.westeurope-01.azurewebsites.net/api/booking \
           -H "Content-Type: application/json" -d '{}')
         
         if [ "$booking_response" -eq 400 ]; then
