@@ -2037,3 +2037,243 @@ button[type="submit"] {
 .bg-gray {
     background: #f9fafb;
 }
+
+/* ==========================================
+   UI/UX Optimizations
+   ========================================== */
+
+/* Fix navigation text wrapping */
+.site-nav a {
+    white-space: nowrap;
+    min-height: 44px; /* Better touch target */
+}
+
+/* Improve navigation spacing on tablet */
+@media (max-width: 1024px) and (min-width: 901px) {
+    .site-nav ul {
+        gap: 0.4rem;
+    }
+    
+    .site-nav a {
+        padding: 0.55rem 0.85rem;
+        font-size: 0.95rem;
+    }
+}
+
+/* Better mobile navigation */
+@media (max-width: 900px) {
+    .site-nav a {
+        font-size: 1.05rem;
+        min-height: 52px; /* Larger touch targets on mobile */
+    }
+}
+
+/* Improved typography */
+h1, h2, h3, h4, h5, h6 {
+    line-height: 1.2;
+    margin-top: 0;
+}
+
+h1 {
+    font-size: clamp(2.2rem, 5vw, 3.5rem);
+    margin-bottom: 1rem;
+}
+
+h2 {
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    margin-bottom: 0.75rem;
+}
+
+h3 {
+    font-size: clamp(1.35rem, 3vw, 1.75rem);
+    margin-bottom: 0.65rem;
+}
+
+/* Better paragraph spacing */
+p + p {
+    margin-top: 1rem;
+}
+
+/* Improved link styles */
+.text-link {
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-underline-offset: 3px;
+    transition: text-decoration-color var(--transition), color var(--transition);
+}
+
+.text-link:hover,
+.text-link:focus-visible {
+    text-decoration-color: currentColor;
+}
+
+/* Better button hover effects */
+.button {
+    position: relative;
+    overflow: hidden;
+}
+
+.button::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+    opacity: 0;
+    transition: opacity var(--transition);
+}
+
+.button:hover::before {
+    opacity: 1;
+}
+
+/* Smooth scroll behavior */
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 80px; /* Account for sticky header */
+}
+
+/* Improved focus indicators */
+*:focus-visible {
+    outline-offset: 4px;
+}
+
+/* Better card hover effects */
+.info-card,
+.service-card,
+.pricing-card {
+    transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.info-card:hover,
+.service-card:hover,
+.pricing-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 24px 48px rgba(24, 61, 44, 0.15);
+}
+
+/* Improved form inputs */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="date"],
+input[type="time"],
+input[type="number"],
+select,
+textarea {
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="tel"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+input[type="number"]:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--brand-500);
+    box-shadow: 0 0 0 3px rgba(47, 143, 106, 0.1);
+}
+
+/* Better mobile spacing */
+@media (max-width: 768px) {
+    .page-hero {
+        padding: 3rem 0;
+    }
+    
+    .hero-inner {
+        gap: 2rem;
+    }
+    
+    .page-section {
+        padding: 3rem 0;
+    }
+    
+    .container {
+        width: min(1120px, 90vw);
+    }
+}
+
+/* Improved loading states */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.loading {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Better image loading */
+img {
+    background: var(--surface-muted);
+}
+
+img[loading="lazy"] {
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+img[loading="lazy"].loaded {
+    opacity: 1;
+}
+
+/* Improved print styles */
+@media print {
+    .site-header,
+    .nav-toggle,
+    .button,
+    .site-footer button {
+        display: none !important;
+    }
+    
+    body {
+        background: white;
+    }
+    
+    a {
+        text-decoration: underline;
+    }
+    
+    a[href^="http"]:after {
+        content: " (" attr(href) ")";
+        font-size: 0.85em;
+        color: var(--text-muted);
+    }
+}
+
+/* Accessibility: Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Dark mode support (future-ready) */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --text-primary: #e8f0eb;
+        --text-secondary: #b8c9c0;
+        --text-muted: #8fa89e;
+        --surface: #1a2420;
+        --surface-muted: #222d28;
+    }
+    
+    body {
+        color-scheme: dark;
+    }
+    
+    img {
+        opacity: 0.9;
+    }
+}
