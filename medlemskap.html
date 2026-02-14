@@ -215,11 +215,11 @@
 
     <script src="app.js"></script>
     <script>
+        // Check for return from Vipps on page load
         document.addEventListener('DOMContentLoaded', async () => {
-            const payBtn = document.getElementById('vipps-pay-btn');
             const statusEl = document.getElementById('vipps-status');
+            const payBtn = document.getElementById('vipps-pay-btn');
 
-            // Check for return from Vipps
             const urlParams = new URLSearchParams(window.location.search);
             const orderId = urlParams.get('orderId');
             const statusParam = urlParams.get('status');
@@ -227,17 +227,20 @@
             if (orderId && statusParam === 'success') {
                 statusEl.style.display = 'block';
                 statusEl.textContent = 'Sjekker betalingsstatus...';
-                statusEl.className = 'form-status'; // Reset class
+                statusEl.className = 'form-status';
 
                 try {
-                    const response = await fetch('/api/vipps/check-status', {
+                    const isLocal = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost';
+                    const apiBase = isLocal ? 'http://localhost:7071' : 'https://bjorkvang-duhsaxahgfe0btgv.westeurope-01.azurewebsites.net';
+
+                    const response = await fetch(`${apiBase}/api/vipps/check-status`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ orderId })
                     });
-                    
+
                     const data = await response.json();
-                    
+
                     if (data.status === 'AUTHORIZED' || data.status === 'CAPTURED') {
                         statusEl.textContent = 'Takk! Ditt medlemskap er betalt og registrert.';
                         statusEl.className = 'form-status is-success';
@@ -252,36 +255,6 @@
                     statusEl.className = 'form-status is-error';
                 }
             }
-
-            payBtn.addEventListener('click', async () => {
-                payBtn.disabled = true;
-                payBtn.textContent = 'Starter Vipps...';
-                statusEl.style.display = 'none';
-
-                try {
-                    const response = await fetch('/api/vipps/initiate', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({})
-                    });
-
-                    if (!response.ok) throw new Error('Kunne ikke starte betaling');
-
-                    const data = await response.json();
-                    if (data.url) {
-                        window.location.href = data.url;
-                    } else {
-                        throw new Error('Ingen URL mottatt fra Vipps');
-                    }
-                } catch (err) {
-                    console.error(err);
-                    statusEl.textContent = 'Noe gikk galt. Prøv igjen senere.';
-                    statusEl.className = 'form-status is-error';
-                    statusEl.style.display = 'block';
-                    payBtn.disabled = false;
-                    payBtn.textContent = 'Betal med Vipps';
-                }
-            });
         });
     </script>
 </body>
