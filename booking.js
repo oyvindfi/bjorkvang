@@ -227,8 +227,6 @@ document.addEventListener('DOMContentLoaded', function () {
           paymentStatus: bookingDetails.paymentStatus || 'unpaid'
       };
 
-      console.log('Sender booking til API:', payload);
-
       const response = await fetch(BOOKING_API_ENDPOINT, {
           method: 'POST',
           headers: {
@@ -354,8 +352,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!statusEl) {
       if (type === 'error') {
         alert(message);
-      } else {
-        console.log(message);
       }
       return;
     }

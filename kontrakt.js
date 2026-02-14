@@ -201,10 +201,8 @@ const loadContract = async () => {
         // But since we haven't deployed the backend function yet, let's simulate or try.
         
         const response = await fetch(`${API_BASE}/getBooking?id=${id}`);
-        
+
         if (!response.ok) {
-            // Fallback for demo purposes if backend isn't ready or returns 404
-            console.warn('Backend fetch failed, showing error state');
             throw new Error('Kunne ikke hente avtale. Vennligst prøv igjen senere.');
         }
 
