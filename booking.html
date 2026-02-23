@@ -303,30 +303,64 @@
                 </div>
                 <div class="space-gallery" role="list">
                     <article class="space-card" role="listitem">
-                        <figure>
-                            <img src="images/67A6972D-DA19-4F40-B0AC-0C283E59D9F2.jpeg" alt="Selskapsoppsett i Bjørkvangs store sal" loading="lazy">
-                        </figure>
+                        <div class="image-gallery" style="position: relative;">
+                            <div class="gallery-images" style="position: relative; overflow: hidden;">
+                                <img class="gallery-image active" src="images/salen.png?v=6" alt="Storsalen - bilde 1" loading="eager" style="display: block; width: 100%; height: auto; object-fit: cover; aspect-ratio: 4/3;">
+                                <img class="gallery-image" src="images/salen2.png?v=1" alt="Storsalen - bilde 2" loading="eager" style="display: none; width: 100%; height: auto; object-fit: cover; aspect-ratio: 4/3;">
+                            </div>
+                            <button class="gallery-prev" onclick="changeImage(-1, this.closest('.image-gallery'))" style="position: absolute; left: 5px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;">‹</button>
+                            <button class="gallery-next" onclick="changeImage(1, this.closest('.image-gallery'))" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;">›</button>
+                            <div class="gallery-dots" style="position: absolute; bottom: 10px; width: 100%; text-align: center; z-index: 10;">
+                                <span class="dot active" onclick="showImage(0, this.closest('.image-gallery'))" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: white; margin: 0 4px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span>
+                                <span class="dot" onclick="showImage(1, this.closest('.image-gallery'))" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.5); margin: 0 4px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span>
+                            </div>
+                        </div>
                         <div class="space-card__body">
                             <h3>Salen</h3>
                             <p>Romslig sal med scene og plass til både langbord og dansegulv.</p>
+                            <a href="lokaler#salen" class="card-link">Se alle bilder →</a>
                         </div>
                     </article>
                     <article class="space-card" role="listitem">
-                        <figure>
-                            <img src="images/981ED216-C4FB-45C8-8862-E7A537F76A9A.jpeg" alt="Peisestue med sofaer">
-                        </figure>
+                        <div class="image-gallery" style="position: relative;">
+                            <div class="gallery-images" style="position: relative; overflow: hidden;">
+                                <img class="gallery-image active" src="images/peisestuve.png?v=2" alt="Peisestua - bilde 1" loading="eager" style="display: block; width: 100%; height: auto; object-fit: cover; aspect-ratio: 4/3;">
+                                <img class="gallery-image" src="images/peisestuve2.png?v=1" alt="Peisestua - bilde 2" loading="eager" style="display: none; width: 100%; height: auto; object-fit: cover; aspect-ratio: 4/3;">
+                            </div>
+                            <button class="gallery-prev" onclick="changeImage(-1, this.closest('.image-gallery'))" style="position: absolute; left: 5px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;">‹</button>
+                            <button class="gallery-next" onclick="changeImage(1, this.closest('.image-gallery'))" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;">›</button>
+                            <div class="gallery-dots" style="position: absolute; bottom: 10px; width: 100%; text-align: center; z-index: 10;">
+                                <span class="dot active" onclick="showImage(0, this.closest('.image-gallery'))" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: white; margin: 0 4px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span>
+                                <span class="dot" onclick="showImage(1, this.closest('.image-gallery'))" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.5); margin: 0 4px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span>
+                            </div>
+                        </div>
                         <div class="space-card__body">
                             <h3>Peisestua</h3>
                             <p>Intim stue med peis som passer til mindre selskap og møter.</p>
+                            <a href="lokaler#peisestua" class="card-link">Se alle bilder →</a>
                         </div>
                     </article>
                     <article class="space-card" role="listitem">
-                        <figure>
-                            <img src="images/76ee410e-035f-409f-bc0c-025141df694e.png" alt="Kjøkkenbenker">
-                        </figure>
+                        <div class="image-gallery" style="position: relative;">
+                            <div class="gallery-images" style="position: relative; overflow: hidden;">
+                                <img class="gallery-image active" src="images/kjokken1.png?v=2" alt="Kjøkkenet - bilde 1" loading="eager" style="display: block; width: 100%; height: auto; object-fit: cover; aspect-ratio: 4/3;">
+                                <img class="gallery-image" src="images/kjokken2.png?v=1" alt="Kjøkkenet - bilde 2" loading="eager" style="display: none; width: 100%; height: auto; object-fit: cover; aspect-ratio: 4/3;">
+                                <img class="gallery-image" src="images/kjokken3.png?v=1" alt="Kjøkkenet - bilde 3" loading="eager" style="display: none; width: 100%; height: auto; object-fit: cover; aspect-ratio: 4/3;">
+                                <img class="gallery-image" src="images/kjokken4.png?v=1" alt="Kjøkkenet - bilde 4" loading="eager" style="display: none; width: 100%; height: auto; object-fit: cover; aspect-ratio: 4/3;">
+                            </div>
+                            <button class="gallery-prev" onclick="changeImage(-1, this.closest('.image-gallery'))" style="position: absolute; left: 5px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;">‹</button>
+                            <button class="gallery-next" onclick="changeImage(1, this.closest('.image-gallery'))" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;">›</button>
+                            <div class="gallery-dots" style="position: absolute; bottom: 10px; width: 100%; text-align: center; z-index: 10;">
+                                <span class="dot active" onclick="showImage(0, this.closest('.image-gallery'))" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: white; margin: 0 4px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span>
+                                <span class="dot" onclick="showImage(1, this.closest('.image-gallery'))" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.5); margin: 0 4px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span>
+                                <span class="dot" onclick="showImage(2, this.closest('.image-gallery'))" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.5); margin: 0 4px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span>
+                                <span class="dot" onclick="showImage(3, this.closest('.image-gallery'))" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.5); margin: 0 4px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span>
+                            </div>
+                        </div>
                         <div class="space-card__body">
                             <h3>Kjøkken</h3>
                             <p>Fullt utstyrt kjøkken med dekketøy og serveringsløsninger.</p>
+                            <a href="lokaler#kjokken" class="card-link">Se alle bilder →</a>
                         </div>
                     </article>
                 </div>

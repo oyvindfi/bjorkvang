@@ -1129,4 +1129,64 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
   // ----------------------------------------
+
+  // --- Image gallery navigation ---
+  window.changeImage = function(direction, galleryElement) {
+    if (!galleryElement) return;
+    
+    const images = galleryElement.querySelectorAll('.gallery-image');
+    const dots = galleryElement.querySelectorAll('.dot');
+    
+    if (images.length === 0) return;
+    
+    let currentIndex = 0;
+    images.forEach((img, i) => {
+      if (img.classList.contains('active')) {
+        currentIndex = i;
+      }
+    });
+    
+    // Hide current
+    images[currentIndex].classList.remove('active');
+    images[currentIndex].style.display = 'none';
+    dots[currentIndex].classList.remove('active');
+    dots[currentIndex].style.background = 'rgba(255,255,255,0.5)';
+    
+    // Calculate new index
+    let newIndex = currentIndex + direction;
+    if (newIndex >= images.length) newIndex = 0;
+    if (newIndex < 0) newIndex = images.length - 1;
+    
+    // Show new
+    images[newIndex].classList.add('active');
+    images[newIndex].style.display = 'block';
+    dots[newIndex].classList.add('active');
+    dots[newIndex].style.background = 'white';
+  };
+
+  window.showImage = function(index, galleryElement) {
+    if (!galleryElement) return;
+    
+    const images = galleryElement.querySelectorAll('.gallery-image');
+    const dots = galleryElement.querySelectorAll('.dot');
+    
+    if (index < 0 || index >= images.length) return;
+    
+    // Hide all
+    images.forEach(img => {
+      img.classList.remove('active');
+      img.style.display = 'none';
+    });
+    dots.forEach(dot => {
+      dot.classList.remove('active');
+      dot.style.background = 'rgba(255,255,255,0.5)';
+    });
+    
+    // Show selected
+    images[index].classList.add('active');
+    images[index].style.display = 'block';
+    dots[index].classList.add('active');
+    dots[index].style.background = 'white';
+  };
+  // ----------------------------------------
 });

@@ -86,7 +86,7 @@
     <main class="page-main" id="main-content">
         
         <!-- Salen -->
-        <section class="page-section">
+        <section class="page-section" id="salen">
             <div class="container">
                 <div class="upcoming-activities__inner">
                     <div class="upcoming-activities__intro">
@@ -103,20 +103,42 @@
                             <a class="button" href="booking">Lei Salen (3 000 kr)</a>
                         </div>
                     </div>
-                    <figure class="hero-media">
-                        <img src="images/salen.png" alt="Storsalen på Bjørkvang med høyt tak og trebjelker" loading="lazy">
-                    </figure>
+                    <div style="justify-self: center; width: 100%; max-width: 640px;">
+                        <div class="image-gallery" style="position: relative;">
+                            <div class="gallery-images" style="position: relative; overflow: hidden; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                                <img class="gallery-image active" src="images/salen.png?v=5" alt="Storsalen på Bjørkvang med høyt tak og trebjelker" loading="eager" style="width: 100%; height: auto; display: block;">
+                                <img class="gallery-image" src="images/salen2.png?v=1" alt="Storsalen fra et annet perspektiv" loading="eager" style="width: 100%; height: auto; display: none;">
+                            </div>
+                            <button class="gallery-prev" onclick="changeImage(-1, this.closest('.image-gallery'))" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;">‹</button>
+                            <button class="gallery-next" onclick="changeImage(1, this.closest('.image-gallery'))" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;">›</button>
+                            <div class="gallery-dots" style="text-align: center; margin-top: 10px;">
+                                <span class="dot active" onclick="showImage(0, this.closest('.image-gallery'))" style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--brand-500); margin: 0 5px; cursor: pointer;"></span>
+                                <span class="dot" onclick="showImage(1, this.closest('.image-gallery'))" style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #ccc; margin: 0 5px; cursor: pointer;"></span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
 
         <!-- Peisestua -->
-        <section class="page-section" style="background-color: var(--surface-muted);">
+        <section class="page-section" id="peisestua" style="background-color: var(--surface-muted);">
             <div class="container">
                 <div class="upcoming-activities__inner">
-                    <figure class="hero-media">
-                        <img src="images/981ED216-C4FB-45C8-8862-E7A537F76A9A.jpeg" alt="Peisestua med sofaer" loading="lazy">
-                    </figure>
+                    <div style="justify-self: center; width: 100%; max-width: 640px;">
+                        <div class="image-gallery" style="position: relative;">
+                            <div class="gallery-images" style="position: relative; overflow: hidden; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                                <img class="gallery-image active" src="images/peisestuve.png?v=1" alt="Peisestua - bilde 1" loading="eager" style="width: 100%; height: auto; display: block;">
+                                <img class="gallery-image" src="images/peisestuve2.png?v=1" alt="Peisestua - bilde 2" loading="eager" style="width: 100%; height: auto; display: none;">
+                            </div>
+                            <button class="gallery-prev" onclick="changeImage(-1, this.closest('.image-gallery'))" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;">‹</button>
+                            <button class="gallery-next" onclick="changeImage(1, this.closest('.image-gallery'))" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;">›</button>
+                            <div class="gallery-dots" style="text-align: center; margin-top: 10px;">
+                                <span class="dot active" onclick="showImage(0, this.closest('.image-gallery'))" style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--brand-500); margin: 0 5px; cursor: pointer;"></span>
+                                <span class="dot" onclick="showImage(1, this.closest('.image-gallery'))" style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #ccc; margin: 0 5px; cursor: pointer;"></span>
+                            </div>
+                        </div>
+                    </div>
                     <div class="upcoming-activities__intro">
                         <span class="eyebrow">Intimt og koselig</span>
                         <h2>Peisestua</h2>
@@ -136,37 +158,43 @@
         </section>
 
         <!-- Kjøkkenet -->
-        <section class="page-section">
+        <section class="page-section" id="kjokken">
             <div class="container">
-                <div class="section-heading">
-                    <span class="eyebrow">Fullt utstyrt</span>
-                    <h2>Kjøkkenet</h2>
-                    <p>Vi har et stort og funksjonelt storkjøkken som gjør det enkelt å servere mat til mange gjester. Kjøkkenet er inkludert i leien.</p>
-                </div>
-
-                <!-- Kitchen Gallery -->
-                <div class="kitchen-gallery" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-                    <figure style="margin: 0;">
-                        <img src="images/76ee410e-035f-409f-bc0c-025141df694e.png" alt="Kjøkkenet på Bjørkvang" loading="lazy" style="width: 100%; height: 250px; object-fit: cover; border-radius: var(--radius-md);">
-                    </figure>
-                    <figure style="margin: 0; background: var(--surface-muted); display: flex; align-items: center; justify-content: center; border-radius: var(--radius-md); height: 250px;">
-                        <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">Flere bilder kommer snart</p>
-                    </figure>
-                </div>
-
-                <div class="inventory-card" style="max-width: 100%;">
-                    <h3>Utstyrsoversikt</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-                        <ul style="margin: 0;">
-                            <li><strong>Matlaging:</strong> Komfyr med stekeovn og industrielt utstyr</li>
-                            <li><strong>Oppvask:</strong> Industriell oppvaskmaskin (rask syklus)</li>
-                            <li><strong>Kjøl/Frys:</strong> Stort kjøleskap og fryser</li>
-                        </ul>
-                        <ul style="margin: 0;">
-                            <li><strong>Kaffe:</strong> Stor kaffetrakter og vannkoker</li>
-                            <li><strong>Dekketøy:</strong> Servise, glass og bestikk til ca. 100 personer</li>
-                            <li><strong>Annet:</strong> Serveringsfat, skåler, termoser og vaser</li>
-                        </ul>
+                <div class="upcoming-activities__inner">
+                    <div class="upcoming-activities__intro">
+                        <span class="eyebrow">Fullt utstyrt</span>
+                        <h2>Kjøkkenet</h2>
+                        <p>Vi har et stort og funksjonelt storkjøkken som gjør det enkelt å servere mat til mange gjester. Kjøkkenet er inkludert i leien.</p>
+                        
+                        <div class="inventory-card">
+                            <h3>Utstyrsoversikt</h3>
+                            <ul>
+                                <li><strong>Matlaging:</strong> Komfyr med stekeovn og industrielt utstyr</li>
+                                <li><strong>Oppvask:</strong> Industriell oppvaskmaskin (rask syklus)</li>
+                                <li><strong>Kjøl/Frys:</strong> Stort kjøleskap og fryser</li>
+                                <li><strong>Kaffe:</strong> Stor kaffetrakter og vannkoker</li>
+                                <li><strong>Dekketøy:</strong> Servise, glass og bestikk til ca. 100 personer</li>
+                                <li><strong>Annet:</strong> Serveringsfat, skåler, termoser og vaser</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div style="justify-self: center; width: 100%; max-width: 640px;">
+                        <div class="image-gallery" style="position: relative;">
+                            <div class="gallery-images" style="position: relative; overflow: hidden; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                                <img class="gallery-image active" src="images/kjokken1.png?v=1" alt="Kjøkkenet på Bjørkvang - bilde 1" loading="eager" style="width: 100%; height: auto; display: block;">
+                                <img class="gallery-image" src="images/kjokken2.png?v=1" alt="Kjøkkenet på Bjørkvang - bilde 2" loading="eager" style="width: 100%; height: auto; display: none;">
+                                <img class="gallery-image" src="images/kjokken3.png?v=1" alt="Kjøkkenet på Bjørkvang - bilde 3" loading="eager" style="width: 100%; height: auto; display: none;">
+                                <img class="gallery-image" src="images/kjokken4.png?v=1" alt="Kjøkkenet på Bjørkvang - bilde 4" loading="eager" style="width: 100%; height: auto; display: none;">
+                            </div>
+                            <button class="gallery-prev" onclick="changeImage(-1, this.closest('.image-gallery'))" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;">‹</button>
+                            <button class="gallery-next" onclick="changeImage(1, this.closest('.image-gallery'))" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;">›</button>
+                            <div class="gallery-dots" style="text-align: center; margin-top: 10px;">
+                                <span class="dot active" onclick="showImage(0, this.closest('.image-gallery'))" style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--brand-500); margin: 0 5px; cursor: pointer;"></span>
+                                <span class="dot" onclick="showImage(1, this.closest('.image-gallery'))" style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #ccc; margin: 0 5px; cursor: pointer;"></span>
+                                <span class="dot" onclick="showImage(2, this.closest('.image-gallery'))" style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #ccc; margin: 0 5px; cursor: pointer;"></span>
+                                <span class="dot" onclick="showImage(3, this.closest('.image-gallery'))" style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #ccc; margin: 0 5px; cursor: pointer;"></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -222,5 +250,42 @@
     </footer>
 
     <script src="app.js"></script>
+    <script>
+        function changeImage(direction, gallery) {
+            const images = gallery.querySelectorAll('.gallery-image');
+            const dots = gallery.querySelectorAll('.dot');
+            let currentIndex = Array.from(images).findIndex(img => img.classList.contains('active'));
+            
+            images[currentIndex].classList.remove('active');
+            images[currentIndex].style.display = 'none';
+            dots[currentIndex].classList.remove('active');
+            dots[currentIndex].style.background = '#ccc';
+            
+            currentIndex = (currentIndex + direction + images.length) % images.length;
+            
+            images[currentIndex].classList.add('active');
+            images[currentIndex].style.display = 'block';
+            dots[currentIndex].classList.add('active');
+            dots[currentIndex].style.background = 'var(--brand-500)';
+        }
+        
+        function showImage(index, gallery) {
+            const images = gallery.querySelectorAll('.gallery-image');
+            const dots = gallery.querySelectorAll('.dot');
+            
+            images.forEach((img, i) => {
+                img.classList.remove('active');
+                img.style.display = i === index ? 'block' : 'none';
+            });
+            
+            dots.forEach((dot, i) => {
+                dot.classList.remove('active');
+                dot.style.background = i === index ? 'var(--brand-500)' : '#ccc';
+            });
+            
+            images[index].classList.add('active');
+            dots[index].classList.add('active');
+        }
+    </script>
 </body>
 </html>
