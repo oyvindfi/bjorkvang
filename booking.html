@@ -146,17 +146,6 @@
                         <legend>Når og hva?</legend>
                         <div class="form-grid">
                             <div class="form-field">
-                                <label for="event-type">Type arrangement *</label>
-                                <select id="event-type" name="eventType" required>
-                                    <option value="" disabled selected>Velg type</option>
-                                    <option value="Familiefeiring">Familiefeiring</option>
-                                    <option value="Møte eller kurs">Møte eller kurs</option>
-                                    <option value="Konsert eller forestilling">Konsert eller forestilling</option>
-                                    <option value="Dugnad">Dugnad eller nærmiljøtreff</option>
-                                    <option value="Annet">Annet</option>
-                                </select>
-                            </div>
-                            <div class="form-field">
                                 <label for="date">Dato *</label>
                                 <input type="date" id="date" name="date" required>
                             </div>
@@ -168,11 +157,25 @@
                                 <label for="duration">Varighet (timer) *</label>
                                 <input type="number" id="duration" name="duration" min="1" max="12" value="4" required>
                             </div>
+                            <div class="form-field form-field--full">
+                                <label for="event-type">Formål med leie *</label>
+                                <select id="event-type" name="eventType" required>
+                                    <option value="" disabled selected>Hva skal du bruke lokalet til?</option>
+                                    <option value="Familiefeiring">Bursdag, jubileum eller annen familiefeiring</option>
+                                    <option value="Bryllup">Bryllup eller forlovelse</option>
+                                    <option value="Møte eller kurs">Møte, kurs eller seminar</option>
+                                    <option value="Konsert eller forestilling">Konsert, teater eller kulturarrangement</option>
+                                    <option value="Minnestund">Begravelse, minnestund eller samling</option>
+                                    <option value="Dugnad">Dugnad eller nærmiljøtreff</option>
+                                    <option value="Annet">Annet</option>
+                                </select>
+                            </div>
                         </div>
                     </fieldset>
 
                     <fieldset class="form-fieldset form-fieldset--full" aria-labelledby="spaces-label">
-                        <legend id="spaces-label">Hva ønsker du å leie? *</legend>
+                        <legend id="spaces-label">Hvilke lokaler trenger du? *</legend>
+                        <p class="fieldset-description">Velg ett eller flere lokaler. For bryllup anbefaler vi bryllupspakken.</p>
                         <div class="option-grid">
                             <label class="option-pill">
                                 <input type="checkbox" name="spaces" value="Peisestue">
@@ -188,11 +191,11 @@
                             </label>
                             <label class="option-pill highlight-option">
                                 <input type="checkbox" name="spaces" value="Bryllupspakke">
-                                <span>Bryllupspakke (6 000 kr)</span>
+                                <span>🎊 Bryllupspakke (6 000 kr)</span>
                             </label>
                             <label class="option-pill">
                                 <input type="checkbox" name="spaces" value="Små møter">
-                                <span>Små møter/minnesamvær (30 kr/pers)</span>
+                                <span>Lite møte/minnestund (30 kr/pers, min. 10 pers)</span>
                             </label>
                         </div>
                     </fieldset>
