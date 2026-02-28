@@ -1,6 +1,7 @@
 const { app } = require('@azure/functions');
 const { getPlunkApiUrl } = require('../shared/email');
 
+// v1.1 — depositPaid + sendInvoice registrert
 console.log(`Azure Functions runtime starting on Node ${process.version} with Plunk endpoint ${getPlunkApiUrl()}`);
 
 const loadingErrors = {};
