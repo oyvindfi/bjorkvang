@@ -152,6 +152,10 @@
                                 <label for="phone">Telefon *</label>
                                 <input type="tel" id="phone" name="phone" autocomplete="tel" placeholder="+47 000 00 000" required>
                             </div>
+                            <div class="form-field">
+                                <label for="address">Adresse</label>
+                                <input type="text" id="address" name="address" autocomplete="street-address" placeholder="Gate, postnummer og sted">
+                            </div>
                         </div>
                     </fieldset>
 
@@ -204,7 +208,7 @@
                             </label>
                             <label class="option-pill highlight-option">
                                 <input type="checkbox" name="spaces" value="Bryllupspakke">
-                                <span>🎊 Bryllupspakke (6 000 kr)</span>
+                                <span>🎊 Bryllupspakke – fra torsdag kveld (6 000 kr)</span>
                             </label>
                             <label class="option-pill">
                                 <input type="checkbox" name="spaces" value="Små møter">
@@ -228,11 +232,8 @@
                                 <input type="checkbox" name="services" value="Riggehjelp">
                                 <span>Riggehjelp</span>
                             </label>
-                            <label class="option-pill">
-                                <input type="checkbox" name="services" value="Vask">
-                                <span>Vask etter arrangement <em>(pris etter omfang)</em></span>
-                            </label>
                         </div>
+                        <p class="fieldset-description" style="margin-top: 0.75rem;">Leietaker rydder og vasker selv etter arrangementet. Ved behov for ekstra vask vil dette faktureres i tillegg.</p>
                     </fieldset>
 
                     <div class="member-nudge">
@@ -263,24 +264,17 @@
                         <legend id="payment-label">Betaling</legend>
                         <div class="payment-info">
                             <p id="calculated-price" class="price-display">Estimert pris: Velg lokaler</p>
-                            <div class="payment-options">
-                                <label class="option-pill">
-                                    <input type="radio" name="paymentMethod" value="later" checked>
-                                    <span>Betal etter godkjenning</span>
-                                </label>
-                                <label class="option-pill">
-                                    <input type="radio" name="paymentMethod" value="vipps">
-                                    <span>
-                                        <span class="vipps-icon-small">V</span> Betal nå med Vipps
-                                    </span>
-                                </label>
+                            <div class="payment-deposit-info" style="background: var(--surface-muted, #f3f4f6); border-radius: 8px; padding: 14px 18px; margin-top: 10px; font-size: 0.95rem; line-height: 1.6;">
+                                <strong>Depositum (50%) betales nå med Vipps.</strong><br>
+                                Restbeløpet faktureres etter arrangementet.
                             </div>
-                            <p class="small-text">Ved betaling nå får du raskere bekreftelse på bookingen.</p>
                         </div>
                     </fieldset>
 
                     <div class="form-actions">
-                        <button class="button" type="submit">Send forespørsel</button>
+                        <button class="button" type="submit">
+                            <span class="vipps-icon-small" style="font-weight:900; margin-right:4px;">V</span> Book og betal depositum med Vipps
+                        </button>
                         <p id="booking-status" class="form-status" role="status" aria-live="polite"></p>
                     </div>
                 </form>
@@ -312,7 +306,7 @@
                     <article class="product-card">
                         <h3>Bryllupspakke</h3>
                         <p class="price">6 000 kr</p>
-                        <p class="description">Torsdag til søndag. Inkluderer ekstra tid til pynting og nedrigg.</p>
+                        <p class="description">Fra torsdag kveld til søndag. Romslig tid til pynting, feiring og nedrigg.</p>
                     </article>
                     <article class="product-card">
                         <h3>Små møter</h3>

@@ -217,6 +217,7 @@ const loadContract = async () => {
         document.getElementById('renter-name').textContent = booking.name;
         document.getElementById('renter-email').textContent = booking.email;
         document.getElementById('renter-phone').textContent = booking.phone;
+        document.getElementById('renter-address').textContent = booking.address || '–';
         
         document.getElementById('rental-date').textContent = formatDate(booking.date);
         document.getElementById('rental-time').textContent = `${booking.time} (${booking.duration} timer)`;
@@ -464,4 +465,11 @@ const signContractLandlord = async () => {
 };
 
 // Initialize
-document.addEventListener('DOMContentLoaded', loadContract);
+document.addEventListener('DOMContentLoaded', () => {
+    loadContract().then(() => {
+        // Auto-trigger print if ?print=1 is in URL (for admin phone bookings)
+        if (new URLSearchParams(window.location.search).get('print') === '1') {
+            setTimeout(() => window.print(), 800);
+        }
+    });
+});

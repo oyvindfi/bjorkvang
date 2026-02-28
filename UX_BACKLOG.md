@@ -220,17 +220,113 @@
 | BK-10  | Kontaktside         | 🟢 Lav      | Lav    | Fullført       |
 | BK-11  | Branding / navn     | 🟢 Lav      | Medium | Fullført       |
 | UX-09  | Sosialt bevis       | 🟢 Lav      | Høy    | Ikke startet   |
+| FAK-01 | Faktura – admin-UI  | 🔴 Høy      | Medium | Fullført       |
+| FAK-02 | Faktura – e-post    | 🔴 Høy      | Medium | Fullført       |
+| FAK-03 | Faktura – PDF       | 🟡 Medium   | Høy    | Ikke startet   |
+| DEP-01 | Depositum – sporing | 🔴 Høy      | Lav    | Fullført       |
+| DEP-02 | Depositum – varsel  | 🟡 Medium   | Medium | Ikke startet   |
+| VIP-01 | Vipps – depositum 50% | 🔴 Høy    | Medium | Fullført       |
+| VIP-02 | Vipps – obligatorisk | 🔴 Høy     | Lav    | Fullført       |
+| VIP-03 | Sluttfaktura – Vipps | 🟡 Medium  | Høy    | Fullført (Alt A) |
+
+---
+
+## 📱 Vipps-flyt — depositum + sluttfaktura
+
+**Overordnet flyt:**
+```
+Booking-søknad → Vipps 50% depositum → Booking bekreftet →
+Arrangement gjennomført → Admin sender sluttfaktura (50%)
+```
+
+> Merk: Backend-infrastruktur (Vipps API, token, redirect, callback) er allerede implementert.
+> Nåværende flyt tar fullt beløp og betaling er valgfritt. Disse oppgavene justerer det.
+
+### VIP-01 · Endre til 50% depositum ved booking
+**Problem:** `vippsInitiateBooking` tar fullt beløp. Korrekt modell er halvparten ved bestilling, resten etter arrangement.  
+**Forslag:** Del beregnet totalbeløp på 2 i `vippsInitiateBooking/index.js`. Lagre `totalAmount` og `depositAmount` på booking-objektet i Cosmos. Betalingsbeskrivelsen til Vipps merkes «Depositum – 50%».  
+**Impact:** 🔴 Høy | **Effort:** Lav  
+**Status:** `[x] Fullført`
+
+---
+
+### VIP-02 · Gjør Vipps-betaling obligatorisk i booking-skjemaet
+**Problem:** Brukeren kan nå velge «betal senere» og sende inn forespørsel uten å betale. Booking bør ikke opprettes uten at depositum er bekreftet.  
+**Forslag:** Fjern «betal senere»-alternativet i `booking.html`. Booking-knappen starter alltid Vipps-flyten. Booking-objektet opprettes i Cosmos *etter* Vipps bekrefter betaling (allerede tilfellet for Vipps-banen, behold det).  
+**Notater:** Telefonbooking via admin er unntaket — admin kan fortsatt opprette uten Vipps.  
+**Impact:** 🔴 Høy | **Effort:** Lav  
+**Status:** `[x] Fullført`
+
+---
+
+### VIP-03 · Sluttfaktura — resterende 50% etter arrangement
+**Problem:** Ingen flyt for å kreve inn restbeløpet etter arrangementet.  
+**Forslag (to alternativer, velg ett):**
+
+**Alt A – Bankoverføring (enklest):**  
+Admin klikker «Send sluttfaktura» i admin-panelet etter arrangementet. En e-post sendes til leietaker med restbeløp, kontonummer og betalingsfrist 14 dager. Løses med FAK-01/FAK-02.
+
+**Alt B – Vipps eCom charge (mer seamless):**  
+Bruk Vipps [ePayment reserve/capture-mønster](https://developer.vippsmobilepay.com/docs/APIs/epayment-api/): reserver fullt beløp ved booking, capture 50% med det samme, capture resterende 50% manuelt fra admin etter arrangement. Krever at Vipps-avtalen støtter delvis capture.
+
+**Anbefaling:** Start med Alt A (banker på eksisterende e-postinfrastruktur). Alt B er mer elegant men mer komplekst og krever at Vipps-avtalen er riktig satt opp.  
+**Impact:** 🟡 Medium | **Effort:** Høy (Alt B) / Medium (Alt A)  
+**Status:** `[x] Fullført (Alt A — bankoverføring via e-post)`
+
+---
+
+## 💳 Faktura-flyt
+
+### FAK-01 · «Send faktura»-knapp i admin-panelet
+**Problem:** Admin har ingen måte å markere at faktura er sendt eller trigge utsendelse. Det skjer manuelt utenfor systemet og spores ikke.  
+**Forslag:** Legg til en «Send faktura»-knapp på godkjente/gjennomførte bookinger i admin. Knappen setter status `invoiced` og logger tidspunkt.  
+**Impact:** 🔴 Høy | **Effort:** Medium  
+**Status:** `[x] Fullført`
+
+---
+
+### FAK-02 · Fakturamail med betalingsinformasjon
+**Problem:** Ingen automatisk e-post med fakturainfo sendes til leietaker etter arrangementet.  
+**Forslag:** Ved klikk på «Send faktura» sendes en e-post med arrangement, beløp, kontonummer og betalingsfrist (f.eks. 14 dager). Bruker eksisterende Plunk-integrasjon.  
+**Avhengigheter:** FAK-01  
+**Notater:** Kontonummer / betalingsinfo må legges inn av styret (miljøvariabel eller hardkodes).  
+**Impact:** 🔴 Høy | **Effort:** Medium  
+**Status:** `[x] Fullført` *(kontonummer 1822.40.12345 og Vipps 104631 satt via miljøvariabler)*
+
+---
+
+### FAK-03 · PDF-faktura
+**Problem:** Leietaker kan ha behov for en fakturakvittering for regnskap (lag/forening).  
+**Forslag:** Generer en enkel PDF-faktura (via `@react-pdf` eller HTML-til-print) som vedlegges fakturamailen eller kan lastes ned fra admin.  
+**Notater:** Kan løses enkelt med en print-vennlig HTML-side tilsvarende leieavtalen, med fakturanummer og betalingsinfo.  
+**Impact:** 🟡 Medium | **Effort:** Høy  
+**Status:** `[ ] Ikke startet`
+
+---
+
+## 💰 Depositumsflyt
+
+### DEP-01 · Sporing av depositum i admin-panelet
+**Problem:** Signeringssiden har checkbox «depositum er betalt», men dette er leietakers egenerklæring og spores ikke i admin. For telefonbooking finnes ingenting.  
+**Forslag:** Legg til et lite «Depositum mottatt»-kryss/knapp i admin-kortet for godkjente bookinger. Lagres på bookingen og vises som badge. Admin bekrefter manuelt etter at betalingen er sjekket.  
+**Impact:** 🔴 Høy | **Effort:** Lav  
+**Status:** `[x] Fullført`
+
+---
+
+### DEP-02 · Automatisk purrevarsel for depositum
+**Problem:** Hvis leietaker ikke betaler depositum, er det ingen automatikk som minner dem på det.  
+**Forslag:** Dersom depositum ikke er markert som mottatt X dager etter signering (f.eks. 7 dager), sendes en automatisk påminnelse på e-post. Kan utløses av en Azure timer-funksjon eller manuelt fra admin.  
+**Avhengigheter:** DEP-01  
+**Impact:** 🟡 Medium | **Effort:** Medium  
+**Status:** `[ ] Ikke startet`
 
 ---
 
 ## Anbefalt rekkefølge (etter effort/impact)
 
-1. **UX-03** — Forsidekort: Raskt og høy synlig effekt
-2. **UX-07** — Knapptekst: 5 minutter, umiddelbar forbedring
-3. **UX-04** — Navigasjon: Lei-lokalet som CTA-knapp i nav
-4. **UX-02** — Hero: Ny tekst og layout
-5. **UX-01** — Fargesystem: Varm sekundærfarge
-6. **UX-05** — Seksjonsvariasjon: Kommende arrangementer på forsiden
-7. **UX-08** — Footer: Vennligere avslutning
-8. **UX-06** — Logo: Ny ikonografi
-9. **UX-09** — Sosialt bevis: Bilder og sitater
+1. **DEP-01** — Depositum-sporing i admin: Lav effort, høy verdi, ingen avhengigheter
+2. **FAK-01** — «Send faktura»-knapp i admin: Grunnmuren for fakturaflyt
+3. **FAK-02** — Fakturamail med betalingsinfo: Direkte verdi for leietaker, bygger på FAK-01
+4. **DEP-02** — Purrevarsel depositum: Bygger på DEP-01, krever litt mer infrastruktur
+5. **FAK-03** — PDF-faktura: Nice-to-have, høyest effort

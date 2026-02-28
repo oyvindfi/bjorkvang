@@ -277,6 +277,7 @@ document.addEventListener('DOMContentLoaded', function () {
           requesterName: bookingDetails.name,
           requesterEmail: bookingDetails.email,
           phone: bookingDetails.phone,
+          address: bookingDetails.address,
           message: bookingDetails.message,
           duration: bookingDetails.duration,
           eventType: bookingDetails.eventType,
@@ -284,7 +285,9 @@ document.addEventListener('DOMContentLoaded', function () {
           services: bookingDetails.services,
           attendees: bookingDetails.attendees,
           paymentOrderId: bookingDetails.paymentOrderId || null,
-          paymentStatus: bookingDetails.paymentStatus || 'unpaid'
+          paymentStatus: bookingDetails.paymentStatus || 'unpaid',
+          depositAmount: bookingDetails.depositAmount || null,
+          totalAmount: bookingDetails.totalAmount || null,
       };
 
       const response = await fetch(BOOKING_API_ENDPOINT, {
@@ -952,6 +955,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const name = (formValues.name || '').trim();
       const email = (formValues.email || '').trim();
       const phone = (formValues.phone || '').trim();
+      const address = (formValues.address || '').trim();
       const dateValue = formValues.date || '';
       const timeValue = formValues.time || '';
       const durationInput = formValues.duration || '';
@@ -1038,6 +1042,7 @@ document.addEventListener('DOMContentLoaded', function () {
         name,
         email,
         phone,
+        address,
         message,
         duration,
         eventType,
@@ -1049,62 +1054,47 @@ document.addEventListener('DOMContentLoaded', function () {
         endDate
       };
 
-      // If user chose Vipps payment, redirect to Vipps first
-      if (paymentMethod === 'vipps') {
-        try {
-          showStatus('Starter Vipps-betaling ...', 'info');
-
-          const vippsResponse = await fetch(`${API_BASE_URL}/api/vipps/initiate-booking`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              phoneNumber: phone,
-              spaces: selectedSpaces,
-              attendees: attendeeCount,
-              date: dateValue,
-              time: timeValue,
-              requesterName: name,
-              eventType: eventType
-            })
-          });
-
-          if (!vippsResponse.ok) {
-            const errorData = await vippsResponse.json();
-            throw new Error(errorData.error || 'Kunne ikke starte Vipps-betaling');
-          }
-
-          const vippsData = await vippsResponse.json();
-
-          // Store booking details in sessionStorage so we can submit after payment
-          sessionStorage.setItem('pendingBooking', JSON.stringify(bookingDetails));
-          sessionStorage.setItem('vippsOrderId', vippsData.orderId);
-
-          // Redirect to Vipps
-          window.location.href = vippsData.url;
-          return;
-        } catch (error) {
-          console.error('Vipps payment error:', error);
-          showStatus('Kunne ikke starte Vipps-betaling. Prøv "Betal etter godkjenning" i stedet.', 'error');
-          isSubmitting = false;
-          return;
-        }
-      }
-
-      // Regular booking submission without Vipps payment
-
+      // Always use Vipps - deposit (50%) paid upfront, rest invoiced after event
       try {
-        showStatus('Sender forespørselen ...', 'info');
-        await submitBooking(bookingDetails);
+        showStatus('Starter Vipps-betaling ...', 'info');
+
+        const vippsResponse = await fetch(`${API_BASE_URL}/api/vipps/initiate-booking`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            phoneNumber: phone,
+            spaces: selectedSpaces,
+            attendees: attendeeCount,
+            date: dateValue,
+            time: timeValue,
+            requesterName: name,
+            eventType: eventType
+          })
+        });
+
+        if (!vippsResponse.ok) {
+          const errorData = await vippsResponse.json();
+          throw new Error(errorData.error || 'Kunne ikke starte Vipps-betaling');
+        }
+
+        const vippsData = await vippsResponse.json();
+
+        // Enrich booking details with deposit/total amounts from Vipps response
+        bookingDetails.totalAmount = vippsData.totalAmount;
+        bookingDetails.depositAmount = vippsData.depositAmount;
+
+        // Store booking details in sessionStorage so we can submit after payment
+        sessionStorage.setItem('pendingBooking', JSON.stringify(bookingDetails));
+        sessionStorage.setItem('vippsOrderId', vippsData.orderId);
+
+        // Redirect to Vipps
+        window.location.href = vippsData.url;
+        return;
       } catch (error) {
-        console.error('Kunne ikke sende bookingforespørsel:', error);
-        // Use the server's message when available (e.g. double-booking 409 conflict),
-        // otherwise fall back to a generic network error hint.
-        showStatus(
-          error.message || 'Kunne ikke sende bookingforespørselen. Sjekk nettforbindelsen og prøv igjen litt senere.',
-          'error'
-        );
+        console.error('Vipps payment error:', error);
+        showStatus('Kunne ikke starte Vipps-betaling. Prøv igjen eller kontakt styret.', 'error');
         isSubmitting = false;
         return;
       }

@@ -127,8 +127,11 @@ function createBookingCard(booking) {
     const contract = booking.contract || {};
     const isRequesterSigned = !!contract.signedAt;
     const isLandlordSigned = !!contract.landlordSignedAt;
+    const depositPaid = !!booking.depositPaid;
+    const invoiceSent = !!booking.invoiceSentAt;
     
     let signatureBadge = '';
+    let depositBadge = '';
     
     if (booking.status === 'approved') {
         if (isLandlordSigned) {
@@ -138,6 +141,9 @@ function createBookingCard(booking) {
         } else {
             signatureBadge = `<span style="background:#fef3c7; color:#92400e; padding:2px 6px; border-radius:4px; font-size:0.8rem; margin-left:5px;">⚠ Venter på signering</span>`;
         }
+        depositBadge = depositPaid
+            ? `<span style="background:#d1fae5; color:#065f46; padding:2px 6px; border-radius:4px; font-size:0.8rem; margin-left:5px;">💰 Depositum betalt</span>`
+            : `<span style="background:#fee2e2; color:#991b1b; padding:2px 6px; border-radius:4px; font-size:0.8rem; margin-left:5px;">⚠ Depositum ikke registrert</span>`;
     }
 
     // Format created date
@@ -155,7 +161,7 @@ function createBookingCard(booking) {
 
     div.innerHTML = `
         <div class="booking-details">
-            <h3>${booking.eventType || 'Reservasjon'} – ${formatDate(booking.date)} ${signatureBadge}</h3>
+            <h3>${booking.eventType || 'Reservasjon'} – ${formatDate(booking.date)} ${signatureBadge} ${depositBadge}</h3>
             <div class="booking-meta"><strong>Tid:</strong> ${booking.time} (${booking.duration} timer)</div>
             <div class="booking-meta"><strong>Navn:</strong> ${booking.requesterName}</div>
             <div class="booking-meta"><strong>E-post:</strong> <a href="mailto:${booking.requesterEmail}">${booking.requesterEmail}</a></div>
@@ -163,6 +169,7 @@ function createBookingCard(booking) {
             <div class="booking-meta"><strong>Areal:</strong> ${spaces || 'Ikke spesifisert'}</div>
             ${services ? `<div class="booking-meta"><strong>Tillegg:</strong> ${services}</div>` : ''}
             ${booking.attendees ? `<div class="booking-meta"><strong>Antall:</strong> ${booking.attendees}</div>` : ''}
+            ${booking.depositAmount ? `<div class="booking-meta"><strong>Depositum:</strong> ${booking.depositAmount.toLocaleString('nb-NO')} kr &nbsp;|&nbsp; <strong>Totalt:</strong> ${(booking.totalAmount || booking.depositAmount * 2).toLocaleString('nb-NO')} kr &nbsp;|&nbsp; <strong>Restbeløp:</strong> ${((booking.totalAmount || booking.depositAmount * 2) - booking.depositAmount).toLocaleString('nb-NO')} kr</div>` : ''}
             ${booking.message ? `<div class="booking-meta" style="margin-top:5px; font-style:italic;">"${booking.message}"</div>` : ''}
             <div class="booking-meta" style="margin-top:5px; font-size:0.8rem; color:#999;">
                 Sendt inn: ${createdStr}<br>
@@ -170,6 +177,7 @@ function createBookingCard(booking) {
             </div>
             ${isRequesterSigned ? `<div class="booking-meta" style="color:#1e40af; font-size:0.8rem;">Leietaker signerte: ${new Date(contract.signedAt).toLocaleString('nb-NO')}</div>` : ''}
             ${isLandlordSigned ? `<div class="booking-meta" style="color:#059669; font-size:0.8rem;">Utleier signerte: ${new Date(contract.landlordSignedAt).toLocaleString('nb-NO')}</div>` : ''}
+            ${booking.invoiceSentAt ? `<div class="booking-meta" style="color:#059669; font-size:0.8rem;">📧 Sluttfaktura sendt: ${new Date(booking.invoiceSentAt).toLocaleString('nb-NO')}</div>` : ''}
         </div>
         <div class="booking-actions">
             ${booking.status === 'pending' ? `
@@ -181,6 +189,9 @@ function createBookingCard(booking) {
                 <button onclick="openContract('${booking.id}')" class="btn-sm" style="background:${isLandlordSigned ? '#10b981' : '#3b82f6'};">
                     ${isLandlordSigned ? 'Se avtale' : (isRequesterSigned ? 'Signer som utleier' : 'Kopier lenke')}
                 </button>
+                <button onclick="printContract('${booking.id}')" class="btn-sm" style="background:#64748b;" title="Åpner utskriftsvennlig versjon – for telefonbooking og papirskjema">🖨 Skriv ut avtale</button>
+                ${!depositPaid ? `<button onclick="markDepositPaid('${booking.id}')" class="btn-sm" style="background:#0ea5e9;">💰 Depositum mottatt</button>` : ''}
+                ${!invoiceSent ? `<button onclick="sendInvoice('${booking.id}')" class="btn-sm" style="background:#8b5cf6;" title="Send sluttfaktura med restbeløp til leietaker">📧 Send sluttfaktura</button>` : ''}
                 <button onclick="sendReminder('${booking.id}')" class="btn-sm" style="background:#f59e0b; color:black;">Påminnelse</button>
             ` : ''}
         </div>
@@ -190,11 +201,11 @@ function createBookingCard(booking) {
 
 function openContract(id) {
     const link = window.location.origin + '/leieavtale?id=' + id + '&mode=admin';
-    // If requester has signed, open it directly for admin to sign
-    // If not, copy link for admin to send (or open to check)
-    // For simplicity, we'll just open it in a new tab if signed, or copy if not.
-    // But the button text changes, so let's check the button text or just do both?
-    // Let's just open it.
+    window.open(link, '_blank');
+}
+
+function printContract(id) {
+    const link = window.location.origin + '/leieavtale?id=' + id + '&print=1';
     window.open(link, '_blank');
 }
 
@@ -225,6 +236,46 @@ async function sendReminder(id) {
     } catch (error) {
         console.error(error);
         alert('Feil ved kommunikasjon med server.');
+    }
+}
+
+async function markDepositPaid(id) {
+    if (!confirm('Bekreft at depositum er mottatt for denne bookingen?')) return;
+    try {
+        const response = await fetch(`${API_BASE_URL}/booking/deposit-paid?id=${id}`, {
+            method: 'POST',
+            headers: { 'Accept': 'application/json' }
+        });
+        if (response.ok) {
+            alert('Depositum markert som betalt!');
+            loadDashboard();
+        } else {
+            alert('Noe gikk galt. Prøv igjen.');
+        }
+    } catch (error) {
+        console.error(error);
+        alert('Nettverksfeil.');
+    }
+}
+
+async function sendInvoice(id) {
+    if (!confirm('Send sluttfaktura med restbeløp til leietaker?')) return;
+    try {
+        const response = await fetch(`${API_BASE_URL}/booking/invoice`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+        if (response.ok) {
+            alert('Sluttfaktura sendt!');
+            loadDashboard();
+        } else {
+            const data = await response.json().catch(() => ({}));
+            alert(`Feil: ${data.error || 'Kunne ikke sende faktura.'}`);
+        }
+    } catch (error) {
+        console.error(error);
+        alert('Nettverksfeil.');
     }
 }
 

@@ -54,12 +54,14 @@ app.http('vippsInitiateBooking', {
                 return createJsonResponse(400, { error: 'Date, time, and name are required' });
             }
 
-            // Calculate amount
-            const amount = calculateAmount(spaces, attendees);
+            // Calculate full amount and 50% deposit
+            const totalAmount = calculateAmount(spaces, attendees);
 
-            if (amount === 0) {
+            if (totalAmount === 0) {
                 return createJsonResponse(400, { error: 'Invalid pricing configuration' });
             }
+
+            const depositAmount = Math.round(totalAmount / 2); // 50% deposit in øre
 
             // Generate unique order ID including booking details
             const orderId = `booking-${date}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
@@ -69,10 +71,10 @@ app.http('vippsInitiateBooking', {
             const returnUrl = `${baseUrl.replace('/api', '')}/booking?status=success&orderId=${orderId}`;
 
             // Create descriptive payment text
-            const paymentText = `Booking ${eventType || 'arrangement'} - ${spaces.join(', ')} - ${date} kl ${time}`;
+            const paymentText = `Depositum (50%) – ${eventType || 'arrangement'} - ${spaces.join(', ')} - ${date} kl ${time}`;
 
             const paymentResponse = await initiatePayment({
-                amount,
+                amount: depositAmount,
                 phoneNumber, // Optional, pre-fills number in Vipps
                 returnUrl,
                 orderId,
@@ -82,7 +84,8 @@ app.http('vippsInitiateBooking', {
             return createJsonResponse(200, {
                 url: paymentResponse.redirectUrl,
                 orderId: orderId,
-                amount: amount / 100 // Return amount in NOK for reference
+                depositAmount: depositAmount / 100, // in NOK
+                totalAmount: totalAmount / 100      // in NOK – for reference
             });
 
         } catch (error) {

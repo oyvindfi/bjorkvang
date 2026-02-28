@@ -179,9 +179,52 @@
 
         @media print {
             body { background: white; }
-            .contract-container { box-shadow: none; margin: 0; padding: 0; }
+            .contract-container { box-shadow: none; margin: 0; padding: 20px; }
             .btn-sign { display: none; }
             .terms-box { max-height: none; overflow: visible; border: none; padding: 0; }
+
+            /* Hide digital signing UI, show paper signature lines instead */
+            #signature-area .signature-pad-container,
+            #signature-area > p,
+            #signature-area > div,
+            #signature-area button,
+            #landlord-signature-area { display: none !important; }
+
+            #signature-area {
+                background: none !important;
+                border: none !important;
+                text-align: left !important;
+                padding: 0 !important;
+                margin-top: 40px;
+            }
+
+            .print-signature-block {
+                display: flex !important;
+                gap: 60px;
+                margin-top: 20px;
+            }
+
+            .print-signature-line {
+                flex: 1;
+            }
+
+            .print-signature-line p {
+                font-size: 0.85rem;
+                color: #444;
+                margin-bottom: 40px;
+            }
+
+            .print-signature-line::after {
+                content: '';
+                display: block;
+                border-bottom: 1px solid #000;
+                margin-bottom: 6px;
+            }
+
+            .print-signature-label {
+                font-size: 0.8rem;
+                color: #666;
+            }
         }
     </style>
 </head>
@@ -212,6 +255,10 @@
                 <div class="detail-item">
                     <span class="detail-label">Telefon</span>
                     <div class="detail-value" id="renter-phone">...</div>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Adresse</span>
+                    <div class="detail-value" id="renter-address">...</div>
                 </div>
             </div>
         </div>
@@ -252,28 +299,53 @@
         <div class="contract-section">
             <h2>Vilkår og regler</h2>
             <div class="terms-box">
-                <p><strong>Ved å signere denne avtalen bekrefter leietaker å ha lest og forstått følgende:</strong></p>
-                
-                <h3>1. Ansvar</h3>
-                <p>Leietaker er ansvarlig for lokalet og inventaret i leieperioden. Leietaker plikter å erstatte skader som oppstår ved uaktsom bruk.</p>
-                
-                <h3>2. Brannvern</h3>
-                <p>Leietaker plikter å sette seg inn i branninstruksen som henger i lokalet. Nødutganger skal ikke blokkeres.</p>
-                
-                <h3>3. Orden og renhold</h3>
-                <p>Lokalet skal forlates i ryddig stand. Bord og stoler settes på plass. Søppel kastes i container ute. Gulv skal feies/vaskes iht. sjekkliste hvis ikke annet er avtalt.</p>
-                
+                <p><strong>Ved å signere denne avtalen bekrefter leietaker å ha lest og godtatt følgende vilkår:</strong></p>
+
+                <h3>Tilgang til lokalet</h3>
+                <p>Ved leie disponerer leietaker lokalet fra kl. 18.00 dagen før leiedato, dersom det er ledig. Det er også mulig å leie en ekstra dag for et tillegg på <strong>kr 1 000</strong>.</p>
+
+                <h3>1. Myndighetskrav</h3>
+                <p>Leietager plikter å sette seg inn i og opprettholde gjeldende anbefalinger og pålegg fra myndighetene, herunder:</p>
+                <ul>
+                    <li>Se vedlegg fra kommunen ang. skjenkebevilgning i HMS-perm.</li>
+                    <li>Ha lest og gjennomgått brann- og rømmingsinstruks for Bjørkvang (se baksiden/HMS-perm).</li>
+                </ul>
+
+                <h3>2. Skadeansvar</h3>
+                <p>Leietageren kan holdes økonomisk ansvarlig for skader som påføres bygninger/lokalene med inventar og utomhusområde. Vi har godt forhold til våre naboer, og ønsker at dette skal opprettholdes – vis hensyn utendørs.</p>
+
+                <h3>3. Renhold</h3>
+                <p>Leietaker er ansvarlig for å rydde og vaske lokalet etter bruk. Dersom lokalet ikke er tilfredsstillende rengjort, vil kostnad for ekstra vask faktureres i tillegg til leiebeløpet.</p>
+
                 <h3>4. Avbestilling</h3>
-                <p>Avbestilling må skje senest 14 dager før leiedato. Ved senere avbestilling kan et gebyr påløpe.</p>
-                
-                <h3>5. Nøkler</h3>
-                <p>Nøkkelutlevering avtales med styret. Tap av nøkkel medfører erstatningsansvar for bytte av låssystem.</p>
+                <p>Avbestilling senere enn to uker før leiedato belastes med <strong>halv leie</strong>.</p>
+
+                <h3>4. Verdisaker og utstyr</h3>
+                <p>Leietageren er selv ansvarlig for sikker oppbevaring av effekter og verdisaker. Helgøens Vel har ikke ansvar for skade på eller tyveri av slike effekter. Leietager/bruker må selv vurdere om de skal forsikre eget utstyr.</p>
+
+                <h3>5. Servicemedarbeider</h3>
+                <p>Leietageren skal rette seg etter de anvisninger som Bjørkvangs servicemedarbeider påpeker under leieforholdet. Servicemedarbeideren kan, dersom sikkerheten ikke er ivaretatt og/eller skade på bygg og inventar og/eller at ordensreglene brytes, bortvise leietager/bruker eller stenge lokalet.</p>
+
+                <h3>6. Varsling ved uregelmessigheter</h3>
+                <p>Eventuelle uregelmessigheter i tilknytning til leieforholdet varsles straks til Bjørkvangs servicemedarbeider, tlf. <strong>480 60 273</strong>, eller til leder i Helgøens Vel, tlf. <strong>916 64 918</strong>.</p>
             </div>
         </div>
 
         <div class="signature-section" id="signature-area">
             <h3>Signering</h3>
             <p>Jeg bekrefter herved bestillingen og godtar leievilkårene.</p>
+
+            <!-- Papirbaserte signaturlinjer – kun synlig ved utskrift -->
+            <div class="print-signature-block" style="display:none;">
+                <div class="print-signature-line">
+                    <p>Ansvarlig leietaker</p>
+                    <span class="print-signature-label">Underskrift leietaker</span>
+                </div>
+                <div class="print-signature-line">
+                    <p>For Helgøens Vel / Bjørkvang</p>
+                    <span class="print-signature-label">Underskrift utleier</span>
+                </div>
+            </div>
             
             <div style="margin: 20px 0; text-align: left; background: white; padding: 15px; border-radius: 4px; border: 1px solid #ddd;">
                 <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer;">
