@@ -84,7 +84,24 @@
         .btn-reject { background-color: #ef4444; }
         .btn-reject:hover { background-color: #dc2626; }
 
+        .btn-primary { background-color: #2563eb; color: white; }
+        .btn-primary:hover { background-color: #1d4ed8; }
+
         .hidden { display: none !important; }
+
+        .manual-booking-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-top: 16px;
+        }
+        .manual-booking-form .full { grid-column: 1 / -1; }
+        .manual-booking-form label { display: flex; flex-direction: column; font-size: 0.9rem; font-weight: 600; gap: 4px; }
+        .manual-booking-form input,
+        .manual-booking-form select,
+        .manual-booking-form textarea { padding: 8px 10px; border: 1px solid #ddd; border-radius: 5px; font: inherit; }
+        .manual-booking-form .option-row { display: flex; flex-wrap: wrap; gap: 8px; }
+        .manual-booking-form .option-row label { flex-direction: row; align-items: center; font-weight: normal; gap: 5px; cursor: pointer; }
 
         .stats-grid {
             display: grid;
@@ -137,7 +154,80 @@
         </div>
 
         <div class="dashboard-section">
-            <h2>🔔 Venter på godkjenning</h2>
+            <h2 style="cursor:pointer;" onclick="toggleManualBooking()">🗓 Registrer manuell booking (telefon/e-post) <span id="manual-toggle-icon">▼</span></h2>
+            <div id="manual-booking-panel" class="hidden">
+                <form id="manual-booking-form" onsubmit="createManualBooking(event)">
+                    <div class="manual-booking-form">
+                        <label>Kundens navn *
+                            <input type="text" id="mb-name" required placeholder="Ola Nordmann">
+                        </label>
+                        <label>Kundens e-post *
+                            <input type="email" id="mb-email" required placeholder="ola@example.com">
+                        </label>
+                        <label>Telefon
+                            <input type="tel" id="mb-phone" placeholder="+47 000 00 000">
+                        </label>
+                        <label>Dato *
+                            <input type="date" id="mb-date" required>
+                        </label>
+                        <label>Starttidspunkt *
+                            <input type="time" id="mb-time" required value="12:00">
+                        </label>
+                        <label>Varighet (timer) *
+                            <input type="number" id="mb-duration" required min="1" max="72" value="4">
+                        </label>
+                        <label class="full">Formål *
+                            <select id="mb-eventtype" required>
+                                <option value="" disabled selected>Velg formål</option>
+                                <option>Familiefeiring</option>
+                                <option>Bryllup</option>
+                                <option>Møte eller kurs</option>
+                                <option>Konsert eller forestilling</option>
+                                <option>Minnestund</option>
+                                <option>Dugnad</option>
+                                <option>Annet</option>
+                            </select>
+                        </label>
+                        <div class="full">
+                            <strong style="font-size:0.9rem;">Lokale *</strong>
+                            <div class="option-row" style="margin-top:6px;" id="mb-spaces-row">
+                                <label><input type="checkbox" name="mb-spaces" value="Peisestue" onchange="mbEnforceSpace(this)"> Peisestue (1 500 kr)</label>
+                                <label><input type="checkbox" name="mb-spaces" value="Salen" onchange="mbEnforceSpace(this)"> Sal (3 000 kr)</label>
+                                <label><input type="checkbox" name="mb-spaces" value="Hele lokalet" onchange="mbEnforceSpace(this)"> Hele lokalet (4 000 kr)</label>
+                                <label><input type="checkbox" name="mb-spaces" value="Bryllupspakke" onchange="mbEnforceSpace(this)">🎊 Bryllupspakke (6 000 kr)</label>
+                                <label><input type="checkbox" name="mb-spaces" value="Små møter" onchange="mbEnforceSpace(this)"> Lite møte/minnestund (30 kr/pers)</label>
+                            </div>
+                        </div>
+                        <div class="full">
+                            <strong style="font-size:0.9rem;">Tillegg</strong>
+                            <div class="option-row" style="margin-top:6px;">
+                                <label><input type="checkbox" name="mb-services" value="Projektor"> Projektor</label>
+                                <label><input type="checkbox" name="mb-services" value="Teknisk utstyr"> Teknisk utstyr</label>
+                                <label><input type="checkbox" name="mb-services" value="Riggehjelp"> Riggehjelp</label>
+                                <label><input type="checkbox" name="mb-services" value="Vask"> Vask</label>
+                            </div>
+                        </div>
+                        <label>Antall deltakere
+                            <input type="number" id="mb-attendees" min="1" placeholder="Ca. antall gjester">
+                        </label>
+                        <label class="full">Notat / tilleggsinformasjon
+                            <textarea id="mb-message" rows="2" placeholder="Eventuelle notater om bestillingen"></textarea>
+                        </label>
+                        <label style="flex-direction:row; align-items:center; gap:8px; font-weight:normal;">
+                            <input type="checkbox" id="mb-member"> Kunden er medlem av Helgøens Vel (−500 kr rabatt)
+                        </label>
+                        <div class="full" style="display:flex; gap:12px; margin-top:4px;">
+                            <button type="submit" class="btn-sm btn-primary" style="padding:10px 24px;">Opprett og godkjenn booking</button>
+                            <button type="button" class="btn-sm" style="background:#aaa;" onclick="toggleManualBooking()">Avbryt</button>
+                        </div>
+                        <p id="mb-status" class="full" style="margin:0; font-size:0.9rem;"></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="dashboard-section">
+            <h2>&#x1F514; Venter på godkjenning</h2>
             <div id="pending-list">Laster...</div>
         </div>
 

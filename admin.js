@@ -294,3 +294,101 @@ function toggleHistory() {
     const el = document.getElementById('history-list');
     el.classList.toggle('hidden');
 }
+
+function toggleManualBooking() {
+    const panel = document.getElementById('manual-booking-panel');
+    const icon  = document.getElementById('manual-toggle-icon');
+    const isHidden = panel.classList.toggle('hidden');
+    icon.textContent = isHidden ? '▼' : '▲';
+    if (!isHidden) panel.querySelector('input')?.focus();
+}
+
+const MB_WHOLE = ['Hele lokalet', 'Bryllupspakke'];
+const MB_INDIVIDUAL = ['Peisestue', 'Salen', 'Små møter'];
+
+function mbEnforceSpace(changed) {
+    if (!changed.checked) return;
+    const all = document.querySelectorAll('input[name="mb-spaces"]');
+    if (MB_WHOLE.includes(changed.value)) {
+        all.forEach(cb => { if (cb !== changed) cb.checked = false; });
+    } else if (MB_INDIVIDUAL.includes(changed.value)) {
+        all.forEach(cb => {
+            if (cb !== changed && (MB_WHOLE.includes(cb.value) || MB_INDIVIDUAL.includes(cb.value)))
+                cb.checked = false;
+        });
+    }
+}
+
+async function createManualBooking(event) {
+    event.preventDefault();
+    const statusEl = document.getElementById('mb-status');
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+
+    const spaces = Array.from(document.querySelectorAll('input[name="mb-spaces"]:checked')).map(cb => cb.value);
+    if (spaces.length === 0) {
+        statusEl.style.color = '#ef4444';
+        statusEl.textContent = 'Velg minst ett lokale.';
+        return;
+    }
+
+    const services = Array.from(document.querySelectorAll('input[name="mb-services"]:checked')).map(cb => cb.value);
+
+    const payload = {
+        requesterName:  document.getElementById('mb-name').value.trim(),
+        requesterEmail: document.getElementById('mb-email').value.trim(),
+        phone:          document.getElementById('mb-phone').value.trim(),
+        date:           document.getElementById('mb-date').value,
+        time:           document.getElementById('mb-time').value,
+        duration:       parseFloat(document.getElementById('mb-duration').value),
+        eventType:      document.getElementById('mb-eventtype').value,
+        message:        document.getElementById('mb-message').value.trim(),
+        attendees:      parseInt(document.getElementById('mb-attendees').value) || null,
+        isMember:       document.getElementById('mb-member').checked,
+        spaces,
+        services,
+        adminCreated:   true,
+    };
+
+    submitBtn.disabled = true;
+    statusEl.style.color = '#555';
+    statusEl.textContent = 'Oppretter booking...';
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/booking`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            statusEl.style.color = '#ef4444';
+            statusEl.textContent = data.message || data.error || 'Noe gikk galt.';
+            return;
+        }
+
+        // Auto-approve since admin is creating it
+        const approveRes = await fetch(`${API_BASE_URL}/booking/approve?id=${encodeURIComponent(data.id)}`, {
+            method: 'POST',
+            headers: { 'Accept': 'application/json' }
+        });
+
+        if (approveRes.ok) {
+            statusEl.style.color = '#059669';
+            statusEl.textContent = `✓ Booking opprettet og godkjent (ID: ${data.id})`;
+            event.target.reset();
+            loadDashboard();
+        } else {
+            statusEl.style.color = '#f59e0b';
+            statusEl.textContent = `Booking opprettet (ID: ${data.id}), men automatisk godkjenning feilet. Godkjenn manuelt i listen.`;
+            loadDashboard();
+        }
+    } catch (err) {
+        console.error('createManualBooking failed', err);
+        statusEl.style.color = '#ef4444';
+        statusEl.textContent = 'Nettverksfeil. Sjekk konsollen.';
+    } finally {
+        submitBtn.disabled = false;
+    }
+}

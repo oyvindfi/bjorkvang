@@ -26,7 +26,10 @@ document.addEventListener('DOMContentLoaded', function () {
     'Små møter': 30 // per person
   };
 
-  // Calculate total price based on selected spaces and attendees
+  const MEMBER_DISCOUNT = 500;
+  const MEMBER_ELIGIBLE_SPACES = ['Hele lokalet', 'Bryllupspakke'];
+
+  // Calculate total price based on selected spaces, attendees and member discount
   const calculatePrice = () => {
     const spacesCheckboxes = form.querySelectorAll('input[name="spaces"]:checked');
     const selectedSpaces = Array.from(spacesCheckboxes).map(cb => cb.value);
@@ -41,7 +44,55 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
 
+    // Apply member discount if eligible space is selected and box is checked
+    const memberCheckbox = form.querySelector('#is-member');
+    const isEligible = selectedSpaces.some(s => MEMBER_ELIGIBLE_SPACES.includes(s));
+    if (memberCheckbox?.checked && isEligible) {
+      total = Math.max(0, total - MEMBER_DISCOUNT);
+    }
+
     return total;
+  };
+
+  // Show/hide member discount section based on eligible space selection
+  const WHOLE_PREMISES = ['Hele lokalet', 'Bryllupspakke'];
+  const INDIVIDUAL_SPACES = ['Peisestue', 'Salen', 'Små møter'];
+
+  /**
+   * Enforce mutual exclusion between spaces:
+   * - Whole-premises (Hele lokalet / Bryllupspakke) locks out everything else.
+   * - Individual rooms lock out whole-premises options and each other
+   *   (only one individual room at a time).
+   */
+  const enforceSpaceMutualExclusion = (changed) => {
+    if (!changed.checked) return; // unchecking never triggers side-effects
+    const allSpaces = Array.from(form.querySelectorAll('input[name="spaces"]'));
+    const val = changed.value;
+
+    if (WHOLE_PREMISES.includes(val)) {
+      // Uncheck everything except the one just selected
+      allSpaces.forEach(cb => { if (cb !== changed) cb.checked = false; });
+    } else if (INDIVIDUAL_SPACES.includes(val)) {
+      // Uncheck whole-premises options and sibling individual rooms
+      allSpaces.forEach(cb => {
+        if (cb !== changed && (WHOLE_PREMISES.includes(cb.value) || INDIVIDUAL_SPACES.includes(cb.value))) {
+          cb.checked = false;
+        }
+      });
+    }
+  };
+
+  const toggleMemberDiscount = () => {
+    const section = document.getElementById('member-discount-section');
+    if (!section) return;
+    const spacesCheckboxes = form.querySelectorAll('input[name="spaces"]:checked');
+    const selectedSpaces = Array.from(spacesCheckboxes).map(cb => cb.value);
+    const eligible = selectedSpaces.some(s => MEMBER_ELIGIBLE_SPACES.includes(s));
+    section.hidden = !eligible;
+    if (!eligible) {
+      const memberCheckbox = form.querySelector('#is-member');
+      if (memberCheckbox) memberCheckbox.checked = false;
+    }
   };
 
   // Update price display
@@ -62,8 +113,17 @@ document.addEventListener('DOMContentLoaded', function () {
   if (form) {
     const spacesCheckboxes = form.querySelectorAll('input[name="spaces"]');
     spacesCheckboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', updatePriceDisplay);
+      checkbox.addEventListener('change', () => {
+        enforceSpaceMutualExclusion(checkbox);
+        toggleMemberDiscount();
+        updatePriceDisplay();
+      });
     });
+
+    const memberCheckbox = form.querySelector('#is-member');
+    if (memberCheckbox) {
+      memberCheckbox.addEventListener('change', updatePriceDisplay);
+    }
 
     if (attendeesInput) {
       attendeesInput.addEventListener('input', updatePriceDisplay);
@@ -237,7 +297,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || 'Kunne ikke sende bookingforespørsel');
+          // For 409 double-booking conflicts, prefer the detailed message over the short error code
+          const errorMessage = response.status === 409
+              ? (errorData.message || 'Det valgte tidspunktet er ikke tilgjengelig. Vennligst velg et annet tidspunkt.')
+              : (errorData.error || 'Kunne ikke sende bookingforespørsel');
+          throw new Error(errorMessage);
       }
 
       return await response.json();
@@ -980,6 +1044,7 @@ document.addEventListener('DOMContentLoaded', function () {
         spaces: selectedSpaces,
         services: selectedServices,
         attendees: attendeeCount,
+        isMember: form.querySelector('#is-member')?.checked ?? false,
         startDate,
         endDate
       };
@@ -1034,8 +1099,10 @@ document.addEventListener('DOMContentLoaded', function () {
         await submitBooking(bookingDetails);
       } catch (error) {
         console.error('Kunne ikke sende bookingforespørsel:', error);
+        // Use the server's message when available (e.g. double-booking 409 conflict),
+        // otherwise fall back to a generic network error hint.
         showStatus(
-          'Kunne ikke sende bookingforespørselen. Sjekk nettforbindelsen og prøv igjen litt senere.',
+          error.message || 'Kunne ikke sende bookingforespørselen. Sjekk nettforbindelsen og prøv igjen litt senere.',
           'error'
         );
         isSubmitting = false;

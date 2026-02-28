@@ -1,13 +1,33 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Bjørkvang">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Helgøya — Bjørkvang">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1f4d3b" />
-      <stop offset="100%" stop-color="#3b9071" />
+      <stop offset="0%" stop-color="#1a6fa3" />
+      <stop offset="100%" stop-color="#0e5285" />
     </linearGradient>
   </defs>
+  <!-- Blue rounded background -->
   <rect width="64" height="64" rx="14" fill="url(#bg)" />
-  <g fill="#f4f0e6" font-family="'Montserrat', 'Helvetica Neue', Arial, sans-serif" font-weight="700">
-    <text font-size="26" x="50%" y="34" text-anchor="middle">BH</text>
-    <text font-size="10" x="50%" y="49" text-anchor="middle">VEL</text>
-  </g>
+  <!-- Helgøya island silhouette — simplified outline of the island shape -->
+  <!-- Wide at the north, narrows to a blunt point toward south-east -->
+  <path
+    d="
+      M 14,22
+      C 13,17 17,11 24,10
+      C 28,9  34,9  39,11
+      C 44,13 50,15 51,20
+      C 53,25 50,29 47,33
+      C 45,36 46,40 44,44
+      C 42,49 38,55 34,57
+      C 31,59 28,56 25,51
+      C 22,46 18,40 15,33
+      C 13,28 14,27 14,22
+      Z
+    "
+    fill="rgba(255,255,255,0.90)"
+  />
+  <!-- Water texture dots suggesting Mjøsa -->
+  <circle cx="7"  cy="34" r="1.2" fill="rgba(255,255,255,0.25)" />
+  <circle cx="9"  cy="40" r="0.9" fill="rgba(255,255,255,0.2)" />
+  <circle cx="57" cy="28" r="1.1" fill="rgba(255,255,255,0.22)" />
+  <circle cx="55" cy="35" r="0.8" fill="rgba(255,255,255,0.18)" />
 </svg>
