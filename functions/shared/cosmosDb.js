@@ -361,10 +361,57 @@ const deleteBooking = async (id, partitionKey) => {
     }
 };
 
+/**
+ * Partially update arbitrary fields on a booking.
+ * @param {string} id - Booking ID
+ * @param {string|null} partitionKey - Partition key value (or null)
+ * @param {Object} fields - Key/value pairs to merge into the booking
+ * @returns {Promise<Object|null>} Updated booking or null if not found
+ */
+const updateBookingFields = async (id, partitionKey, fields) => {
+    try {
+        const db = initCosmosClient();
+
+        if (useInMemory || !db) {
+            // In-memory fallback: mutate the stored object directly
+            const existing = inMemoryStore.getBooking ? inMemoryStore.getBooking(id) : null;
+            if (!existing) return null;
+            Object.assign(existing, fields, { updatedAt: new Date().toISOString() });
+            return existing;
+        }
+
+        const { container } = db;
+
+        const existing = await getBooking(id, partitionKey);
+        if (!existing) {
+            return null;
+        }
+
+        const updated = {
+            ...existing,
+            ...fields,
+            updatedAt: new Date().toISOString()
+        };
+
+        const { resource } = await container.item(id, partitionKey || existing.bjorkvang).replace(updated);
+        console.log(`CosmosDB: Updated booking ${id} fields: ${Object.keys(fields).join(', ')}`);
+        return resource;
+    } catch (error) {
+        console.error('CosmosDB: Failed to update booking fields', {
+            error: error.message,
+            code: error.code,
+            id,
+            fields: Object.keys(fields)
+        });
+        throw error;
+    }
+};
+
 module.exports = {
     saveBooking,
     getBooking,
     updateBookingStatus,
+    updateBookingFields,
     addContractSignature,
     listBookings,
     deleteBooking,
