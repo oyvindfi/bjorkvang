@@ -10,6 +10,20 @@ document.addEventListener('DOMContentLoaded', function () {
   const reservationEmptyState = document.getElementById('reservation-empty');
   const dateInput = document.getElementById('date');
   const timeInput = document.getElementById('time');
+
+  // Flatpickr date picker — Norwegian locale, no past dates
+  let datepicker = null;
+  if (dateInput && typeof flatpickr !== 'undefined') {
+    datepicker = flatpickr(dateInput, {
+      locale: 'no',
+      dateFormat: 'Y-m-d',
+      minDate: 'today',
+      disableMobile: false,
+      allowInput: true,
+      nextArrow: '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
+      prevArrow: '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
+    });
+  }
   const durationInputEl = document.getElementById('duration');
   const eventTypeSelect = document.getElementById('event-type');
   const calculatedPriceEl = document.getElementById('calculated-price');
@@ -783,6 +797,7 @@ document.addEventListener('DOMContentLoaded', function () {
       selectable: true,
       selectMirror: true,
       dayMaxEvents: true,
+      validRange: { start: new Date().toISOString().slice(0, 10) },
       events: events,
       eventTimeFormat: {
         hour: '2-digit',
@@ -804,7 +819,9 @@ document.addEventListener('DOMContentLoaded', function () {
         return classes;
       },
       dateClick: function (info) {
-        if (dateInput) {
+        if (datepicker) {
+          datepicker.setDate(info.dateStr, true);
+        } else if (dateInput) {
           dateInput.value = info.dateStr;
         }
         if (statusEl) {
@@ -815,8 +832,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       },
       select: function (selectionInfo) {
-        if (dateInput) {
-          dateInput.value = selectionInfo.startStr.slice(0, 10);
+        const selectedDate = selectionInfo.startStr.slice(0, 10);
+        if (datepicker) {
+          datepicker.setDate(selectedDate, true);
+        } else if (dateInput) {
+          dateInput.value = selectedDate;
         }
         if (timeInput && !selectionInfo.allDay) {
           timeInput.value = selectionInfo.startStr.slice(11, 16);

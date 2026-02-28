@@ -16,6 +16,43 @@
     <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="style.css">
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+      /* Flatpickr theme overrides */
+      .flatpickr-calendar {
+        font-family: inherit;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(24,61,44,.18);
+        border: 1px solid #d0ddd8;
+      }
+      .flatpickr-day.selected,
+      .flatpickr-day.selected:hover {
+        background: var(--color-primary, #1a6644);
+        border-color: var(--color-primary, #1a6644);
+      }
+      .flatpickr-day:hover {
+        background: #e6f0eb;
+        border-color: #e6f0eb;
+      }
+      .flatpickr-day.today {
+        border-color: var(--color-primary, #1a6644);
+        font-weight: 700;
+      }
+      .flatpickr-day.flatpickr-disabled {
+        color: #c0c8c4;
+        text-decoration: line-through;
+      }
+      .flatpickr-months .flatpickr-prev-month,
+      .flatpickr-months .flatpickr-next-month {
+        color: var(--color-primary, #1a6644);
+        fill: var(--color-primary, #1a6644);
+      }
+      .flatpickr-current-month .cur-month,
+      .flatpickr-current-month .numInputWrapper {
+        font-weight: 600;
+      }
+      #date { cursor: pointer; }
+    </style>
 </head>
 <body>
     <a class="skip-link" href="#main-content">Hopp til hovedinnhold</a>
@@ -271,7 +308,7 @@
                                 </label>
                                 <label class="option-pill">
                                     <input type="radio" name="paymentMethod" value="bank">
-                                    <span><strong>Bankinnbetaling</strong> – betal fullt beløp til konto <strong>1822.40.12345</strong> innen 14 dager etter bekreftelse fra styret</span>
+                                    <span><strong>Bankinnbetaling</strong> – betal 50 % depositum til konto <strong>1822.40.12345</strong> innen 14 dager etter bekreftelse, resten faktureres etter arrangementet</span>
                                 </label>
                             </div>
                         </div>
@@ -433,6 +470,8 @@
     <script src="app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/locales-all.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/no.js"></script>
     <script src="booking.js"></script>
 </body>
 </html>
