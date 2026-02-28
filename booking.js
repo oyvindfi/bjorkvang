@@ -110,6 +110,21 @@ document.addEventListener('DOMContentLoaded', function () {
   };
 
   // Watch for changes to spaces and attendees
+  // Update submit button label when payment method changes
+  if (form) {
+    const submitBtn = document.getElementById('submit-btn');
+    const paymentRadios = form.querySelectorAll('input[name="paymentMethod"]');
+    const updateSubmitLabel = () => {
+      const method = form.querySelector('input[name="paymentMethod"]:checked')?.value || 'vipps';
+      if (submitBtn) {
+        submitBtn.innerHTML = method === 'vipps'
+          ? '<span style="font-weight:900; margin-right:4px;">V</span> Book og betal depositum med Vipps'
+          : 'Send bookingforespørsel (bankinnbetaling)';
+      }
+    };
+    paymentRadios.forEach(r => r.addEventListener('change', updateSubmitLabel));
+  }
+
   if (form) {
     const spacesCheckboxes = form.querySelectorAll('input[name="spaces"]');
     spacesCheckboxes.forEach(checkbox => {
@@ -965,7 +980,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const selectedSpaces = Array.from(form.querySelectorAll('input[name="spaces"]:checked')).map((input) => input.value);
       const selectedServices = Array.from(form.querySelectorAll('input[name="services"]:checked')).map((input) => input.value);
       const notificationEmailRaw = (formValues.notificationEmail || '').trim();
-      const paymentMethod = formValues.paymentMethod || 'later';
+      const paymentMethod = formValues.paymentMethod || 'vipps';
 
       const notificationRecipients = notificationEmailRaw
         ? notificationEmailRaw
@@ -1054,7 +1069,35 @@ document.addEventListener('DOMContentLoaded', function () {
         endDate
       };
 
-      // Always use Vipps - deposit (50%) paid upfront, rest invoiced after event
+      // --- Bank payment path ---
+      if (paymentMethod === 'bank') {
+        try {
+          showStatus('Sender bookingforespørsel ...', 'info');
+          const totalAmount = calculatePrice();
+          bookingDetails.paymentMethod = 'bank';
+          bookingDetails.paymentStatus = 'unpaid';
+          bookingDetails.totalAmount = totalAmount;
+          await submitBooking(bookingDetails);
+
+          form.reset();
+          if (durationInputEl) durationInputEl.value = '4';
+          if (eventTypeSelect) eventTypeSelect.selectedIndex = 0;
+
+          showStatus(
+            `Bookingforespørsel sendt! Styret vil bekrefte innen kort tid. ` +
+            `Betal kr ${totalAmount.toLocaleString('nb-NO')} til kontonr. 1822.40.12345 ` +
+            `(eller Vipps 104631) innen 14 dager etter bekreftelse.`,
+            'success'
+          );
+        } catch (error) {
+          console.error('Bank booking error:', error);
+          showStatus(error.message || 'Kunne ikke sende bookingforespørsel. Prøv igjen.', 'error');
+        }
+        isSubmitting = false;
+        return;
+      }
+
+      // --- Vipps payment path ---
       try {
         showStatus('Starter Vipps-betaling ...', 'info');
 

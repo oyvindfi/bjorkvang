@@ -264,15 +264,21 @@
                         <legend id="payment-label">Betaling</legend>
                         <div class="payment-info">
                             <p id="calculated-price" class="price-display">Estimert pris: Velg lokaler</p>
-                            <div class="payment-deposit-info" style="background: var(--surface-muted, #f3f4f6); border-radius: 8px; padding: 14px 18px; margin-top: 10px; font-size: 0.95rem; line-height: 1.6;">
-                                <strong>Depositum (50%) betales nå med Vipps.</strong><br>
-                                Restbeløpet faktureres etter arrangementet.
+                            <div class="option-grid" style="margin-top: 12px;">
+                                <label class="option-pill">
+                                    <input type="radio" name="paymentMethod" value="vipps" checked>
+                                    <span><strong>Vipps</strong> – betal 50 % depositum nå, resten faktureres etter arrangementet</span>
+                                </label>
+                                <label class="option-pill">
+                                    <input type="radio" name="paymentMethod" value="bank">
+                                    <span><strong>Bankinnbetaling</strong> – betal fullt beløp til konto <strong>1822.40.12345</strong> innen 14 dager etter bekreftelse fra styret</span>
+                                </label>
                             </div>
                         </div>
                     </fieldset>
 
                     <div class="form-actions">
-                        <button class="button" type="submit">
+                        <button class="button" type="submit" id="submit-btn">
                             <span class="vipps-icon-small" style="font-weight:900; margin-right:4px;">V</span> Book og betal depositum med Vipps
                         </button>
                         <p id="booking-status" class="form-status" role="status" aria-live="polite"></p>
