@@ -5,41 +5,21 @@ const { saveBooking, listBookings } = require('../../shared/cosmosDb');
 const { generateEmailHtml } = require('../../shared/emailTemplate');
 
 /**
- * Returns the effective start of a booking's occupied window.
- * Per the rental contract, tenants get access from 18:00 the day before
- * their booking date (if available). To enforce this, every booking is
- * treated as occupying the venue from 18:00 the previous day onward.
- *
- * @param {string} date   - YYYY-MM-DD
- * @param {string} time   - HH:MM (actual start of the event)
- * @returns {Date}
- */
-function effectiveStart(date, time) {
-    const eventStart = new Date(`${date}T${time}`);
-    const prevDay18 = new Date(eventStart);
-    prevDay18.setDate(prevDay18.getDate() - 1);
-    prevDay18.setHours(18, 0, 0, 0);
-    // Use whichever is earlier — normally always prevDay18,
-    // but if the event itself starts before 18:00 the same day
-    // (unusual edge case) we still don't go earlier than needed.
-    return prevDay18 < eventStart ? prevDay18 : eventStart;
-}
-
-/**
  * Check if a new booking overlaps with any existing (non-rejected/cancelled) bookings.
  * Handles the "Hele lokalet" rule: booking the whole premises conflicts with any
  * individual room, and any individual room conflicts with a whole-premises booking.
- * Accounts for the 18:00 day-before access window: each booking occupies the venue
- * from 18:00 the previous day through the end of the event.
+ *
+ * Note: the rental contract grants access from 18:00 the day before — but only if the
+ * venue is free. This is a conditional perk, not a hard reservation. Conflict detection
+ * therefore uses actual booking times, not an expanded window.
  *
  * @param {Object} newBooking - { date, time, duration, spaces }
  * @param {Array}  existingBookings
  * @returns {{ conflict: boolean, conflictingBooking: Object|null }}
  */
 function checkForDoubleBooking(newBooking, existingBookings) {
-    const newEffStart = effectiveStart(newBooking.date, newBooking.time);
-    const newActualStart = new Date(`${newBooking.date}T${newBooking.time}`);
-    const newEnd = new Date(newActualStart.getTime() + newBooking.duration * 60 * 60 * 1000);
+    const newStart = new Date(`${newBooking.date}T${newBooking.time}`);
+    const newEnd = new Date(newStart.getTime() + newBooking.duration * 60 * 60 * 1000);
 
     const WHOLE_PREMISES = ['Hele lokalet', 'Bryllupspakke'];
     const newIncludesWhole = newBooking.spaces.some(s => WHOLE_PREMISES.includes(s));
@@ -60,13 +40,11 @@ function checkForDoubleBooking(newBooking, existingBookings) {
 
         if (!spacesOverlap) continue;
 
-        // Existing booking occupies from 18:00 the day before through its end
-        const existingEffStart = effectiveStart(existing.date, existing.time || '00:00');
-        const existingActualStart = new Date(`${existing.date}T${existing.time || '00:00'}`);
-        const existingEnd = new Date(existingActualStart.getTime() + (existing.duration || 1) * 60 * 60 * 1000);
+        const existingStart = new Date(`${existing.date}T${existing.time || '00:00'}`);
+        const existingEnd = new Date(existingStart.getTime() + (existing.duration || 1) * 60 * 60 * 1000);
 
-        // Conflict if the two occupied windows overlap
-        if (newEffStart < existingEnd && newEnd > existingEffStart) {
+        // Conflict if the actual time windows overlap
+        if (newStart < existingEnd && newEnd > existingStart) {
             return { conflict: true, conflictingBooking: existing };
         }
     }
@@ -190,7 +168,7 @@ app.http('bookingRequest', {
                 });
                 return createJsonResponse(409, {
                     error: 'Dobbeltbooking',
-                    message: `Det valgte tidspunktet er ikke tilgjengelig — lokalet er allerede reservert fra kl. 18:00 dagen før (${conflictingBooking?.date} kl. ${conflictingBooking?.time}). Vennligst velg et annet tidspunkt.`,
+                    message: `Det valgte tidspunktet er ikke tilgjengelig — lokalet er allerede reservert (${conflictingBooking?.date} kl. ${conflictingBooking?.time}). Vennligst velg et annet tidspunkt.`,
                     conflictingBookingDate: conflictingBooking?.date,
                     conflictingBookingTime: conflictingBooking?.time,
                 }, request);
