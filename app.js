@@ -32,23 +32,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // touchend fires immediately (no 300ms delay) and preventDefault stops
-  // the ghost click from firing afterwards (prevents double-toggle)
-  toggle.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    handleToggle();
-  }, { passive: false });
-
-  // click handles keyboard (Enter/Space) and mouse
+  // click works reliably on <button> elements on all mobile browsers.
+  // touch-action: manipulation in CSS already removes the 300ms iOS delay,
+  // so no need for a separate touchend handler (which can cause double-firing).
   toggle.addEventListener('click', handleToggle);
 
-  // Close nav when tapping/clicking outside of it on mobile
-  document.addEventListener('touchstart', (e) => {
+  // Close nav when clicking/tapping outside of it
+  document.addEventListener('click', (e) => {
     if (toggle.getAttribute('aria-expanded') === 'true' &&
         !nav.contains(e.target) && !toggle.contains(e.target)) {
       closeNav(true);
     }
-  }, { passive: true });
+  });
 
   nav.querySelectorAll('a').forEach((link) => {
     link.addEventListener('click', () => closeNav(true));
