@@ -23,14 +23,32 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.classList.add('nav-open');
   };
 
-  toggle.addEventListener('click', () => {
+  const handleToggle = () => {
     const expanded = toggle.getAttribute('aria-expanded') === 'true';
     if (expanded) {
       closeNav(true);
     } else {
       openNav();
     }
-  });
+  };
+
+  // touchend fires immediately (no 300ms delay) and preventDefault stops
+  // the ghost click from firing afterwards (prevents double-toggle)
+  toggle.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    handleToggle();
+  }, { passive: false });
+
+  // click handles keyboard (Enter/Space) and mouse
+  toggle.addEventListener('click', handleToggle);
+
+  // Close nav when tapping/clicking outside of it on mobile
+  document.addEventListener('touchstart', (e) => {
+    if (toggle.getAttribute('aria-expanded') === 'true' &&
+        !nav.contains(e.target) && !toggle.contains(e.target)) {
+      closeNav(true);
+    }
+  }, { passive: true });
 
   nav.querySelectorAll('a').forEach((link) => {
     link.addEventListener('click', () => closeNav(true));

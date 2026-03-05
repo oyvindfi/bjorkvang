@@ -112,7 +112,7 @@ img {
     box-shadow: var(--shadow-soft);
     transition: transform var(--transition), opacity var(--transition);
     opacity: 0;
-    z-index: 1000;
+    z-index: 1100;
 }
 
 .skip-link:focus-visible {
@@ -137,7 +137,7 @@ a:focus-visible,
 .site-header {
     position: sticky;
     top: 0;
-    z-index: 20;
+    z-index: 1000;
     background: rgba(253, 250, 246, 0.94);
     backdrop-filter: blur(18px);
     border-bottom: 2px solid var(--accent-500);
@@ -150,11 +150,13 @@ a:focus-visible,
     justify-content: space-between;
     gap: 1rem;
     padding: 0.85rem 0;
+    position: relative;
 }
 
 .branding {
     display: flex;
     align-items: center;
+    min-width: 0; /* Allow flex shrinking on small screens */
 }
 
 .logo {
@@ -203,12 +205,17 @@ a:focus-visible,
     align-items: center;
     justify-content: center;
     gap: 0.25rem;
-    padding: 0.45rem 0.9rem;
+    padding: 0.55rem 1rem;
     border-radius: 999px;
     border: 1px solid rgba(14, 82, 133, 0.2);
     background: rgba(255, 255, 255, 0.9);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 6px 16px rgba(15, 40, 90, 0.08);
     cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    min-width: 44px;
+    min-height: 44px;
     transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
 }
 
@@ -219,8 +226,9 @@ a:focus-visible,
 
 .nav-toggle span {
     display: block;
-    width: 1.4rem;
-    height: 2px;
+    width: 1.5rem;
+    height: 2.5px;
+    border-radius: 2px;
     background: var(--brand-600);
     transition: transform var(--transition), opacity var(--transition);
 }
@@ -304,15 +312,18 @@ body.nav-open {
 
     .site-nav {
         position: absolute;
-        inset: calc(100% + 0.75rem) 1rem auto 1rem;
-        padding: 1rem;
+        top: calc(100% + 0.5rem);
+        left: 0;
+        right: 0;
+        padding: 0.75rem;
         border-radius: var(--radius-md);
         background: var(--surface);
-        box-shadow: var(--shadow-soft);
+        box-shadow: 0 8px 32px rgba(10, 40, 80, 0.14), 0 2px 8px rgba(10, 40, 80, 0.08);
+        z-index: 999;
         opacity: 0;
         pointer-events: none;
-        transform: translateY(-0.5rem) scale(0.96);
-        transform-origin: top right;
+        transform: translateY(-0.5rem) scale(0.97);
+        transform-origin: top center;
         transition: opacity var(--transition), transform var(--transition);
     }
 
@@ -325,12 +336,18 @@ body.nav-open {
     .site-nav ul {
         flex-direction: column;
         align-items: stretch;
-        gap: 0.35rem;
+        gap: 0.25rem;
     }
 
     .site-nav a {
-        justify-content: space-between;
-        padding: 0.8rem 1.1rem;
+        justify-content: flex-start;
+        padding: 0.9rem 1.1rem;
+        border-radius: var(--radius-sm);
+    }
+
+    .site-nav .nav-cta a {
+        justify-content: center;
+        margin-top: 0.25rem;
     }
 }
 
@@ -2246,20 +2263,29 @@ button[type="submit"] {
 
     .logo {
         gap: 0.6rem;
+        min-width: 0; /* Allow flex shrinking */
     }
 
     .logo-mark {
-        width: 40px;
-        height: 40px;
+        width: 38px;
+        height: 38px;
         border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .logo-text {
+        min-width: 0; /* Allow text truncation */
     }
 
     .logo-title {
-        font-size: 1.2rem;
+        font-size: 1.05rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .logo-subtitle {
-        font-size: 0.8rem;
+        display: none; /* Hide on very small screens to save space */
     }
 
     .page-section {
@@ -2472,6 +2498,24 @@ button[type="submit"] {
     .site-nav a {
         font-size: 1.05rem;
         min-height: 52px; /* Larger touch targets on mobile */
+    }
+
+    /* Shrink logo on small screens to make room for toggle */
+    .logo-mark {
+        width: 42px;
+        height: 42px;
+    }
+
+    .logo-title {
+        font-size: clamp(1rem, 4vw, 1.3rem);
+    }
+
+    .logo-subtitle {
+        font-size: 0.78rem;
+    }
+
+    .logo {
+        gap: 0.75rem;
     }
 }
 
