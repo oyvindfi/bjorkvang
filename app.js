@@ -8,6 +8,11 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
+  // Create backdrop element for mobile nav dimming
+  const backdrop = document.createElement('div');
+  backdrop.className = 'nav-backdrop';
+  document.body.appendChild(backdrop);
+
   const closeNav = (skipFocus = false) => {
     toggle.setAttribute('aria-expanded', 'false');
     nav.classList.remove('is-open');
@@ -36,6 +41,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // touch-action: manipulation in CSS already removes the 300ms iOS delay,
   // so no need for a separate touchend handler (which can cause double-firing).
   toggle.addEventListener('click', handleToggle);
+
+  // Tap backdrop to close nav
+  backdrop.addEventListener('click', () => closeNav(true));
 
   // Close nav when clicking/tapping outside of it
   document.addEventListener('click', (e) => {
@@ -159,7 +167,6 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   setupCopyLinkButtons();
-});
 
   // UX Enhancements
 

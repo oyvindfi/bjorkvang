@@ -30,4 +30,16 @@
   <circle cx="9"  cy="40" r="0.9" fill="rgba(255,255,255,0.2)" />
   <circle cx="57" cy="28" r="1.1" fill="rgba(255,255,255,0.22)" />
   <circle cx="55" cy="35" r="0.8" fill="rgba(255,255,255,0.18)" />
+  <!-- Hovinsholmen — pointed north, bulging asymmetrically wider toward south -->
+  <path
+    d="
+      M 34,59.5
+      C 37,60.5 39,62.5 38.5,64
+      C 38,65.2 36.2,65.8 34,65.8
+      C 31.8,65.8 30,65.2 29.5,64
+      C 29,62.5 31,60.5 34,59.5
+      Z
+    "
+    fill="rgba(255,255,255,0.90)"
+  />
 </svg>
