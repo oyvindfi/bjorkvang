@@ -2,6 +2,103 @@ const API_BASE_URL = window.location.hostname === '127.0.0.1' || window.location
     ? 'http://localhost:7071/api' 
     : 'https://bjorkvang-duhsaxahgfe0btgv.westeurope-01.azurewebsites.net/api';
 
+// ---------- Reschedule modal ----------
+
+function injectRescheduleModal() {
+    if (document.getElementById('reschedule-modal')) return;
+    const modal = document.createElement('div');
+    modal.id = 'reschedule-modal';
+    modal.style.cssText = 'display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9000; align-items:center; justify-content:center;';
+    modal.innerHTML = `
+        <div style="background:#fff; border-radius:10px; padding:2rem; max-width:420px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+            <h3 style="margin:0 0 0.25rem; font-size:1.2rem;">Endre dato for booking</h3>
+            <p id="reschedule-current" style="color:#6b7280; font-size:0.9rem; margin:0 0 1.25rem;"></p>
+            <p id="reschedule-limit-warning" style="display:none; color:#b45309; font-size:0.85rem; background:#fef3c7; border:1px solid #fbbf24; border-radius:6px; padding:0.6rem 0.85rem; margin-bottom:1rem;">
+                ⚠ Merk: Dette er siste tillatte ombooking for denne bestillingen (maks 1 gang iht. vilkår §5).
+            </p>
+            <label style="display:block; font-weight:600; margin-bottom:0.4rem;">Ny dato</label>
+            <input id="reschedule-date" type="date" style="width:100%; padding:0.55rem; border:1px solid #d1d5db; border-radius:6px; font-size:1rem; margin-bottom:1rem; box-sizing:border-box;" />
+            <label style="display:block; font-weight:600; margin-bottom:0.4rem;">Nytt tidspunkt</label>
+            <input id="reschedule-time" type="time" style="width:100%; padding:0.55rem; border:1px solid #d1d5db; border-radius:6px; font-size:1rem; margin-bottom:1.5rem; box-sizing:border-box;" />
+            <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+                <button onclick="closeRescheduleModal()" style="padding:0.55rem 1.2rem; border:1px solid #d1d5db; border-radius:6px; background:#fff; cursor:pointer; font-size:0.95rem;">Avbryt</button>
+                <button id="reschedule-confirm-btn" onclick="confirmReschedule()" style="padding:0.55rem 1.4rem; border:none; border-radius:6px; background:#3b82f6; color:#fff; font-weight:600; cursor:pointer; font-size:0.95rem;">Bekreft flytt</button>
+            </div>
+            <p id="reschedule-error" style="display:none; color:#ef4444; font-size:0.85rem; margin-top:0.75rem;"></p>
+        </div>
+    `;
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeRescheduleModal(); });
+    document.body.appendChild(modal);
+}
+
+let _rescheduleBookingId = null;
+
+function openRescheduleModal(id, currentDate, currentTime, rescheduleCount) {
+    injectRescheduleModal();
+    _rescheduleBookingId = id;
+    document.getElementById('reschedule-current').textContent =
+        `Nåværende dato: ${currentDate} kl. ${currentTime}`;
+    document.getElementById('reschedule-date').value = currentDate;
+    document.getElementById('reschedule-time').value = currentTime || '12:00';
+    document.getElementById('reschedule-error').style.display = 'none';
+    // Warn if this will be the last allowed rebook
+    const warning = document.getElementById('reschedule-limit-warning');
+    warning.style.display = (rescheduleCount === 0) ? 'block' : 'none';
+    const modal = document.getElementById('reschedule-modal');
+    modal.style.display = 'flex';
+    setTimeout(() => document.getElementById('reschedule-date').focus(), 50);
+}
+
+function closeRescheduleModal() {
+    const modal = document.getElementById('reschedule-modal');
+    if (modal) modal.style.display = 'none';
+    _rescheduleBookingId = null;
+}
+
+async function confirmReschedule() {
+    const newDate = document.getElementById('reschedule-date').value;
+    const newTime = document.getElementById('reschedule-time').value;
+    const errorEl = document.getElementById('reschedule-error');
+    const btn = document.getElementById('reschedule-confirm-btn');
+
+    if (!newDate || !newTime) {
+        errorEl.textContent = 'Du må fylle inn både dato og tidspunkt.';
+        errorEl.style.display = 'block';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Lagrer...';
+    errorEl.style.display = 'none';
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/booking/reschedule`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ id: _rescheduleBookingId, newDate, newTime }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            errorEl.textContent = data.error || 'Noe gikk galt.';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        closeRescheduleModal();
+        alert(`✓ Booking flyttet til ${newDate} kl. ${newTime}. Bekreftelse er sendt til leietaker.`);
+        loadDashboard();
+    } catch (err) {
+        console.error('confirmReschedule error:', err);
+        errorEl.textContent = 'Nettverksfeil. Prøv igjen.';
+        errorEl.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Bekreft flytt';
+    }
+}
+
 async function checkLogin() {
     const input = document.getElementById('password-input').value;
     const btn = document.querySelector('#login-overlay button');
@@ -178,6 +275,7 @@ function createBookingCard(booking) {
             ${isRequesterSigned ? `<div class="booking-meta" style="color:#1e40af; font-size:0.8rem;">Leietaker signerte: ${new Date(contract.signedAt).toLocaleString('nb-NO')}</div>` : ''}
             ${isLandlordSigned ? `<div class="booking-meta" style="color:#059669; font-size:0.8rem;">Utleier signerte: ${new Date(contract.landlordSignedAt).toLocaleString('nb-NO')}</div>` : ''}
             ${booking.invoiceSentAt ? `<div class="booking-meta" style="color:#059669; font-size:0.8rem;">📧 Sluttfaktura sendt: ${new Date(booking.invoiceSentAt).toLocaleString('nb-NO')}</div>` : ''}
+            ${booking.previousDate ? `<div class="booking-meta" style="color:#6366f1; font-size:0.8rem;">↺ Ombooket fra: ${booking.previousDate}${booking.previousTime ? ' kl. ' + booking.previousTime : ''}</div>` : ''}
         </div>
         <div class="booking-actions">
             ${booking.status === 'pending' ? `
@@ -193,6 +291,10 @@ function createBookingCard(booking) {
                 ${!depositPaid ? `<button onclick="markDepositPaid('${booking.id}')" class="btn-sm" style="background:#0ea5e9;">💰 Depositum mottatt</button>` : ''}
                 ${!invoiceSent ? `<button onclick="sendInvoice('${booking.id}')" class="btn-sm" style="background:#8b5cf6;" title="Send sluttfaktura med restbeløp til leietaker">📧 Send sluttfaktura</button>` : ''}
                 <button onclick="sendReminder('${booking.id}')" class="btn-sm" style="background:#f59e0b; color:black;">Påminnelse</button>
+                ${(booking.rescheduleCount || 0) < 1
+                    ? `<button onclick="openRescheduleModal('${booking.id}', '${booking.date}', '${(booking.time || '').replace(/'/g, '')}', ${booking.rescheduleCount || 0})" class="btn-sm" style="background:#6366f1;" title="Flytt bookingen til ny dato (maks 1 gang iht. vilkår §5)">📅 Endre dato</button>`
+                    : `<span style="font-size:0.78rem; color:#9ca3af; padding:4px 6px; display:inline-block;" title="Maks antall ombookinger er brukt (iht. vilkår §5)">↺ Ombooket (1/1)</span>`
+                }
             ` : ''}
         </div>
     `;
