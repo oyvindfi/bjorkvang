@@ -60,3 +60,4 @@ loadFunction('vippsCheckStatus', './functions/vippsCheckStatus');
 loadFunction('vippsCallback', './functions/vippsCallback');
 loadFunction('depositPaid', './functions/depositPaid');
 loadFunction('sendInvoice', './functions/sendInvoice');
+loadFunction('rescheduleBooking', './functions/rescheduleBooking');
