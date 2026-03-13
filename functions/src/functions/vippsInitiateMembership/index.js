@@ -1,5 +1,5 @@
 const { app } = require('@azure/functions');
-const { createJsonResponse, parseBody, resolveBaseUrl } = require('../../../shared/http');
+const { createJsonResponse, parseBody } = require('../../../shared/http');
 const { createRecurringAgreement } = require('../../../shared/vipps');
 const { saveMember } = require('../../../shared/cosmosDb');
 
@@ -13,8 +13,9 @@ app.http('vippsInitiateMembership', {
             const { phoneNumber } = body;
 
             const amount = 25000; // 250 kr i øre
-            const baseUrl = resolveBaseUrl(request);
-            const siteBase = baseUrl.replace('/api', '');
+            // Vipps Recurring API krever HTTPS-URLer.
+            // Bruk den konfigurerte SITE_BASE_URL eller fall tilbake til produksjonsdomenet.
+            const siteBase = process.env.SITE_BASE_URL || 'https://bjorkvang.no';
 
             // agreementId genereres av Vipps; vi sender den via redirect-parameteren
             // slik at frontend kan sjekke status etter godkjenning

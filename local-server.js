@@ -163,8 +163,10 @@ async function handleApi(pathname, body, req) {
 
     // POST /api/vipps/membership/create  →  Løpende avtale (Recurring API)
     if (pathname === '/api/vipps/membership/create') {
-        const merchantRedirectUrl = `${origin}/medlemskap?status=success`;
-        const merchantAgreementUrl = `${origin}/medlemskap#administrer`;
+        // Vipps Recurring API krever HTTPS-URLer – bruk produksjonsdomenet for redirects
+        const siteBase = 'https://bjorkvang.no';
+        const merchantRedirectUrl = `${siteBase}/medlemskap?status=success`;
+        const merchantAgreementUrl = `${siteBase}/medlemskap#administrer`;
         const result = await vippsCreateRecurringAgreement({
             productName: 'Medlemskap Helgøens Vel',
             productDescription: 'Årlig kontingent – 250 kr. Gir rabatt på leie av Bjørkvang.',
