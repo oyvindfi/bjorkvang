@@ -116,16 +116,20 @@ async function handleApi(pathname, body, req) {
 
     // POST /api/vipps/initiate-booking  →  Booking depositum (50%)
     if (pathname === '/api/vipps/initiate-booking') {
-        const { spaces, attendees, date, time, requesterName, eventType, phoneNumber } = body;
+        const { spaces, attendees, date, time, requesterName, eventType, phoneNumber, isMember } = body;
         if (!spaces || !Array.isArray(spaces) || !date || !time || !requesterName) {
             return { _status: 400, error: 'spaces, date, time og requesterName er påkrevd' };
         }
         const PRICING = { 'Peisestue': 1500, 'Salen': 3000, 'Hele lokalet': 4000, 'Bryllupspakke': 6000, 'Små møter': 30 };
+        const MEMBER_ELIGIBLE = ['Hele lokalet', 'Bryllupspakke'];
         let total = 0;
         spaces.forEach(s => {
             if (s === 'Små møter') total += PRICING[s] * (parseInt(attendees) || 10);
             else if (PRICING[s]) total += PRICING[s];
         });
+        if (isMember === true && spaces.some(s => MEMBER_ELIGIBLE.includes(s))) {
+            total = Math.max(0, total - 500);
+        }
         if (total === 0) return { _status: 400, error: 'Ugyldig romkombinasjon' };
         const depositAmount = Math.round(total * 100 / 2); // 50% i øre
         const orderId = `booking-${date}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;

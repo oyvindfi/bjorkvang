@@ -1133,7 +1133,8 @@ document.addEventListener('DOMContentLoaded', function () {
             date: dateValue,
             time: timeValue,
             requesterName: name,
-            eventType: eventType
+            eventType: eventType,
+            isMember: bookingDetails.isMember
           })
         });
 

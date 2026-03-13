@@ -11,19 +11,26 @@ const PRICING = {
     'Små møter': 30 // per person
 };
 
-// Calculate total amount based on selected spaces and attendees
-const calculateAmount = (spaces, attendees) => {
+const MEMBER_DISCOUNT = 500; // kr
+const MEMBER_ELIGIBLE_SPACES = ['Hele lokalet', 'Bryllupspakke'];
+
+// Calculate total amount based on selected spaces, attendees, and membership discount
+const calculateAmount = (spaces, attendees, isMember = false) => {
     let total = 0;
 
     spaces.forEach(space => {
         if (space === 'Små møter') {
-            // For small meetings, calculate per person
-            const count = parseInt(attendees) || 10; // Default to 10 if not specified
+            const count = parseInt(attendees) || 10;
             total += PRICING[space] * count;
         } else if (PRICING[space]) {
             total += PRICING[space];
         }
     });
+
+    const isEligible = spaces.some(s => MEMBER_ELIGIBLE_SPACES.includes(s));
+    if (isMember && isEligible) {
+        total = Math.max(0, total - MEMBER_DISCOUNT);
+    }
 
     return total * 100; // Convert to øre
 };
@@ -42,20 +49,15 @@ app.http('vippsInitiateBooking', {
                 date,
                 time,
                 requesterName,
-                eventType
-            } = body;
-
-            // Validate required fields
-            if (!spaces || !Array.isArray(spaces) || spaces.length === 0) {
-                return createJsonResponse(400, { error: 'Spaces must be specified' });
-            }
+            eventType,
+            isMember
 
             if (!date || !time || !requesterName) {
                 return createJsonResponse(400, { error: 'Date, time, and name are required' });
             }
 
             // Calculate full amount and 50% deposit
-            const totalAmount = calculateAmount(spaces, attendees);
+            const totalAmount = calculateAmount(spaces, attendees, isMember === true);
 
             if (totalAmount === 0) {
                 return createJsonResponse(400, { error: 'Invalid pricing configuration' });

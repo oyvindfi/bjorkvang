@@ -67,7 +67,7 @@ app.http('bookingRequest', {
         }
 
         const body = await parseBody(request);
-        const { date, time, requesterName, requesterEmail, message, duration, eventType, spaces, services, attendees, paymentOrderId, paymentStatus } = body;
+        const { date, time, requesterName, requesterEmail, message, duration, eventType, spaces, services, attendees, paymentOrderId, paymentStatus, isMember } = body;
 
         // Validate required fields
         if (!date || !time || !requesterName || !requesterEmail) {
@@ -202,6 +202,7 @@ app.http('bookingRequest', {
                 'Små møter': 30 // per person
             };
 
+            const MEMBER_ELIGIBLE_SPACES = ['Hele lokalet', 'Bryllupspakke'];
             let paymentAmount = 0;
             safeSpaces.forEach(space => {
                 if (space === 'Små møter') {
@@ -210,6 +211,11 @@ app.http('bookingRequest', {
                     paymentAmount += PRICING[space];
                 }
             });
+
+            const memberIsEligible = isMember === true && safeSpaces.some(s => MEMBER_ELIGIBLE_SPACES.includes(s));
+            if (memberIsEligible) {
+                paymentAmount = Math.max(0, paymentAmount - 500);
+            }
 
             // Convert to øre for storage
             paymentAmount = paymentAmount * 100;
