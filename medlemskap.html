@@ -15,6 +15,7 @@
     <link rel="canonical" href="https://bjørkvang.no/medlemskap">
     <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="style.css">
+    <script async type="text/javascript" src="https://checkout.vipps.no/checkout-button/v1/vipps-checkout-button.js"></script>
 </head>
 <body>
     <a class="skip-link" href="#main-content">Hopp til hovedinnhold</a>
@@ -128,20 +129,22 @@
                     <div class="vipps-payment-container">
                         <p>Betal enkelt med Vipps for å registrere ditt medlemskap:</p>
                         
-                        <button id="vipps-pay-btn" class="button vipps-button">
-                            <span class="vipps-icon">V</span>
-                            Betal med Vipps
-                        </button>
+                        <vipps-mobilepay-button
+                            id="vipps-pay-btn"
+                            type="button"
+                            brand="vipps"
+                            language="no"
+                            variant="primary"
+                            rounded="true"
+                            verb="pay"
+                            stretched="false"
+                            branded="true"
+                            loading="false"
+                            style="cursor:pointer;"
+                        ></vipps-mobilepay-button>
                         <p id="vipps-status" class="form-status" style="display:none; margin-top: 1rem;"></p>
                     </div>
 
-                    <div class="manual-payment-details">
-                        <p class="small-text">Alternativt kan du betale manuelt:</p>
-                        <ul class="vipps-steps small-text">
-                            <li><strong>Vipps-nummer:</strong> #104631 (merk med «Medlemskap»)</li>
-                            <li><strong>Konto:</strong> 1822.40.12345 (merk med «Medlemskap»)</li>
-                        </ul>
-                    </div>
                     
                     <p class="membership-note">Kontingenten gjelder per kalenderår. Velkommen som medlem!</p>
                 </div>
@@ -153,13 +156,12 @@
                 const btn = document.getElementById('vipps-pay-btn');
                 const statusEl = document.getElementById('vipps-status');
 
-                btn.disabled = true;
-                btn.textContent = 'Laster...';
+                // Sett loading-state på Vipps-knappen
+                btn.setAttribute('loading', 'true');
                 if (statusEl) statusEl.style.display = 'none';
 
                 try {
-                    // Determine API URL based on environment
-                    const isLocal = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost';
+                    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
                     const apiBase = isLocal ? 'http://localhost:7071' : 'https://bjorkvang-duhsaxahgfe0btgv.westeurope-01.azurewebsites.net';
 
                     const response = await fetch(`${apiBase}/api/vipps/initiate`, {
@@ -182,24 +184,11 @@
                         statusEl.style.display = 'block';
                         statusEl.classList.add('is-error');
                     }
-                    btn.disabled = false;
-                    btn.innerHTML = '<span class="vipps-icon">V</span> Betal med Vipps';
+                    btn.setAttribute('loading', 'false');
                 }
             });
 
-            // Check for success query param
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('status') === 'success') {
-                const container = document.querySelector('.vipps-payment-container');
-                if (container) {
-                    container.innerHTML = `
-                        <div class="success-message" style="text-align: center; color: var(--brand-600);">
-                            <h3 style="margin-top:0;">Takk for din betaling!</h3>
-                            <p>Ditt medlemskap er nå registrert.</p>
-                        </div>
-                    `;
-                }
-            }
+
         </script>
 
         <section class="page-section">
@@ -256,46 +245,63 @@
 
     <script src="app.js"></script>
     <script>
-        // Check for return from Vipps on page load
         document.addEventListener('DOMContentLoaded', async () => {
-            const statusEl = document.getElementById('vipps-status');
-            const payBtn = document.getElementById('vipps-pay-btn');
-
             const urlParams = new URLSearchParams(window.location.search);
             const orderId = urlParams.get('orderId');
             const statusParam = urlParams.get('status');
 
-            if (orderId && statusParam === 'success') {
-                statusEl.style.display = 'block';
-                statusEl.textContent = 'Sjekker betalingsstatus...';
-                statusEl.className = 'form-status';
+            if (!orderId || statusParam !== 'success') return;
 
-                try {
-                    const isLocal = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost';
-                    const apiBase = isLocal ? 'http://localhost:7071' : 'https://bjorkvang-duhsaxahgfe0btgv.westeurope-01.azurewebsites.net';
+            const callout = document.querySelector('.vipps-callout');
 
-                    const response = await fetch(`${apiBase}/api/vipps/check-status`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ orderId })
-                    });
+            // Vis spinner umiddelbart
+            callout.innerHTML = `
+                <div id="vipps-result" style="text-align:center; padding: 1rem 0;">
+                    <p style="color: var(--brand-600);">Sjekker betaling…</p>
+                </div>
+            `;
+            callout.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-                    const data = await response.json();
+            try {
+                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                const apiBase = isLocal ? 'http://localhost:7071' : 'https://bjorkvang-duhsaxahgfe0btgv.westeurope-01.azurewebsites.net';
 
-                    if (data.status === 'AUTHORIZED' || data.status === 'CAPTURED') {
-                        statusEl.textContent = 'Takk! Ditt medlemskap er betalt og registrert.';
-                        statusEl.className = 'form-status is-success';
-                        payBtn.style.display = 'none';
-                    } else {
-                        statusEl.textContent = 'Betalingen ble ikke fullført. Prøv igjen.';
-                        statusEl.className = 'form-status is-error';
-                    }
-                } catch (err) {
-                    console.error(err);
-                    statusEl.textContent = 'Kunne ikke verifisere betalingen. Ta kontakt hvis beløpet er trukket.';
-                    statusEl.className = 'form-status is-error';
+                const response = await fetch(`${apiBase}/api/vipps/check-status`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderId })
+                });
+                const data = await response.json();
+
+                if (data.status === 'AUTHORIZED' || data.status === 'CAPTURED') {
+                    callout.innerHTML = `
+                        <div style="text-align:center; padding: 1.5rem 0;">
+                            <div style="font-size:3rem; margin-bottom:.5rem;">&#10003;</div>
+                            <h2 style="color: var(--brand-600); margin-top:0;">Takk for din betaling!</h2>
+                            <p>Ditt medlemskap er nå registrert. Velkommen som medlem!</p>
+                            <a class="button" href="/" style="margin-top:1rem;">Tilbake til forsiden</a>
+                        </div>
+                    `;
+                } else {
+                    callout.innerHTML = `
+                        <div style="text-align:center; padding: 1.5rem 0;">
+                            <h2 style="color:#dc2626; margin-top:0;">Betalingen ble ikke fullført</h2>
+                            <p>Prøv igjen, eller betal manuelt via Vipps-nummer #104631.</p>
+                            <a class="button" href="/medlemskap#betal" style="margin-top:1rem;">Prøv igjen</a>
+                        </div>
+                    `;
                 }
+            } catch (err) {
+                console.error(err);
+                callout.innerHTML = `
+                    <div style="text-align:center; padding: 1.5rem 0;">
+                        <h2 style="color:#dc2626; margin-top:0;">Kunne ikke verifisere betaling</h2>
+                        <p>Ta kontakt med oss hvis beløpet er trukket: <a href="mailto:styret@bjørkvang.no">styret@bjørkvang.no</a></p>
+                    </div>
+                `;
             }
+
+            callout.scrollIntoView({ behavior: 'smooth', block: 'center' });
         });
     </script>
 </body>

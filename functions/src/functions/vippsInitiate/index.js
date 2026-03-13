@@ -15,17 +15,18 @@ app.http('vippsInitiate', {
             const amount = 25000; // in øre
             const orderId = `membership-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
             const baseUrl = resolveBaseUrl(request);
-            
-            // In production, this should point to a dedicated success page
-            // For now, we redirect back to medlemskap with a query param
             const returnUrl = `${baseUrl.replace('/api', '')}/medlemskap?status=success&orderId=${orderId}`;
+
+            const validTo = new Date();
+            validTo.setFullYear(validTo.getFullYear() + 1);
+            const validToStr = validTo.toLocaleDateString('nb-NO', { day: 'numeric', month: 'long', year: 'numeric' });
 
             const paymentResponse = await initiatePayment({
                 amount,
                 phoneNumber, // Optional, pre-fills number in Vipps
                 returnUrl,
                 orderId,
-                text: 'Medlemskap Helgøens Vel (årlig fornyelse)'
+                text: `Medlemskap Helgøens Vel – gjelder frem til ${validToStr}`
             });
 
             return createJsonResponse(200, {

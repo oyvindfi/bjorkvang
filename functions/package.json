@@ -6,6 +6,8 @@
   "scripts": {
     "start": "func start",
     "test": "node test-functions.js",
+    "test:vipps": "node test-vipps.js",
+    "test:vipps:e2e": "node test-vipps-e2e.js",
     "test:cosmos": "node test-cosmos.js",
     "verify": "node verify-integration.js",
     "verify:local": "node verify-deployment.js local",

@@ -1,5 +1,26 @@
 const fetch = require('node-fetch');
 
+/**
+ * Testbeløp for Vipps testmiljø (MT).
+ * Beløp oppgis i øre (minor units). Bruk disse for å trigge spesifikke utfall i testappen.
+ * Dokumentasjon: https://developer.vippsmobilepay.com/docs/test-environment/
+ */
+const VIPPS_TEST_AMOUNTS = {
+    // Betalingsfeil
+    INSUFFICIENT_FUNDS: 151,
+    REFUSED_BY_ISSUER: 182,
+    SUSPECTED_FRAUD: 183,
+    WITHDRAWAL_LIMIT_EXCEEDED: 184,
+    EXPIRED_CARD: 186,
+    INVALID_CARD: 187,
+    THREE_D_SECURE_DENIED: 197,   // Kun Norge
+    UNKNOWN_RESULT_1H: 201,        // Ukjent resultat i 1 time
+    SCA_REQUIRED: 202,             // Kun Norge
+    // Refusjonsfeil
+    REFUND_CANNOT_REFUND_SINGLE: 123,  // Kan ikke refundere enkeltoverføringer / bruker slettet
+    REFUND_PERIOD_EXPIRED: 124
+};
+
 const VIPPS_CLIENT_ID = process.env.VIPPS_CLIENT_ID;
 const VIPPS_CLIENT_SECRET = process.env.VIPPS_CLIENT_SECRET;
 const VIPPS_SUBSCRIPTION_KEY = process.env.VIPPS_SUBSCRIPTION_KEY;
@@ -148,5 +169,6 @@ const capturePayment = async (reference, amount) => {
 module.exports = {
     initiatePayment,
     getPayment,
-    capturePayment
+    capturePayment,
+    VIPPS_TEST_AMOUNTS
 };
