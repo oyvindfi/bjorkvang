@@ -10,7 +10,7 @@ app.http('vippsInitiateMembership', {
     handler: async (request, context) => {
         try {
             const body = await parseBody(request);
-            const { phoneNumber } = body;
+            const { phoneNumber, name } = body;
 
             const amount = 25000; // 250 kr i øre
             // Vipps Recurring API krever HTTPS-URLer.
@@ -41,6 +41,7 @@ app.http('vippsInitiateMembership', {
                 await saveMember({
                     id: agreementResponse.agreementId,
                     agreementId: agreementResponse.agreementId,
+                    name: name || null,
                     phoneNumber: phoneNumber || null,
                     status: 'PENDING',
                     productName: 'Medlemskap Helgøens Vel',

@@ -183,6 +183,7 @@ async function handleApi(pathname, body, req) {
             inMemoryMembers[result.agreementId] = {
                 id: result.agreementId,
                 agreementId: result.agreementId,
+                name: body.name || null,
                 phoneNumber: body.phoneNumber || null,
                 status: 'PENDING',
                 productName: 'Medlemskap Helgøens Vel',

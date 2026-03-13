@@ -289,12 +289,14 @@
                     wrap.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:.9rem;">
                         <thead><tr style="text-align:left;border-bottom:2px solid #eee;">
                             <th style="padding:8px 12px;">Innmeldt</th>
+                            <th style="padding:8px 12px;">Navn</th>
                             <th style="padding:8px 12px;">Telefon</th>
                             <th style="padding:8px 12px;">Status</th>
                             <th style="padding:8px 12px;">Avtale-ID</th>
                         </tr></thead>
                         <tbody>${members.map(m => `<tr style="border-bottom:1px solid #f0f0f0;">
                             <td style="padding:8px 12px;">${m.createdAt ? new Date(m.createdAt).toLocaleDateString('nb-NO') : '–'}</td>
+                            <td style="padding:8px 12px;">${m.name || '–'}</td>
                             <td style="padding:8px 12px;">${m.phoneNumber || '–'}</td>
                             <td style="padding:8px 12px;">${statusLabel[m.status] || m.status || '–'}</td>
                             <td style="padding:8px 12px;font-family:monospace;font-size:.8rem;">${m.agreementId || m.id || '–'}</td>

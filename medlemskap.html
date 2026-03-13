@@ -128,6 +128,16 @@
                     <p>Medlemskap koster <strong>250 kr</strong> per år – trekkes automatisk via Vipps hvert år.</p>
                     
                     <div class="vipps-payment-container">
+                        <div class="form-grid" style="margin-bottom:1.25rem;">
+                            <div class="form-field">
+                                <label for="member-name">Navn *</label>
+                                <input type="text" id="member-name" name="name" autocomplete="name" placeholder="Fullt navn" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="member-phone">Mobilnummer</label>
+                                <input type="tel" id="member-phone" name="phone" autocomplete="tel" placeholder="+47 xxx xx xxx">
+                            </div>
+                        </div>
                         <p>Godkjenn den løpende avtalen i Vipps for å registrere ditt medlemskap:</p>
                         
                         <vipps-mobilepay-button
@@ -164,10 +174,23 @@
                     const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
                     const apiBase = isLocal ? 'http://localhost:7071' : 'https://bjorkvang-duhsaxahgfe0btgv.westeurope-01.azurewebsites.net';
 
+                    const name = document.getElementById('member-name').value.trim();
+                    const phone = document.getElementById('member-phone').value.trim();
+
+                    if (!name) {
+                        if (statusEl) {
+                            statusEl.textContent = 'Vennligst oppgi navn.';
+                            statusEl.style.display = 'block';
+                            statusEl.classList.add('is-error');
+                        }
+                        btn.setAttribute('loading', 'false');
+                        return;
+                    }
+
                     const response = await fetch(`${apiBase}/api/vipps/membership/create`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({})
+                        body: JSON.stringify({ name, phoneNumber: phone || undefined })
                     });
 
                     const data = await response.json();
