@@ -2,6 +2,9 @@ const { CosmosClient } = require('@azure/cosmos');
 const { DefaultAzureCredential } = require('@azure/identity');
 const inMemoryStore = require('./bookingStore');
 
+// In-memory fallback for members (local dev / no CosmosDB)
+const inMemoryMembers = {};
+
 // Configuration from environment variables
 const COSMOS_ENDPOINT = process.env.COSMOS_ENDPOINT;
 const COSMOS_DATABASE_ID = process.env.COSMOS_DATABASE_ID || 'bjorkvang';
@@ -407,6 +410,61 @@ const updateBookingFields = async (id, partitionKey, fields) => {
     }
 };
 
+/**
+ * Save a member record (recurring agreement) to CosmosDB or in-memory.
+ * @param {Object} member - { id, agreementId, phoneNumber, status, productName, amount }
+ */
+const saveMember = async (member) => {
+    try {
+        const db = initCosmosClient();
+        const item = {
+            ...member,
+            bjorkvang: 'members', // partition key value — keeps all member docs together
+            type: 'member',
+            createdAt: member.createdAt || new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+        };
+
+        if (useInMemory || !db) {
+            inMemoryMembers[item.id] = item;
+            return item;
+        }
+
+        const { container } = db;
+        const { resource } = await container.items.upsert(item);
+        console.log(`CosmosDB: Saved member ${resource.id}`);
+        return resource;
+    } catch (error) {
+        console.error('CosmosDB: Failed to save member', { error: error.message, id: member.id });
+        throw error;
+    }
+};
+
+/**
+ * List all member records, sorted by createdAt descending.
+ */
+const listMembers = async () => {
+    try {
+        const db = initCosmosClient();
+
+        if (useInMemory || !db) {
+            return Object.values(inMemoryMembers).sort((a, b) =>
+                (b.createdAt || '').localeCompare(a.createdAt || '')
+            );
+        }
+
+        const { container } = db;
+        const querySpec = { query: "SELECT * FROM c WHERE c.type = 'member'" };
+        const { resources } = await container.items
+            .query(querySpec, { partitionKey: 'members' })
+            .fetchAll();
+        return resources.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+    } catch (error) {
+        console.error('CosmosDB: Failed to list members', { error: error.message });
+        throw error;
+    }
+};
+
 module.exports = {
     saveBooking,
     getBooking,
@@ -415,4 +473,6 @@ module.exports = {
     addContractSignature,
     listBookings,
     deleteBooking,
+    saveMember,
+    listMembers,
 };

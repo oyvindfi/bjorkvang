@@ -208,7 +208,7 @@
                         id="custom-amount"
                         class="custom-amount-input"
                         type="number"
-                        min="10"
+                        min="1"
                         max="100000"
                         placeholder="100"
                         inputmode="numeric"
@@ -299,13 +299,13 @@
 
         function getAmount() {
             const customVal = parseInt(customInput.value);
-            if (customInput.value.trim() !== '' && customVal >= 10) {
+            if (customInput.value.trim() !== '' && customVal > 0) {
                 return customVal * 100;
             }
             if (customInput.value.trim() === '') {
                 return selectedChipAmount;
             }
-            return null; // ugyldig verdi
+            return null;
         }
 
         function clearStatus() {
@@ -322,8 +322,8 @@
         btn.addEventListener('click', async () => {
             const amount = getAmount();
 
-            if (!amount || amount < 1000) {
-                showStatus('Minste beløp er 10 kr.', 'is-error');
+            if (!amount || amount <= 0) {
+                showStatus('Skriv inn et beløp.', 'is-error');
                 return;
             }
 

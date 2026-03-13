@@ -11,8 +11,8 @@ app.http('vippsDonate', {
             const body = await parseBody(request);
             const amount = parseInt(body.amount);
 
-            if (!amount || amount < 1000) {
-                return createJsonResponse(400, { error: 'Minste beløp er 10 kr (1000 øre)' });
+            if (!amount || amount <= 0) {
+                return createJsonResponse(400, { error: 'Beløp må være større enn 0' });
             }
 
             const orderId = `donation-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;

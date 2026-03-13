@@ -21,6 +21,9 @@ const PORT = 7071;
 const VIPPS_BASE_URL = env.VIPPS_BASE_URL || 'https://apitest.vipps.no';
 const MSN = env.VIPPS_MERCHANT_SERIAL_NUMBER;
 
+// In-memory members store (local dev only; reset on server restart)
+const inMemoryMembers = {};
+
 const MIME_TYPES = {
     '.html': 'text/html; charset=utf-8',
     '.css':  'text/css',
@@ -92,12 +95,56 @@ async function vippsGetPayment(reference) {
     return await res.json();
 }
 
+async function vippsCreateRecurringAgreement({ productName, productDescription, amount, intervalUnit, intervalCount, merchantRedirectUrl, merchantAgreementUrl, phoneNumber, chargeNow }) {
+    const token = await getVippsToken();
+    const idempotencyKey = `agreement-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+    const payload = {
+        interval: { unit: intervalUnit || 'YEAR', count: intervalCount || 1 },
+        pricing: { amount, currency: 'NOK' },
+        merchantRedirectUrl,
+        merchantAgreementUrl,
+        productName,
+        productDescription,
+    };
+    if (chargeNow !== false) {
+        payload.initialCharge = { amount, description: productName, transactionType: 'DIRECT_CAPTURE' };
+    }
+    if (phoneNumber) payload.phoneNumber = phoneNumber;
+
+    const res = await fetch(`${VIPPS_BASE_URL}/recurring/v3/agreements`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Ocp-Apim-Subscription-Key': env.VIPPS_SUBSCRIPTION_KEY,
+            'Content-Type': 'application/json',
+            'Merchant-Serial-Number': MSN,
+            'Idempotency-Key': idempotencyKey,
+        },
+        body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error(`Recurring-feil: ${res.status} ${await res.text()}`);
+    return await res.json();
+}
+
+async function vippsGetRecurringAgreement(agreementId) {
+    const token = await getVippsToken();
+    const res = await fetch(`${VIPPS_BASE_URL}/recurring/v3/agreements/${agreementId}`, {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Ocp-Apim-Subscription-Key': env.VIPPS_SUBSCRIPTION_KEY,
+            'Merchant-Serial-Number': MSN
+        }
+    });
+    if (!res.ok) throw new Error(`Agreement-feil: ${res.status} ${await res.text()}`);
+    return await res.json();
+}
+
 // ─── API-ruter ────────────────────────────────────────────────────────────────
 
 async function handleApi(pathname, body, req) {
     const origin = `http://localhost:${PORT}`;
 
-    // POST /api/vipps/initiate  →  Medlemskapsbetaling 250 kr
+    // POST /api/vipps/initiate  →  Gammel engangsbetaling (beholdt for bakoverkompatibilitet)
     if (pathname === '/api/vipps/initiate') {
         const orderId = `membership-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
         const returnUrl = `${origin}/medlemskap?status=success&orderId=${orderId}`;
@@ -112,6 +159,50 @@ async function handleApi(pathname, body, req) {
             phoneNumber: body.phoneNumber
         });
         return { url: result.redirectUrl, orderId };
+    }
+
+    // POST /api/vipps/membership/create  →  Løpende avtale (Recurring API)
+    if (pathname === '/api/vipps/membership/create') {
+        const merchantRedirectUrl = `${origin}/medlemskap?status=success`;
+        const merchantAgreementUrl = `${origin}/medlemskap#administrer`;
+        const result = await vippsCreateRecurringAgreement({
+            productName: 'Medlemskap Helgøens Vel',
+            productDescription: 'Årlig kontingent – 250 kr. Gir rabatt på leie av Bjørkvang.',
+            amount: 25000,
+            intervalUnit: 'YEAR',
+            intervalCount: 1,
+            merchantRedirectUrl,
+            merchantAgreementUrl,
+            phoneNumber: body.phoneNumber,
+            chargeNow: true,
+        });
+        // Persist locally so /api/members can show it
+        if (result.agreementId) {
+            inMemoryMembers[result.agreementId] = {
+                id: result.agreementId,
+                agreementId: result.agreementId,
+                phoneNumber: body.phoneNumber || null,
+                status: 'PENDING',
+                productName: 'Medlemskap Helgøens Vel',
+                amount: 25000,
+                createdAt: new Date().toISOString(),
+            };
+        }
+        return { url: result.vippsConfirmationUrl, agreementId: result.agreementId };
+    }
+
+    // POST /api/vipps/membership/status  →  Sjekk avtalestatus
+    if (pathname === '/api/vipps/membership/status') {
+        if (!body.agreementId) return { _status: 400, error: 'agreementId er påkrevd' };
+        const agreement = await vippsGetRecurringAgreement(body.agreementId);
+        return {
+            status: agreement.status,
+            agreementId: agreement.id,
+            productName: agreement.productName,
+            pricing: agreement.pricing,
+            start: agreement.start,
+            stop: agreement.stop,
+        };
     }
 
     // POST /api/vipps/initiate-booking  →  Booking depositum (50%)
@@ -151,10 +242,18 @@ async function handleApi(pathname, body, req) {
         return { status: payment.state, amount: payment.amount };
     }
 
+    // GET /api/members  →  Liste over alle registrerte medlemmer
+    if (pathname === '/api/members') {
+        const members = Object.values(inMemoryMembers).sort((a, b) =>
+            (b.createdAt || '').localeCompare(a.createdAt || '')
+        );
+        return { members };
+    }
+
     // POST /api/vipps/donate  →  Fri donasjon
     if (pathname === '/api/vipps/donate') {
         const amount = parseInt(body.amount);
-        if (!amount || amount < 1000) return { _status: 400, error: 'Minste beløp er 10 kr (1000 øre)' };
+        if (!amount || amount <= 0) return { _status: 400, error: 'Beløp må være større enn 0' };
         const orderId = `donation-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
         const returnUrl = `${origin}/stott-oss?status=success&orderId=${orderId}&amount=${amount}`;
         const kroner = Math.round(amount / 100);

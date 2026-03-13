@@ -166,9 +166,104 @@ const capturePayment = async (reference, amount) => {
     return await response.json();
 };
 
+/**
+ * Create a recurring agreement (and optional initial charge) with Vipps.
+ * @param {Object} options
+ * @param {string} options.productName - Short product name shown in Vipps
+ * @param {string} options.productDescription - Longer description
+ * @param {number} options.amount - Amount in øre (e.g. 25000 = 250 kr)
+ * @param {string} options.intervalUnit - 'YEAR' | 'MONTH' | 'WEEK' | 'DAY'
+ * @param {number} options.intervalCount - Number of interval units between charges
+ * @param {string} options.merchantRedirectUrl - Where to send user after agreement
+ * @param {string} options.merchantAgreementUrl - Page where user can manage/stop agreement
+ * @param {string} [options.phoneNumber] - Pre-fill phone number in Vipps
+ * @param {boolean} [options.chargeNow=true] - Include an initial charge immediately
+ */
+const createRecurringAgreement = async ({
+    productName,
+    productDescription,
+    amount,
+    intervalUnit = 'YEAR',
+    intervalCount = 1,
+    merchantRedirectUrl,
+    merchantAgreementUrl,
+    phoneNumber,
+    chargeNow = true,
+}) => {
+    const accessToken = await getAccessToken();
+
+    const payload = {
+        interval: { unit: intervalUnit, count: intervalCount },
+        pricing: { amount, currency: 'NOK' },
+        merchantRedirectUrl,
+        merchantAgreementUrl,
+        productName,
+        productDescription,
+    };
+
+    if (chargeNow) {
+        payload.initialCharge = {
+            amount,
+            description: productName,
+            transactionType: 'DIRECT_CAPTURE',
+        };
+    }
+
+    if (phoneNumber) {
+        payload.phoneNumber = phoneNumber;
+    }
+
+    const idempotencyKey = `agreement-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+
+    const response = await fetch(`${VIPPS_BASE_URL}/recurring/v3/agreements`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Ocp-Apim-Subscription-Key': VIPPS_SUBSCRIPTION_KEY,
+            'Content-Type': 'application/json',
+            'Merchant-Serial-Number': VIPPS_MERCHANT_SERIAL_NUMBER,
+            'Idempotency-Key': idempotencyKey,
+        },
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to create recurring agreement: ${response.status} ${errorText}`);
+    }
+
+    return await response.json();
+};
+
+/**
+ * Get the status of a recurring agreement.
+ * @param {string} agreementId
+ */
+const getRecurringAgreement = async (agreementId) => {
+    const accessToken = await getAccessToken();
+
+    const response = await fetch(`${VIPPS_BASE_URL}/recurring/v3/agreements/${agreementId}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Ocp-Apim-Subscription-Key': VIPPS_SUBSCRIPTION_KEY,
+            'Merchant-Serial-Number': VIPPS_MERCHANT_SERIAL_NUMBER,
+        },
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to get recurring agreement: ${response.status} ${errorText}`);
+    }
+
+    return await response.json();
+};
+
 module.exports = {
     initiatePayment,
     getPayment,
     capturePayment,
+    createRecurringAgreement,
+    getRecurringAgreement,
     VIPPS_TEST_AMOUNTS
 };

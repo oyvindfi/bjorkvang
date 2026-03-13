@@ -242,6 +242,17 @@
         </div>
 
         <div class="dashboard-section">
+            <h2 style="cursor:pointer;" onclick="toggleMembers()">👥 Medlemmer <span id="members-toggle">▼</span> <span id="members-count" style="font-size:.85rem;font-weight:normal;color:#888;"></span></h2>
+            <div id="members-panel" class="hidden">
+                <div style="display:flex;gap:.75rem;align-items:center;margin-bottom:1rem;">
+                    <button class="btn-sm btn-primary" onclick="loadMembers()" style="padding:6px 14px;">↻ Oppdater</button>
+                    <span id="members-status" style="font-size:.9rem;color:#888;"></span>
+                </div>
+                <div id="members-table-wrap" style="overflow-x:auto;"></div>
+            </div>
+        </div>
+
+        <div class="dashboard-section">
             <h2 style="cursor:pointer;" onclick="toggleApiStatus()">⚙️ API-status <span id="api-status-toggle">▼</span></h2>
             <div id="api-status-panel" class="hidden">
                 <p style="color:#888;font-size:.9rem;">Henter status fra produksjonsmiljøet…</p>
@@ -252,6 +263,49 @@
 
     <script src="admin.js"></script>
     <script>
+        let membersLoaded = false;
+        function toggleMembers() {
+            const panel = document.getElementById('members-panel');
+            const icon = document.getElementById('members-toggle');
+            const isHidden = panel.classList.toggle('hidden');
+            icon.textContent = isHidden ? '▼' : '▲';
+            if (!isHidden && !membersLoaded) loadMembers();
+        }
+        function loadMembers() {
+            document.getElementById('members-status').textContent = 'Henter…';
+            fetch(`${API_BASE_URL}/members`)
+                .then(r => r.json())
+                .then(data => {
+                    membersLoaded = true;
+                    const members = data.members || [];
+                    document.getElementById('members-count').textContent = `(${members.length})`;
+                    document.getElementById('members-status').textContent = '';
+                    const statusLabel = { ACTIVE: '✅ Aktiv', PENDING: '⏳ Venter', STOPPED: '🔴 Stoppet', EXPIRED: '⚫ Utløpt' };
+                    const wrap = document.getElementById('members-table-wrap');
+                    if (members.length === 0) {
+                        wrap.innerHTML = '<p style="color:#888;">Ingen registrerte medlemmer.</p>';
+                        return;
+                    }
+                    wrap.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:.9rem;">
+                        <thead><tr style="text-align:left;border-bottom:2px solid #eee;">
+                            <th style="padding:8px 12px;">Innmeldt</th>
+                            <th style="padding:8px 12px;">Telefon</th>
+                            <th style="padding:8px 12px;">Status</th>
+                            <th style="padding:8px 12px;">Avtale-ID</th>
+                        </tr></thead>
+                        <tbody>${members.map(m => `<tr style="border-bottom:1px solid #f0f0f0;">
+                            <td style="padding:8px 12px;">${m.createdAt ? new Date(m.createdAt).toLocaleDateString('nb-NO') : '–'}</td>
+                            <td style="padding:8px 12px;">${m.phoneNumber || '–'}</td>
+                            <td style="padding:8px 12px;">${statusLabel[m.status] || m.status || '–'}</td>
+                            <td style="padding:8px 12px;font-family:monospace;font-size:.8rem;">${m.agreementId || m.id || '–'}</td>
+                        </tr>`).join('')}</tbody>
+                    </table>`;
+                })
+                .catch(err => {
+                    document.getElementById('members-status').textContent = 'Feil: ' + err.message;
+                });
+        }
+
         let apiStatusLoaded = false;
         function toggleApiStatus() {
             const panel = document.getElementById('api-status-panel');
