@@ -86,6 +86,7 @@ loadFunction('signBooking', './functions/signBooking');
 loadFunction('verifyAdmin', './functions/verifyAdmin');
 loadFunction('sendReminder', './functions/sendReminder');
 loadFunction('vippsInitiate', './functions/vippsInitiate');
+loadFunction('vippsDonate', './functions/vippsDonate');
 loadFunction('vippsInitiateBooking', './functions/vippsInitiateBooking');
 loadFunction('vippsInitiateContractPayment', './functions/vippsInitiateContractPayment');
 loadFunction('vippsCheckStatus', './functions/vippsCheckStatus');
