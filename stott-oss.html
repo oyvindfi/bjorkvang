@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Støtt Bjørkvang – Helgøens Vel</title>
+    <meta name="description" content="Støtt Bjørkvang forsamlingslokale og Helgøens Vel med en donasjon. Alle bidrag går direkte til vedlikehold og videreutvikling av lokalet.">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://bjørkvang.no/stott-oss">
+    <meta property="og:title" content="Støtt Bjørkvang – Helgøens Vel">
+    <meta property="og:description" content="Bidraget ditt gjør en forskjell for nærmiljøet på Helgøya.">
+    <meta property="og:image" content="https://bjørkvang.no/images/bjorkvang-sommer.png">
+
+    <link rel="canonical" href="https://bjørkvang.no/stott-oss">
+    <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="style.css">
+    <script async type="text/javascript" src="https://checkout.vipps.no/checkout-button/v1/vipps-checkout-button.js"></script>
+
+    <style>
+        /* Beløpsvelger */
+        .amount-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: .75rem;
+            margin: 1.5rem 0 1rem;
+        }
+        @media (max-width: 480px) {
+            .amount-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        .amount-chip {
+            border: 2px solid var(--brand-200);
+            border-radius: var(--radius-sm);
+            background: white;
+            padding: .65rem .5rem;
+            cursor: pointer;
+            text-align: center;
+            transition: all .15s ease;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--brand-600);
+        }
+        .amount-chip:hover {
+            border-color: var(--brand-400);
+            background: var(--brand-50);
+        }
+        .amount-chip.selected {
+            border-color: var(--brand-500);
+            background: var(--brand-50);
+            box-shadow: 0 0 0 2px var(--brand-500);
+        }
+
+        /* Egendefinert beløp */
+        .custom-amount-wrap {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .custom-amount-wrap label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: .5rem;
+            color: var(--brand-600);
+        }
+        .custom-amount-wrap .currency {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: 600;
+            color: #666;
+            pointer-events: none;
+        }
+        .custom-amount-input {
+            width: 100%;
+            padding: .8rem 3rem .8rem 1rem;
+            border: 2px solid var(--brand-200);
+            border-radius: var(--radius-sm);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--brand-600);
+            box-sizing: border-box;
+            transition: border-color .15s;
+            -moz-appearance: textfield;
+        }
+        .custom-amount-input:focus {
+            outline: none;
+            border-color: var(--brand-500);
+        }
+        .custom-amount-input::-webkit-outer-spin-button,
+        .custom-amount-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+        /* Donasjonswidget */
+        .donate-wrap {
+            max-width: 480px;
+            margin: 3rem auto;
+            padding: 0 1rem;
+        }
+        .donate-wrap h1 {
+            color: var(--brand-600);
+            margin-bottom: .4rem;
+        }
+        .donate-wrap > p {
+            color: #555;
+            margin-top: 0;
+            margin-bottom: 1.75rem;
+        }
+        .donate-callout {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-card);
+            padding: 2rem;
+        }
+        .vipps-btn-wrap {
+            margin-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: .75rem;
+        }
+        #donate-status {
+            font-size: .95rem;
+            padding: .6rem 1rem;
+            border-radius: var(--radius-sm);
+            display: none;
+        }
+        #donate-status.is-error {
+            background: #fee2e2;
+            color: #991b1b;
+            display: block;
+        }
+        #donate-status.is-info {
+            background: var(--brand-50);
+            color: var(--brand-600);
+            display: block;
+        }
+        .donate-footer-note {
+            margin-top: 2rem;
+            font-size: .9rem;
+            color: #777;
+            text-align: center;
+        }
+        .donate-footer-note a {
+            color: var(--brand-500);
+        }
+    </style>
+</head>
+<body>
+    <a class="skip-link" href="#main-content">Hopp til hovedinnhold</a>
+    <header class="site-header">
+        <div class="container nav-container">
+            <div class="branding">
+                <a class="logo" href="/">
+                    <span class="logo-mark" aria-hidden="true">
+                        <svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none">
+                            <line x1="5.5" y1="9" x2="5.5" y2="23" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                            <ellipse cx="5.5" cy="8" rx="2.2" ry="2.8" fill="currentColor" opacity="0.65"/>
+                            <path d="M8 16 L14 9 L20 16Z" fill="currentColor"/>
+                            <rect x="9.5" y="16" width="9" height="7" rx="0.5" fill="currentColor" opacity="0.9"/>
+                            <rect x="12" y="19" width="4" height="4" rx="0.5" fill="rgba(255,255,255,0.3)"/>
+                            <line x1="23.5" y1="7" x2="23.5" y2="23" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                            <ellipse cx="23.5" cy="6" rx="2.8" ry="3.3" fill="currentColor" opacity="0.65"/>
+                            <path d="M3 25 Q8 23.2 14 25 Q20 26.8 25 25" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity="0.5" fill="none"/>
+                        </svg>
+                    </span>
+                    <span class="logo-text">
+                        <span class="logo-title">Bjørkvang forsamlingslokale</span>
+                        <span class="logo-subtitle">Helgøens Vel</span>
+                    </span>
+                </a>
+            </div>
+            <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Åpne hovedmenyen">
+                <span class="nav-toggle-bars" aria-hidden="true">
+                    <span></span><span></span><span></span>
+                </span>
+                <span class="nav-toggle-label" aria-hidden="true">Meny</span>
+            </button>
+            <nav class="site-nav" id="primary-nav" aria-label="Hovedmeny">
+                <ul>
+                    <li><a href="/">Hjem</a></li>
+                    <li><a href="lokaler">Våre&nbsp;lokaler</a></li>
+                    <li><a href="booking#calendar">Kalender</a></li>
+                    <li><a href="booking">Lei&nbsp;lokalet</a></li>
+                    <li><a href="medlemskap">Medlemskap</a></li>
+                    <li><a href="nyheter">Nyheter</a></li>
+                    <li><a href="stott-oss" aria-current="page">Støtt&nbsp;oss</a></li>
+                    <li><a href="kontakt">Kontakt</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="page-main" id="main-content">
+        <div class="donate-wrap">
+            <h1>Støtt Bjørkvang</h1>
+            <p>Bjørkvang drives på dugnad av Helgøens Vel. Alle bidrag går direkte til vedlikehold og drift av lokalet.</p>
+
+            <div class="donate-callout">
+                <div class="amount-grid" role="group" aria-label="Velg beløp">
+                    <button class="amount-chip" data-amount="50" type="button">50 kr</button>
+                    <button class="amount-chip selected" data-amount="100" type="button">100 kr</button>
+                    <button class="amount-chip" data-amount="200" type="button">200 kr</button>
+                    <button class="amount-chip" data-amount="500" type="button">500 kr</button>
+                </div>
+
+                <div class="custom-amount-wrap">
+                    <label for="custom-amount">Valgfritt beløp</label>
+                    <input
+                        id="custom-amount"
+                        class="custom-amount-input"
+                        type="number"
+                        min="10"
+                        max="100000"
+                        placeholder="100"
+                        inputmode="numeric"
+                        aria-label="Valgfritt beløp i kroner"
+                    >
+                    <span class="currency">kr</span>
+                </div>
+
+                <div class="vipps-btn-wrap">
+                    <vipps-mobilepay-button
+                        id="vipps-donate-btn"
+                        type="button"
+                        brand="vipps"
+                        language="no"
+                        variant="primary"
+                        rounded="true"
+                        verb="pay"
+                        stretched="false"
+                        branded="true"
+                        loading="false"
+                        style="cursor:pointer;"
+                    ></vipps-mobilepay-button>
+                    <p id="donate-status" role="alert"></p>
+                </div>
+            </div>
+
+            <p class="donate-footer-note">
+                Spiller du Norsk Tipping? Sett Helgøens Vel (org.nr. 995 519 240) som grasrotmottaker.<br>
+                Eller <a href="medlemskap">bli medlem</a> for 250 kr i året.
+            </p>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-grid">
+            <div>
+                <h2 class="footer-title">Bjørkvang forsamlingslokale og Helgøens Vel</h2>
+                <p>Et inkluderende forsamlingshus på Helgøya som rommer møter, feiringer og fellesskap.</p>
+            </div>
+            <div>
+                <h2 class="footer-title">Snarveier</h2>
+                <ul class="footer-links">
+                    <li><a href="lokaler">Våre&nbsp;lokaler</a></li>
+                    <li><a href="booking">Lei&nbsp;lokalet</a></li>
+                    <li><a href="medlemskap">Medlemskap</a></li>
+                    <li><a href="stott-oss" aria-current="page">Støtt oss</a></li>
+                    <li><a href="nyheter">Nyheter</a></li>
+                    <li><a href="vilkaar">Salgsvilkår</a></li>
+                </ul>
+            </div>
+            <div>
+                <h2 class="footer-title">Kontakt</h2>
+                <ul class="footer-contact">
+                    <li><a href="mailto:styret@bjørkvang.no">styret@bjørkvang.no</a></li>
+                    <li><a href="tel:+4748060273">+47 480 60 273</a></li>
+                    <li>Helgøyvegen 219, 2350 Nes på Hedmarken</li>
+                </ul>
+            </div>
+        </div>
+        <p class="footer-meta">&copy; 2025 Bjørkvang forsamlingslokale og Helgøens Vel.</p>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        // Valgt beløp (øre)
+        let selectedAmount = 10000; // 100 kr default
+
+        const chips = document.querySelectorAll('.amount-chip');
+        const customInput = document.getElementById('custom-amount');
+        const btn = document.getElementById('vipps-donate-btn');
+        const statusEl = document.getElementById('donate-status');
+
+        // Chip-klikk
+        chips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                chips.forEach(c => c.classList.remove('selected'));
+                chip.classList.add('selected');
+                selectedAmount = parseInt(chip.dataset.amount) * 100; // til øre
+                customInput.value = '';
+                clearStatus();
+            });
+        });
+
+        // Egendefinert beløp
+        customInput.addEventListener('input', () => {
+            const val = parseInt(customInput.value);
+            if (val >= 10) {
+                chips.forEach(c => c.classList.remove('selected'));
+                selectedAmount = val * 100;
+            }
+            clearStatus();
+        });
+
+        function clearStatus() {
+            statusEl.textContent = '';
+            statusEl.className = '';
+        }
+
+        function showStatus(msg, type) {
+            statusEl.textContent = msg;
+            statusEl.className = type;
+        }
+
+        // Klikk på Vipps-knappen
+        btn.addEventListener('click', async () => {
+            const customVal = parseInt(customInput.value);
+            if (customVal >= 10) selectedAmount = customVal * 100;
+
+            if (!selectedAmount || selectedAmount < 1000) {
+                showStatus('Minste beløp er 10 kr.', 'is-error');
+                return;
+            }
+
+            btn.setAttribute('loading', 'true');
+            clearStatus();
+            showStatus('Starter betaling…', 'is-info');
+
+            try {
+                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                const apiBase = isLocal ? 'http://localhost:7071' : 'https://bjorkvang-duhsaxahgfe0btgv.westeurope-01.azurewebsites.net';
+
+                const response = await fetch(`${apiBase}/api/vipps/donate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: selectedAmount })
+                });
+
+                const data = await response.json();
+                if (response.ok && data.url) {
+                    window.location.href = data.url;
+                } else {
+                    throw new Error(data.error || 'Ukjent feil');
+                }
+            } catch (err) {
+                console.error(err);
+                showStatus('Noe gikk galt. Prøv igjen eller kontakt oss.', 'is-error');
+                btn.setAttribute('loading', 'false');
+            }
+        });
+
+        // Suksess-retur fra Vipps
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('status') !== 'success') return;
+
+            const callout = document.querySelector('.donate-callout');
+            const amount = params.get('amount');
+            const display = amount ? `${Math.round(parseInt(amount) / 100)} kr` : '';
+
+            callout.innerHTML = `
+                <div style="text-align:center; padding: 1.5rem 0;">
+                    <div style="font-size:3rem; color: var(--brand-500); margin-bottom:.75rem;">&#10003;</div>
+                    <h2 style="color: var(--brand-600); margin-top:0;">Tusen takk${display ? ' for ' + display : ''}!</h2>
+                    <p style="color:#555;">Bidraget ditt betyr mye for Bjørkvang og Helgøya.<br>Vi setter stor pris på støtten.</p>
+                    <a class="button" href="/" style="margin-top:1.5rem;">Tilbake til forsiden</a>
+                </div>
+            `;
+            callout.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    </script>
+</body>
+</html>

@@ -147,6 +147,23 @@ async function handleApi(pathname, body, req) {
         return { status: payment.state, amount: payment.amount };
     }
 
+    // POST /api/vipps/donate  →  Fri donasjon
+    if (pathname === '/api/vipps/donate') {
+        const amount = parseInt(body.amount);
+        if (!amount || amount < 1000) return { _status: 400, error: 'Minste beløp er 10 kr (1000 øre)' };
+        const orderId = `donation-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+        const returnUrl = `${origin}/stott-oss?status=success&orderId=${orderId}&amount=${amount}`;
+        const kroner = Math.round(amount / 100);
+        const result = await vippsInitiatePayment({
+            amount,
+            orderId,
+            returnUrl,
+            text: `Donasjon til Bjørkvang – ${kroner} kr`,
+            phoneNumber: body.phoneNumber
+        });
+        return { url: result.redirectUrl, orderId, amount };
+    }
+
     return { _status: 404, error: 'Ukjent endepunkt' };
 }
 

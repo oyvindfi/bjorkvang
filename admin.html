@@ -240,8 +240,38 @@
             <h2 style="cursor: pointer;" onclick="toggleHistory()">📜 Historikk / Avviste (Klikk for å vise)</h2>
             <div id="history-list" class="hidden"></div>
         </div>
+
+        <div class="dashboard-section">
+            <h2 style="cursor:pointer;" onclick="toggleApiStatus()">⚙️ API-status <span id="api-status-toggle">▼</span></h2>
+            <div id="api-status-panel" class="hidden">
+                <p style="color:#888;font-size:.9rem;">Henter status fra produksjonsmiljøet…</p>
+                <pre id="api-status-output" style="background:#f4f4f4;padding:1rem;border-radius:6px;font-size:.85rem;overflow-x:auto;"></pre>
+            </div>
+        </div>
     </div>
 
     <script src="admin.js"></script>
+    <script>
+        let apiStatusLoaded = false;
+        function toggleApiStatus() {
+            const panel = document.getElementById('api-status-panel');
+            const icon = document.getElementById('api-status-toggle');
+            const isHidden = panel.classList.toggle('hidden');
+            icon.textContent = isHidden ? '▼' : '▲';
+            if (!isHidden && !apiStatusLoaded) {
+                apiStatusLoaded = true;
+                const apiBase = 'https://bjorkvang-duhsaxahgfe0btgv.westeurope-01.azurewebsites.net';
+                fetch(`${apiBase}/api/status`)
+                    .then(r => r.json())
+                    .then(data => {
+                        document.getElementById('api-status-output').textContent = JSON.stringify(data, null, 2);
+                        document.querySelector('#api-status-panel p').remove();
+                    })
+                    .catch(err => {
+                        document.querySelector('#api-status-panel p').textContent = 'Feil: ' + err.message;
+                    });
+            }
+        }
+    </script>
 </body>
 </html>

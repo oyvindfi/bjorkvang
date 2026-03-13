@@ -43,6 +43,38 @@ app.http('healthCheck', {
     }
 });
 
+// Status endpoint — only exposes boolean presence of secrets, never their values
+app.http('apiStatus', {
+    methods: ['GET'],
+    authLevel: 'anonymous',
+    route: 'status',
+    handler: async (request, context) => {
+        const vippsBaseUrl = process.env.VIPPS_BASE_URL || 'https://apitest.vipps.no';
+        return {
+            body: JSON.stringify({
+                vippsEnvironment: vippsBaseUrl.includes('apitest') ? 'test' : 'production',
+                nodeVersion: process.version,
+                timestamp: new Date().toISOString(),
+                vars: {
+                    VIPPS_CLIENT_ID:             !!process.env.VIPPS_CLIENT_ID,
+                    VIPPS_CLIENT_SECRET:          !!process.env.VIPPS_CLIENT_SECRET,
+                    VIPPS_SUBSCRIPTION_KEY:       !!process.env.VIPPS_SUBSCRIPTION_KEY,
+                    VIPPS_MERCHANT_SERIAL_NUMBER: !!process.env.VIPPS_MERCHANT_SERIAL_NUMBER,
+                    VIPPS_BASE_URL:               !!process.env.VIPPS_BASE_URL,
+                    PLUNK_API_TOKEN:              !!process.env.PLUNK_API_TOKEN,
+                    BOARD_TO_ADDRESS:             !!process.env.BOARD_TO_ADDRESS,
+                    DEFAULT_FROM_ADDRESS:         !!process.env.DEFAULT_FROM_ADDRESS,
+                    COSMOS_CONNECTION_STRING:     !!process.env.COSMOS_CONNECTION_STRING,
+                },
+                loadedFunctions,
+                loadingErrors,
+            }, null, 2),
+            headers: { 'Content-Type': 'application/json' },
+            status: 200
+        };
+    }
+});
+
 loadFunction('approveBooking', './functions/approveBooking');
 loadFunction('bookingRequest', './functions/bookingRequest');
 loadFunction('emailHttpTriggerBooking', './functions/emailHttpTriggerBooking');
