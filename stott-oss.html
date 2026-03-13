@@ -273,8 +273,7 @@
 
     <script src="app.js"></script>
     <script>
-        // Valgt beløp (øre)
-        let selectedAmount = 10000; // 100 kr default
+        let selectedChipAmount = 10000; // 100 kr default (øre)
 
         const chips = document.querySelectorAll('.amount-chip');
         const customInput = document.getElementById('custom-amount');
@@ -286,21 +285,28 @@
             chip.addEventListener('click', () => {
                 chips.forEach(c => c.classList.remove('selected'));
                 chip.classList.add('selected');
-                selectedAmount = parseInt(chip.dataset.amount) * 100; // til øre
+                selectedChipAmount = parseInt(chip.dataset.amount) * 100;
                 customInput.value = '';
                 clearStatus();
             });
         });
 
-        // Egendefinert beløp
+        // Skriving i egendefinert felt fjerner chip-valg
         customInput.addEventListener('input', () => {
-            const val = parseInt(customInput.value);
-            if (val >= 10) {
-                chips.forEach(c => c.classList.remove('selected'));
-                selectedAmount = val * 100;
-            }
+            chips.forEach(c => c.classList.remove('selected'));
             clearStatus();
         });
+
+        function getAmount() {
+            const customVal = parseInt(customInput.value);
+            if (customInput.value.trim() !== '' && customVal >= 10) {
+                return customVal * 100;
+            }
+            if (customInput.value.trim() === '') {
+                return selectedChipAmount;
+            }
+            return null; // ugyldig verdi
+        }
 
         function clearStatus() {
             statusEl.textContent = '';
@@ -314,10 +320,9 @@
 
         // Klikk på Vipps-knappen
         btn.addEventListener('click', async () => {
-            const customVal = parseInt(customInput.value);
-            if (customVal >= 10) selectedAmount = customVal * 100;
+            const amount = getAmount();
 
-            if (!selectedAmount || selectedAmount < 1000) {
+            if (!amount || amount < 1000) {
                 showStatus('Minste beløp er 10 kr.', 'is-error');
                 return;
             }
@@ -333,7 +338,7 @@
                 const response = await fetch(`${apiBase}/api/vipps/donate`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ amount: selectedAmount })
+                    body: JSON.stringify({ amount })
                 });
 
                 const data = await response.json();
