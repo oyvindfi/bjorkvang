@@ -235,10 +235,21 @@
             <h2>📅 Kommende godkjente bookinger</h2>
             <div id="upcoming-list">Ingen kommende bookinger.</div>
         </div>
-
         <div class="dashboard-section">
             <h2 style="cursor: pointer;" onclick="toggleHistory()">📜 Historikk / Avviste (Klikk for å vise)</h2>
             <div id="history-list" class="hidden"></div>
+        </div>
+
+        <div class="dashboard-section">
+            <h2 style="cursor:pointer;" onclick="toggleVippsDashboard()">💳 Vipps betalingsoversikt <span id="vipps-dashboard-toggle">▼</span></h2>
+            <div id="vipps-dashboard-section" class="hidden">
+                <p style="color:#6b7280;font-size:0.88rem;margin-bottom:1rem;">
+                    Oppdateres automatisk ved innlasting. Viser alle bookinger med Vipps-betaling.
+                </p>
+                <div id="vipps-dashboard-panel">
+                    <p style="color:#9ca3af;">Laster...</p>
+                </div>
+            </div>
         </div>
 
         <div class="dashboard-section">
@@ -327,6 +338,13 @@
                         document.querySelector('#api-status-panel p').textContent = 'Feil: ' + err.message;
                     });
             }
+        }
+
+        function toggleVippsDashboard() {
+            const panel = document.getElementById('vipps-dashboard-section');
+            const icon = document.getElementById('vipps-dashboard-toggle');
+            const isHidden = panel.classList.toggle('hidden');
+            icon.textContent = isHidden ? '▼' : '▲';
         }
     </script>
 </body>

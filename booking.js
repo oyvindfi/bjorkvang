@@ -129,11 +129,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const submitBtn = document.getElementById('submit-btn');
     const paymentRadios = form.querySelectorAll('input[name="paymentMethod"]');
     const updateSubmitLabel = () => {
-      const method = form.querySelector('input[name="paymentMethod"]:checked')?.value || 'vipps';
       if (submitBtn) {
-        submitBtn.innerHTML = method === 'vipps'
-          ? '<span style="font-weight:900; margin-right:4px;">V</span> Book og betal depositum med Vipps'
-          : 'Send bookingforespørsel (bankinnbetaling)';
+        submitBtn.textContent = 'Send bookingforespørsel';
       }
     };
     paymentRadios.forEach(r => r.addEventListener('change', updateSubmitLabel));
@@ -209,96 +206,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const BOOKING_API_ENDPOINT = `${API_BASE_URL}/api/booking`;
   const CALENDAR_API_ENDPOINT = `${API_BASE_URL}/api/booking/calendar`;
 
-  // Check if returning from Vipps payment
-  const urlParams = new URLSearchParams(window.location.search);
-  const vippsStatus = urlParams.get('status');
-  const vippsOrderId = urlParams.get('orderId');
-
-  // Store Vipps return parameters to handle after initialization
-  let pendingVippsReturn = null;
-  if (vippsStatus === 'success' && vippsOrderId) {
-    pendingVippsReturn = vippsOrderId;
-  }
-
-  async function handleVippsReturn(orderId) {
-    try {
-      // Show status message
-      if (statusEl) {
-        showStatus('Verifiserer betaling ...', 'info');
-      }
-
-      // Check payment status with Vipps
-      const statusResponse = await fetch(`${API_BASE_URL}/api/vipps/check-status`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId })
-      });
-
-      if (!statusResponse.ok) {
-        throw new Error('Kunne ikke verifisere betaling');
-      }
-
-      const statusData = await statusResponse.json();
-
-      if (statusData.status === 'AUTHORIZED' || statusData.status === 'CAPTURED') {
-        // Payment successful - submit the booking
-        const pendingBooking = sessionStorage.getItem('pendingBooking');
-        if (pendingBooking) {
-          const bookingDetails = JSON.parse(pendingBooking);
-
-          // Add payment information
-          bookingDetails.paymentOrderId = orderId;
-          bookingDetails.paymentStatus = 'paid';
-
-          await submitBooking(bookingDetails);
-
-          // Clean up session storage
-          sessionStorage.removeItem('pendingBooking');
-          sessionStorage.removeItem('vippsOrderId');
-
-          // Add to events
-          const { startDate: startDateObj, endDate: endDateObj, ...restDetails } = bookingDetails;
-          const startDate = new Date(startDateObj);
-          const endDate = new Date(endDateObj);
-
-          const newEvent = {
-            title: bookingDetails.eventType || 'Reservert',
-            start: startDate.toISOString(),
-            end: endDate.toISOString(),
-            extendedProps: {
-              ...restDetails,
-              status: 'confirmed', // Paid bookings are auto-confirmed
-              createdAt: new Date().toISOString(),
-              paymentStatus: 'paid'
-            }
-          };
-
-          events.push(newEvent);
-          events.sort((a, b) => new Date(a.start) - new Date(b.start));
-
-          if (calendar) {
-            calendar.addEvent(newEvent);
-            highlightDayCells();
-          }
-
-          updateReservationList();
-
-          showStatus('Betaling godkjent! Din booking er bekreftet. Du vil motta e-post med bekreftelse.', 'success');
-        } else {
-          showStatus('Betaling godkjent, men bookingdetaljer mangler. Ta kontakt med styret.', 'error');
-        }
-      } else {
-        showStatus('Betalingen ble ikke fullført. Prøv igjen eller velg "Betal etter godkjenning".', 'error');
-      }
-    } catch (error) {
-      console.error('Error handling Vipps return:', error);
-      showStatus('Kunne ikke verifisere betalingen. Ta kontakt med styret hvis beløpet er trukket.', 'error');
-    }
-
-    // Clean URL
-    window.history.replaceState({}, document.title, window.location.pathname);
-  }
-
   async function submitBooking(bookingDetails) {
       const payload = {
           date: bookingDetails.startDate.toISOString().split('T')[0],
@@ -313,9 +220,9 @@ document.addEventListener('DOMContentLoaded', function () {
           spaces: bookingDetails.spaces,
           services: bookingDetails.services,
           attendees: bookingDetails.attendees,
-          paymentOrderId: bookingDetails.paymentOrderId || null,
-          paymentStatus: bookingDetails.paymentStatus || 'unpaid',
-          depositAmount: bookingDetails.depositAmount || null,
+          isMember: bookingDetails.isMember || false,
+          paymentMethod: bookingDetails.paymentMethod || 'vipps',
+          paymentStatus: 'unpaid',
           totalAmount: bookingDetails.totalAmount || null,
       };
 
@@ -664,11 +571,7 @@ document.addEventListener('DOMContentLoaded', function () {
           console.error('Feil ved initialisering av hendelser:', error);
       }
 
-      // Handle Vipps return if returning from payment
-      if (pendingVippsReturn) {
-        await handleVippsReturn(pendingVippsReturn);
-        pendingVippsReturn = null;
-      }
+
   };
 
   initializeEvents();
@@ -1089,137 +992,30 @@ document.addEventListener('DOMContentLoaded', function () {
         endDate
       };
 
-      // --- Bank payment path ---
-      if (paymentMethod === 'bank') {
-        try {
-          showStatus('Sender bookingforespørsel ...', 'info');
-          const totalAmount = calculatePrice();
-          bookingDetails.paymentMethod = 'bank';
-          bookingDetails.paymentStatus = 'unpaid';
-          bookingDetails.totalAmount = totalAmount;
-          await submitBooking(bookingDetails);
-
-          form.reset();
-          if (durationInputEl) durationInputEl.value = '4';
-          if (eventTypeSelect) eventTypeSelect.selectedIndex = 0;
-
-          showStatus(
-            `Bookingforespørsel sendt! Styret vil bekrefte innen kort tid. ` +
-            `Betal kr ${totalAmount.toLocaleString('nb-NO')} til kontonr. 1822.40.12345 ` +
-            `(eller Vipps 104631) innen 14 dager etter bekreftelse.`,
-            'success'
-          );
-        } catch (error) {
-          console.error('Bank booking error:', error);
-          showStatus(error.message || 'Kunne ikke sende bookingforespørsel. Prøv igjen.', 'error');
-        }
-        isSubmitting = false;
-        return;
-      }
-
-      // --- Vipps payment path ---
+      // --- Submit booking request (payment preference stored, no payment taken now) ---
       try {
-        showStatus('Starter Vipps-betaling ...', 'info');
+        showStatus('Sender bookingforesp\u00f8rsel ...', 'info');
+        const totalAmount = calculatePrice();
+        bookingDetails.paymentMethod = paymentMethod;
+        bookingDetails.totalAmount = totalAmount;
+        await submitBooking(bookingDetails);
 
-        const vippsResponse = await fetch(`${API_BASE_URL}/api/vipps/initiate-booking`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            phoneNumber: phone,
-            spaces: selectedSpaces,
-            attendees: attendeeCount,
-            date: dateValue,
-            time: timeValue,
-            requesterName: name,
-            eventType: eventType,
-            isMember: bookingDetails.isMember
-          })
-        });
+        form.reset();
+        if (durationInputEl) durationInputEl.value = '4';
+        if (eventTypeSelect) eventTypeSelect.selectedIndex = 0;
 
-        if (!vippsResponse.ok) {
-          const errorData = await vippsResponse.json();
-          throw new Error(errorData.error || 'Kunne ikke starte Vipps-betaling');
-        }
+        const paymentNote = paymentMethod === 'vipps'
+          ? 'Du vil motta en Vipps-betalingsforesp\u00f8rsel for depositum (50 %) etter godkjenning.'
+          : \Du vil motta en betalingsforesp\u00f8rsel for depositum (50 % av ca. kr \) etter godkjenning.\;
 
-        const vippsData = await vippsResponse.json();
-
-        // Enrich booking details with deposit/total amounts from Vipps response
-        bookingDetails.totalAmount = vippsData.totalAmount;
-        bookingDetails.depositAmount = vippsData.depositAmount;
-
-        // Store booking details in sessionStorage so we can submit after payment
-        sessionStorage.setItem('pendingBooking', JSON.stringify(bookingDetails));
-        sessionStorage.setItem('vippsOrderId', vippsData.orderId);
-
-        // Redirect to Vipps
-        window.location.href = vippsData.url;
-        return;
+        showStatus(
+          \Bookingforesp\u00f8rsel sendt! Styret vil vurdere foresp\u00f8rselen og ta kontakt innen kort tid. \,
+          'success'
+        );
       } catch (error) {
-        console.error('Vipps payment error:', error);
-        showStatus('Kunne ikke starte Vipps-betaling. Prøv igjen eller kontakt styret.', 'error');
-        isSubmitting = false;
-        return;
+        console.error('Booking submit error:', error);
+        showStatus(error.message || 'Kunne ikke sende bookingforesp\u00f8rsel. Pr\u00f8v igjen.', 'error');
       }
-
-      const { startDate: startDateObj, endDate: endDateObj, ...restDetails } = bookingDetails;
-
-      const newEvent = {
-        title: eventType || 'Reservert',
-        start: startDate.toISOString(),
-        end: endDate.toISOString(),
-        extendedProps: {
-          ...restDetails,
-          startDate: startDateObj.toISOString(),
-          endDate: endDateObj.toISOString(),
-          status,
-          createdAt: new Date().toISOString()
-        }
-      };
-
-      events.push(newEvent);
-      events.sort((a, b) => new Date(a.start) - new Date(b.start));
-
-      try {
-        const eventsJson = JSON.stringify(events);
-        localStorage.setItem('bookingEvents', eventsJson);
-      } catch (err) {
-        console.error('Kunne ikke lagre hendelse:', err);
-        // Check if quota exceeded
-        if (err.name === 'QuotaExceededError') {
-          console.warn('LocalStorage quota exceeded. Removing old events.');
-          // Keep only future events to save space
-          const futureEvents = events.filter(e => new Date(e.start) >= new Date());
-          try {
-            localStorage.setItem('bookingEvents', JSON.stringify(futureEvents));
-            events = futureEvents;
-          } catch (retryErr) {
-            console.error('Still failed after cleanup:', retryErr);
-          }
-        }
-      }
-
-      if (calendar) {
-        calendar.addEvent(newEvent);
-        highlightDayCells();
-      }
-
-      updateReservationList();
-      highlightDayCells();
-
-      form.reset();
-      if (durationInputEl) {
-        durationInputEl.value = '4';
-      }
-      if (eventTypeSelect) {
-        eventTypeSelect.selectedIndex = 0;
-      }
-
-      showStatus(
-        'Din bookingforespørsel er mottatt og vises nå i kalenderen. Du blir kontaktet av styret for endelig bekreftelse.'
-      );
-      
       isSubmitting = false;
     });
   }

@@ -1,7 +1,7 @@
 const { app } = require('@azure/functions');
 const { getPlunkApiUrl } = require('../shared/email');
 
-// v1.1 — depositPaid + sendInvoice registrert
+// v1.2 — sendDepositRequest + checkVippsStatuses + sendFinalInvoice registrert
 console.log(`Azure Functions runtime starting on Node ${process.version} with Plunk endpoint ${getPlunkApiUrl()}`);
 
 const loadingErrors = {};
@@ -95,5 +95,8 @@ loadFunction('vippsCheckStatus', './functions/vippsCheckStatus');
 loadFunction('vippsCallback', './functions/vippsCallback');
 loadFunction('depositPaid', './functions/depositPaid');
 loadFunction('sendInvoice', './functions/sendInvoice');
+loadFunction('sendDepositRequest', './functions/sendDepositRequest');
+loadFunction('checkVippsStatuses', './functions/checkVippsStatuses');
+loadFunction('sendFinalInvoice', './functions/sendFinalInvoice');
 loadFunction('rescheduleBooking', './functions/rescheduleBooking');
 loadFunction('getMembers', './functions/getMembers');

@@ -153,9 +153,30 @@ async function loadDashboard() {
     try {
         const response = await fetch(`${API_BASE_URL}/booking/admin`);
         if (!response.ok) throw new Error('Failed to fetch bookings');
-        
         const data = await response.json();
-        renderDashboard(data.bookings || []);
+        let bookings = data.bookings || [];
+
+        // Auto-check Vipps payment statuses on every dashboard load
+        try {
+            const vippsRes = await fetch(`${API_BASE_URL}/booking/check-vipps-statuses`, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json' }
+            });
+            if (vippsRes.ok) {
+                const vippsData = await vippsRes.json();
+                // Use the fresh booking list returned by the status check
+                if (Array.isArray(vippsData.bookings) && vippsData.bookings.length > 0) {
+                    bookings = vippsData.bookings;
+                }
+                if (vippsData.updatedCount > 0) {
+                    console.info(`Vipps status check: ${vippsData.updatedCount} booking(s) updated.`);
+                }
+            }
+        } catch (vippsErr) {
+            console.warn('Vipps status check failed (non-fatal):', vippsErr);
+        }
+
+        renderDashboard(bookings);
     } catch (error) {
         console.error('Error loading dashboard:', error);
         alert('Kunne ikke laste bookinger. Sjekk konsollen for detaljer.');
@@ -174,7 +195,6 @@ function renderDashboard(bookings) {
     const now = new Date();
     const currentYear = now.getFullYear();
 
-    // Sort bookings: Pending first, then by date
     bookings.sort((a, b) => new Date(a.date) - new Date(b.date));
 
     let pendingCount = 0;
@@ -198,7 +218,6 @@ function renderDashboard(bookings) {
             upcomingCount++;
             upcomingList.appendChild(card);
         } else {
-            // Rejected or past approved
             historyList.appendChild(card);
         }
     });
@@ -207,10 +226,11 @@ function renderDashboard(bookings) {
     if (upcomingList.children.length === 0) upcomingList.innerHTML = '<p>Ingen kommende bookinger.</p>';
     if (historyList.children.length === 0) historyList.innerHTML = '<p>Ingen historikk.</p>';
 
-    // Update stats
     document.getElementById('stat-pending').textContent = pendingCount;
     document.getElementById('stat-upcoming').textContent = upcomingCount;
     document.getElementById('stat-total').textContent = totalYearCount;
+
+    renderVippsDashboard(bookings);
 }
 
 function createBookingCard(booking) {
@@ -220,45 +240,107 @@ function createBookingCard(booking) {
     const spaces = Array.isArray(booking.spaces) ? booking.spaces.join(', ') : booking.spaces;
     const services = Array.isArray(booking.services) ? booking.services.join(', ') : booking.services;
     
-    // Check signature status
     const contract = booking.contract || {};
     const isRequesterSigned = !!contract.signedAt;
     const isLandlordSigned = !!contract.landlordSignedAt;
+
+    // --- Payment state ---
+    const depositRequested = !!booking.depositRequested;
     const depositPaid = !!booking.depositPaid;
-    const invoiceSent = !!booking.invoiceSentAt;
-    
+    const depositViaVipps = !!booking.depositVippsOrderId;
+    const finalInvoiceSent = !!(booking.finalInvoiceSentAt || booking.invoiceSentAt);
+    const finalInvoicePaid = !!booking.finalInvoicePaid;
+    const finalViaVipps = !!booking.finalInvoiceVippsOrderId;
+    const paymentMethod = booking.paymentMethod || 'bank';
+    const totalNOK = booking.totalAmount || 0;
+    const depositNOK = booking.depositAmount || (totalNOK ? Math.round(totalNOK * 0.5) : 0);
+
+    // --- Signature badge ---
     let signatureBadge = '';
-    let depositBadge = '';
-    
     if (booking.status === 'approved') {
         if (isLandlordSigned) {
-            signatureBadge = `<span style="background:#d1fae5; color:#065f46; padding:2px 6px; border-radius:4px; font-size:0.8rem; margin-left:5px;">✓ Ferdig signert</span>`;
+            signatureBadge = `<span style="background:#d1fae5;color:#065f46;padding:2px 6px;border-radius:4px;font-size:0.8rem;margin-left:5px;">✓ Ferdig signert</span>`;
         } else if (isRequesterSigned) {
-            signatureBadge = `<span style="background:#dbeafe; color:#1e40af; padding:2px 6px; border-radius:4px; font-size:0.8rem; margin-left:5px;">✎ Signert av leietaker</span>`;
+            signatureBadge = `<span style="background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:4px;font-size:0.8rem;margin-left:5px;">✎ Signert av leietaker</span>`;
         } else {
-            signatureBadge = `<span style="background:#fef3c7; color:#92400e; padding:2px 6px; border-radius:4px; font-size:0.8rem; margin-left:5px;">⚠ Venter på signering</span>`;
+            signatureBadge = `<span style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;font-size:0.8rem;margin-left:5px;">⚠ Venter på signering</span>`;
         }
-        depositBadge = depositPaid
-            ? `<span style="background:#d1fae5; color:#065f46; padding:2px 6px; border-radius:4px; font-size:0.8rem; margin-left:5px;">💰 Depositum betalt</span>`
-            : `<span style="background:#fee2e2; color:#991b1b; padding:2px 6px; border-radius:4px; font-size:0.8rem; margin-left:5px;">⚠ Depositum ikke registrert</span>`;
     }
 
-    // Format created date
+    // --- Deposit/invoice status badges ---
+    let paymentBadges = '';
+    if (booking.status === 'approved') {
+        if (!depositRequested) {
+            paymentBadges += `<span style="background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-size:0.8rem;margin-left:5px;">💰 Depositum ikke sendt</span>`;
+        } else if (depositRequested && !depositPaid) {
+            const sentDate = booking.depositRequestedAt ? new Date(booking.depositRequestedAt).toLocaleDateString('nb-NO') : '';
+            const method = depositViaVipps ? '(Vipps)' : '(bank)';
+            paymentBadges += `<span style="background:#e0f2fe;color:#075985;padding:2px 7px;border-radius:4px;font-size:0.8rem;margin-left:5px;">⏳ Depositum sendt ${sentDate} ${method}</span>`;
+        } else if (depositPaid) {
+            paymentBadges += `<span style="background:#d1fae5;color:#065f46;padding:2px 7px;border-radius:4px;font-size:0.8rem;margin-left:5px;">✅ Depositum betalt${depositNOK ? ' kr ' + depositNOK.toLocaleString('nb-NO') : ''}</span>`;
+        }
+
+        if (depositPaid) {
+            if (!finalInvoiceSent) {
+                paymentBadges += `<span style="background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-size:0.8rem;margin-left:5px;">📄 Sluttfaktura ikke sendt</span>`;
+            } else if (finalInvoiceSent && !finalInvoicePaid) {
+                const method = finalViaVipps ? '(Vipps)' : '(bank)';
+                paymentBadges += `<span style="background:#e0f2fe;color:#075985;padding:2px 7px;border-radius:4px;font-size:0.8rem;margin-left:5px;">⏳ Sluttfaktura sendt ${method}</span>`;
+            } else if (finalInvoicePaid) {
+                paymentBadges += `<span style="background:#d1fae5;color:#065f46;padding:2px 7px;border-radius:4px;font-size:0.8rem;margin-left:5px;">✅ Sluttfaktura betalt</span>`;
+            }
+        }
+    }
+
     let createdStr = 'Ukjent';
     if (booking.createdAt) {
-        const createdDate = new Date(booking.createdAt);
-        createdStr = createdDate.toLocaleString('nb-NO', { 
-            day: '2-digit', 
-            month: '2-digit', 
-            year: 'numeric', 
-            hour: '2-digit', 
-            minute: '2-digit' 
+        createdStr = new Date(booking.createdAt).toLocaleString('nb-NO', {
+            day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
         });
+    }
+
+    // --- Action buttons for approved bookings ---
+    let approvedActions = '';
+    if (booking.status === 'approved') {
+        approvedActions += `<button onclick="rejectBooking('${booking.id}')" class="btn-sm btn-reject">Kanseller</button>`;
+        approvedActions += `<button onclick="openContract('${booking.id}')" class="btn-sm" style="background:${isLandlordSigned ? '#10b981' : '#3b82f6'};">
+            ${isLandlordSigned ? 'Se avtale' : (isRequesterSigned ? 'Signer som utleier' : 'Kopier lenke')}
+        </button>`;
+        approvedActions += `<button onclick="printContract('${booking.id}')" class="btn-sm" style="background:#64748b;" title="Åpner utskriftsvennlig versjon">🖨 Skriv ut avtale</button>`;
+
+        // Deposit flow
+        if (!depositRequested) {
+            approvedActions += `<button onclick="sendDepositRequest('${booking.id}')" class="btn-sm" style="background:#0ea5e9;">💸 Send depositumforespørsel</button>`;
+        } else if (depositRequested && !depositPaid) {
+            if (paymentMethod === 'bank') {
+                // For bank: allow admin to manually mark as paid
+                approvedActions += `<button onclick="markDepositPaid('${booking.id}')" class="btn-sm" style="background:#0ea5e9;">💰 Depositum mottatt (bank)</button>`;
+            }
+            // For Vipps: auto-checked on load, but also allow manual mark as fallback
+            if (paymentMethod === 'vipps') {
+                approvedActions += `<button onclick="markDepositPaid('${booking.id}')" class="btn-sm" style="background:#64748b;font-size:0.75rem;">🔄 Merk depositum betalt (manuelt)</button>`;
+            }
+        }
+
+        // Final invoice — only available after deposit is paid
+        if (depositPaid && !finalInvoiceSent) {
+            approvedActions += `<button onclick="openFinalInvoiceModal('${booking.id}', ${totalNOK}, ${depositNOK})" class="btn-sm" style="background:#8b5cf6;">📧 Send sluttfaktura</button>`;
+        } else if (finalInvoiceSent && !finalInvoicePaid && paymentMethod === 'bank') {
+            approvedActions += `<button onclick="markFinalInvoicePaid('${booking.id}')" class="btn-sm" style="background:#0ea5e9;">✅ Sluttfaktura betalt (bank)</button>`;
+        }
+
+        approvedActions += `<button onclick="sendReminder('${booking.id}')" class="btn-sm" style="background:#f59e0b;color:black;">Påminnelse</button>`;
+
+        if ((booking.rescheduleCount || 0) < 1) {
+            approvedActions += `<button onclick="openRescheduleModal('${booking.id}', '${booking.date}', '${(booking.time || '').replace(/'/g, '')}', ${booking.rescheduleCount || 0})" class="btn-sm" style="background:#6366f1;" title="Flytt bookingen til ny dato (maks 1 gang iht. vilkår §5)">📅 Endre dato</button>`;
+        } else {
+            approvedActions += `<span style="font-size:0.78rem;color:#9ca3af;padding:4px 6px;display:inline-block;" title="Maks antall ombookinger er brukt (iht. vilkår §5)">↺ Ombooket (1/1)</span>`;
+        }
     }
 
     div.innerHTML = `
         <div class="booking-details">
-            <h3>${booking.eventType || 'Reservasjon'} – ${formatDate(booking.date)} ${signatureBadge} ${depositBadge}</h3>
+            <h3>${booking.eventType || 'Reservasjon'} – ${formatDate(booking.date)} ${signatureBadge} ${paymentBadges}</h3>
             <div class="booking-meta"><strong>Tid:</strong> ${booking.time} (${booking.duration} timer)</div>
             <div class="booking-meta"><strong>Navn:</strong> ${booking.requesterName}</div>
             <div class="booking-meta"><strong>E-post:</strong> <a href="mailto:${booking.requesterEmail}">${booking.requesterEmail}</a></div>
@@ -266,36 +348,26 @@ function createBookingCard(booking) {
             <div class="booking-meta"><strong>Areal:</strong> ${spaces || 'Ikke spesifisert'}</div>
             ${services ? `<div class="booking-meta"><strong>Tillegg:</strong> ${services}</div>` : ''}
             ${booking.attendees ? `<div class="booking-meta"><strong>Antall:</strong> ${booking.attendees}</div>` : ''}
-            ${booking.depositAmount ? `<div class="booking-meta"><strong>Depositum:</strong> ${booking.depositAmount.toLocaleString('nb-NO')} kr &nbsp;|&nbsp; <strong>Totalt:</strong> ${(booking.totalAmount || booking.depositAmount * 2).toLocaleString('nb-NO')} kr &nbsp;|&nbsp; <strong>Restbeløp:</strong> ${((booking.totalAmount || booking.depositAmount * 2) - booking.depositAmount).toLocaleString('nb-NO')} kr</div>` : ''}
-            ${booking.message ? `<div class="booking-meta" style="margin-top:5px; font-style:italic;">"${booking.message}"</div>` : ''}
-            <div class="booking-meta" style="margin-top:5px; font-size:0.8rem; color:#999;">
+            <div class="booking-meta"><strong>Betalingsmetode:</strong> ${paymentMethod === 'vipps' ? 'Vipps' : 'Bank'}</div>
+            ${totalNOK ? `<div class="booking-meta"><strong>Estimert total:</strong> kr ${totalNOK.toLocaleString('nb-NO')} &nbsp;|&nbsp; <strong>Depositum (50%):</strong> kr ${depositNOK.toLocaleString('nb-NO')} &nbsp;|&nbsp; <strong>Restbeløp:</strong> kr ${(totalNOK - depositNOK).toLocaleString('nb-NO')}</div>` : ''}
+            ${booking.message ? `<div class="booking-meta" style="margin-top:5px;font-style:italic;">"${booking.message}"</div>` : ''}
+            <div class="booking-meta" style="margin-top:5px;font-size:0.8rem;color:#999;">
                 Sendt inn: ${createdStr}<br>
                 ID: ${booking.id} | Status: ${translateStatus(booking.status)}
             </div>
-            ${isRequesterSigned ? `<div class="booking-meta" style="color:#1e40af; font-size:0.8rem;">Leietaker signerte: ${new Date(contract.signedAt).toLocaleString('nb-NO')}</div>` : ''}
-            ${isLandlordSigned ? `<div class="booking-meta" style="color:#059669; font-size:0.8rem;">Utleier signerte: ${new Date(contract.landlordSignedAt).toLocaleString('nb-NO')}</div>` : ''}
-            ${booking.invoiceSentAt ? `<div class="booking-meta" style="color:#059669; font-size:0.8rem;">📧 Sluttfaktura sendt: ${new Date(booking.invoiceSentAt).toLocaleString('nb-NO')}</div>` : ''}
-            ${booking.previousDate ? `<div class="booking-meta" style="color:#6366f1; font-size:0.8rem;">↺ Ombooket fra: ${booking.previousDate}${booking.previousTime ? ' kl. ' + booking.previousTime : ''}</div>` : ''}
+            ${isRequesterSigned ? `<div class="booking-meta" style="color:#1e40af;font-size:0.8rem;">Leietaker signerte: ${new Date(contract.signedAt).toLocaleString('nb-NO')}</div>` : ''}
+            ${isLandlordSigned ? `<div class="booking-meta" style="color:#059669;font-size:0.8rem;">Utleier signerte: ${new Date(contract.landlordSignedAt).toLocaleString('nb-NO')}</div>` : ''}
+            ${booking.depositRequestedAt ? `<div class="booking-meta" style="color:#075985;font-size:0.8rem;">💸 Depositumforespørsel sendt: ${new Date(booking.depositRequestedAt).toLocaleString('nb-NO')}</div>` : ''}
+            ${booking.depositPaidAt ? `<div class="booking-meta" style="color:#059669;font-size:0.8rem;">✅ Depositum betalt: ${new Date(booking.depositPaidAt).toLocaleString('nb-NO')}</div>` : ''}
+            ${booking.finalInvoiceSentAt ? `<div class="booking-meta" style="color:#059669;font-size:0.8rem;">📧 Sluttfaktura sendt: ${new Date(booking.finalInvoiceSentAt).toLocaleString('nb-NO')}</div>` : booking.invoiceSentAt ? `<div class="booking-meta" style="color:#059669;font-size:0.8rem;">📧 Sluttfaktura sendt: ${new Date(booking.invoiceSentAt).toLocaleString('nb-NO')}</div>` : ''}
+            ${booking.previousDate ? `<div class="booking-meta" style="color:#6366f1;font-size:0.8rem;">↺ Ombooket fra: ${booking.previousDate}${booking.previousTime ? ' kl. ' + booking.previousTime : ''}</div>` : ''}
         </div>
         <div class="booking-actions">
             ${booking.status === 'pending' ? `
                 <button onclick="approveBooking('${booking.id}')" class="btn-sm btn-approve">Godkjenn</button>
                 <button onclick="rejectBooking('${booking.id}')" class="btn-sm btn-reject">Avvis</button>
             ` : ''}
-            ${booking.status === 'approved' ? `
-                <button onclick="rejectBooking('${booking.id}')" class="btn-sm btn-reject">Kanseller</button>
-                <button onclick="openContract('${booking.id}')" class="btn-sm" style="background:${isLandlordSigned ? '#10b981' : '#3b82f6'};">
-                    ${isLandlordSigned ? 'Se avtale' : (isRequesterSigned ? 'Signer som utleier' : 'Kopier lenke')}
-                </button>
-                <button onclick="printContract('${booking.id}')" class="btn-sm" style="background:#64748b;" title="Åpner utskriftsvennlig versjon – for telefonbooking og papirskjema">🖨 Skriv ut avtale</button>
-                ${!depositPaid ? `<button onclick="markDepositPaid('${booking.id}')" class="btn-sm" style="background:#0ea5e9;">💰 Depositum mottatt</button>` : ''}
-                ${!invoiceSent ? `<button onclick="sendInvoice('${booking.id}')" class="btn-sm" style="background:#8b5cf6;" title="Send sluttfaktura med restbeløp til leietaker">📧 Send sluttfaktura</button>` : ''}
-                <button onclick="sendReminder('${booking.id}')" class="btn-sm" style="background:#f59e0b; color:black;">Påminnelse</button>
-                ${(booking.rescheduleCount || 0) < 1
-                    ? `<button onclick="openRescheduleModal('${booking.id}', '${booking.date}', '${(booking.time || '').replace(/'/g, '')}', ${booking.rescheduleCount || 0})" class="btn-sm" style="background:#6366f1;" title="Flytt bookingen til ny dato (maks 1 gang iht. vilkår §5)">📅 Endre dato</button>`
-                    : `<span style="font-size:0.78rem; color:#9ca3af; padding:4px 6px; display:inline-block;" title="Maks antall ombookinger er brukt (iht. vilkår §5)">↺ Ombooket (1/1)</span>`
-                }
-            ` : ''}
+            ${approvedActions}
         </div>
     `;
     return div;
@@ -358,6 +430,273 @@ async function markDepositPaid(id) {
         console.error(error);
         alert('Nettverksfeil.');
     }
+}
+
+async function sendDepositRequest(id) {
+    if (!confirm('Send depositumforespørsel til leietaker?')) return;
+    try {
+        const res = await fetch(`${API_BASE_URL}/booking/send-deposit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+            const method = data.paymentMethod === 'vipps' ? 'Vipps-lenke' : 'bankdetaljer';
+            alert(`Depositumforespørsel sendt til ${data.sentTo} (${method}, kr ${(data.depositAmount || 0).toLocaleString('nb-NO')})!`);
+            loadDashboard();
+        } else {
+            alert(`Feil: ${data.error || 'Kunne ikke sende depositumforespørsel.'}`);
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Nettverksfeil.');
+    }
+}
+
+// ---------- Final invoice modal ----------
+
+let _finalInvoiceBookingId = null;
+let _finalInvoiceTotalNOK = 0;
+let _finalInvoiceDepositNOK = 0;
+let _extraItemCount = 0;
+
+function openFinalInvoiceModal(id, totalNOK, depositNOK) {
+    _finalInvoiceBookingId = id;
+    _finalInvoiceTotalNOK = totalNOK || 0;
+    _finalInvoiceDepositNOK = depositNOK || 0;
+    _extraItemCount = 0;
+
+    injectFinalInvoiceModal();
+
+    document.getElementById('fi-base-total').textContent = totalNOK ? `kr ${totalNOK.toLocaleString('nb-NO')}` : '–';
+    document.getElementById('fi-deposit').textContent = depositNOK ? `− kr ${depositNOK.toLocaleString('nb-NO')}` : '–';
+    document.getElementById('fi-extra-rows').innerHTML = '';
+    updateFinalInvoiceTotal();
+
+    document.getElementById('final-invoice-modal').style.display = 'flex';
+}
+
+function injectFinalInvoiceModal() {
+    if (document.getElementById('final-invoice-modal')) return;
+    const modal = document.createElement('div');
+    modal.id = 'final-invoice-modal';
+    modal.style.cssText = 'display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9000; align-items:flex-start; justify-content:center; padding:40px 16px; overflow-y:auto;';
+    modal.innerHTML = `
+        <div style="background:#fff; border-radius:10px; padding:2rem; max-width:560px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+            <h3 style="margin:0 0 1rem; font-size:1.2rem;">📧 Send sluttfaktura</h3>
+
+            <table style="width:100%;border-collapse:collapse;font-size:0.95rem;margin-bottom:1rem;">
+                <tr>
+                    <td style="padding:6px 0;color:#6b7280;">Leiesum (estimert total)</td>
+                    <td id="fi-base-total" style="text-align:right;font-weight:600;">–</td>
+                </tr>
+                <tr id="fi-extra-rows"></tr>
+                <tr>
+                    <td style="padding:6px 0;color:#059669;">Depositum allerede betalt (trekkes fra)</td>
+                    <td id="fi-deposit" style="text-align:right;color:#059669;">–</td>
+                </tr>
+                <tr style="border-top:2px solid #e5e7eb;">
+                    <td style="padding:10px 0;font-weight:bold;font-size:1.05rem;">Gjenstående å betale</td>
+                    <td id="fi-remaining" style="text-align:right;font-weight:bold;font-size:1.05rem;">–</td>
+                </tr>
+            </table>
+
+            <div style="margin-bottom:1rem;">
+                <strong style="font-size:0.9rem;">Tilleggsbelastninger (f.eks. vask, ekstra utstyr)</strong>
+                <div id="fi-extra-items-container" style="margin-top:8px;"></div>
+                <button type="button" onclick="addExtraInvoiceItem()" style="margin-top:8px;padding:5px 12px;border:1px dashed #9ca3af;border-radius:6px;background:transparent;cursor:pointer;font-size:0.88rem;color:#6b7280;">+ Legg til rad</button>
+            </div>
+
+            <div style="display:flex; gap:0.75rem; justify-content:flex-end; margin-top:1.25rem;">
+                <button onclick="closeFinalInvoiceModal()" style="padding:0.55rem 1.2rem; border:1px solid #d1d5db; border-radius:6px; background:#fff; cursor:pointer; font-size:0.95rem;">Avbryt</button>
+                <button id="fi-submit-btn" onclick="submitFinalInvoice()" style="padding:0.55rem 1.4rem; border:none; border-radius:6px; background:#8b5cf6; color:#fff; font-weight:600; cursor:pointer; font-size:0.95rem;">Send sluttfaktura</button>
+            </div>
+            <p id="fi-error" style="display:none; color:#ef4444; font-size:0.85rem; margin-top:0.75rem;"></p>
+        </div>
+    `;
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeFinalInvoiceModal(); });
+    document.body.appendChild(modal);
+}
+
+function addExtraInvoiceItem() {
+    const container = document.getElementById('fi-extra-items-container');
+    const rowId = `fi-extra-${_extraItemCount++}`;
+    const row = document.createElement('div');
+    row.id = rowId;
+    row.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:6px;';
+    row.innerHTML = `
+        <input type="text" placeholder="Beskrivelse (f.eks. Vask)" oninput="updateFinalInvoiceTotal()"
+            style="flex:1;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font:inherit;font-size:0.9rem;"
+            class="fi-desc">
+        <input type="number" placeholder="kr" min="0" step="1" oninput="updateFinalInvoiceTotal()"
+            style="width:90px;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font:inherit;font-size:0.9rem;"
+            class="fi-amount">
+        <button type="button" onclick="document.getElementById('${rowId}').remove(); updateFinalInvoiceTotal();"
+            style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:1.1rem;padding:0 4px;">✕</button>
+    `;
+    container.appendChild(row);
+}
+
+function updateFinalInvoiceTotal() {
+    const extraRows = document.querySelectorAll('#fi-extra-items-container > div');
+    let extrasTotal = 0;
+    extraRows.forEach(row => {
+        const amt = parseFloat(row.querySelector('.fi-amount')?.value) || 0;
+        extrasTotal += amt;
+    });
+    const remaining = (_finalInvoiceTotalNOK - _finalInvoiceDepositNOK) + extrasTotal;
+    const el = document.getElementById('fi-remaining');
+    if (el) el.textContent = `kr ${remaining.toLocaleString('nb-NO')}`;
+}
+
+function closeFinalInvoiceModal() {
+    const modal = document.getElementById('final-invoice-modal');
+    if (modal) modal.style.display = 'none';
+    _finalInvoiceBookingId = null;
+}
+
+async function submitFinalInvoice() {
+    const btn = document.getElementById('fi-submit-btn');
+    const errEl = document.getElementById('fi-error');
+    errEl.style.display = 'none';
+
+    // Collect extra items
+    const extraItems = [];
+    const extraRows = document.querySelectorAll('#fi-extra-items-container > div');
+    for (const row of extraRows) {
+        const desc = (row.querySelector('.fi-desc')?.value || '').trim();
+        const amt = parseFloat(row.querySelector('.fi-amount')?.value) || 0;
+        if (desc || amt) {
+            if (!desc) { errEl.textContent = 'Fyll inn beskrivelse for alle tilleggsrader.'; errEl.style.display = 'block'; return; }
+            if (amt < 0) { errEl.textContent = 'Beløp kan ikke være negativt.'; errEl.style.display = 'block'; return; }
+            extraItems.push({ description: desc, amountNOK: amt });
+        }
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Sender...';
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/booking/send-final-invoice`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ id: _finalInvoiceBookingId, extraItems })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+            closeFinalInvoiceModal();
+            alert(`Sluttfaktura sendt til ${data.sentTo}!\nGjenstående beløp: kr ${(data.remainingAmount || 0).toLocaleString('nb-NO')}`);
+            loadDashboard();
+        } else {
+            errEl.textContent = data.error || 'Noe gikk galt.';
+            errEl.style.display = 'block';
+        }
+    } catch (err) {
+        console.error(err);
+        errEl.textContent = 'Nettverksfeil. Prøv igjen.';
+        errEl.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Send sluttfaktura';
+    }
+}
+
+async function markFinalInvoicePaid(id) {
+    if (!confirm('Bekreft at sluttfaktura er betalt (bankoverføring)?')) return;
+    try {
+        const res = await fetch(`${API_BASE_URL}/booking/deposit-paid?id=${id}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ markFinalInvoice: true })
+        });
+        if (res.ok) {
+            // There's no dedicated endpoint yet — use updateBookingFields approach via a generic patch if available,
+            // otherwise fall back to a simple alert instructing the admin.
+            alert('Merk: for nå markeres dette manuelt. Kontakt utvikler for å legge til et dedikert endepunkt for sluttfaktura-betaling via bank.');
+            loadDashboard();
+        } else {
+            alert('Noe gikk galt.');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Nettverksfeil.');
+    }
+}
+
+// ---------- Vipps payment dashboard ----------
+
+function renderVippsDashboard(bookings) {
+    const panel = document.getElementById('vipps-dashboard-panel');
+    if (!panel) return;
+
+    const vippsBookings = bookings.filter(b =>
+        b.paymentMethod === 'vipps' ||
+        b.depositVippsOrderId ||
+        b.finalInvoiceVippsOrderId
+    );
+
+    const stats = {
+        depositsSent: vippsBookings.filter(b => b.depositVippsOrderId).length,
+        depositsPaid: vippsBookings.filter(b => b.depositPaid && b.depositVippsOrderId).length,
+        invoicesSent: vippsBookings.filter(b => b.finalInvoiceVippsOrderId).length,
+        invoicesPaid: vippsBookings.filter(b => b.finalInvoicePaid).length,
+    };
+
+    const statusBadge = (paid, sent) => {
+        if (paid) return '<span style="background:#d1fae5;color:#065f46;padding:2px 7px;border-radius:4px;font-size:0.8rem;">✅ Betalt</span>';
+        if (sent) return '<span style="background:#e0f2fe;color:#075985;padding:2px 7px;border-radius:4px;font-size:0.8rem;">⏳ Sendt</span>';
+        return '<span style="background:#f3f4f6;color:#6b7280;padding:2px 7px;border-radius:4px;font-size:0.8rem;">– Ikke sendt</span>';
+    };
+
+    const rows = vippsBookings.map(b => {
+        const depNOK = b.depositAmount || 0;
+        const invNOK = b.finalInvoiceAmountNOK || 0;
+        return `<tr style="border-bottom:1px solid #f3f4f6;">
+            <td style="padding:8px 6px;font-weight:500;">${b.requesterName || '–'}</td>
+            <td style="padding:8px 6px;color:#6b7280;">${b.date || '–'}</td>
+            <td style="padding:8px 6px;">${b.eventType || '–'}</td>
+            <td style="padding:8px 6px;">${statusBadge(b.depositPaid, b.depositVippsOrderId)}${depNOK ? ` <small style="color:#6b7280;">kr ${depNOK.toLocaleString('nb-NO')}</small>` : ''}</td>
+            <td style="padding:8px 6px;">${statusBadge(b.finalInvoicePaid, b.finalInvoiceVippsOrderId)}${invNOK ? ` <small style="color:#6b7280;">kr ${invNOK.toLocaleString('nb-NO')}</small>` : ''}</td>
+        </tr>`;
+    }).join('');
+
+    panel.innerHTML = `
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:1rem;">
+            <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:12px 20px;min-width:130px;text-align:center;">
+                <div style="font-size:1.6rem;font-weight:bold;color:#0369a1;">${stats.depositsSent}</div>
+                <div style="font-size:0.8rem;color:#6b7280;">Depositum sendt</div>
+            </div>
+            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 20px;min-width:130px;text-align:center;">
+                <div style="font-size:1.6rem;font-weight:bold;color:#15803d;">${stats.depositsPaid}</div>
+                <div style="font-size:0.8rem;color:#6b7280;">Depositum betalt</div>
+            </div>
+            <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:12px 20px;min-width:130px;text-align:center;">
+                <div style="font-size:1.6rem;font-weight:bold;color:#0369a1;">${stats.invoicesSent}</div>
+                <div style="font-size:0.8rem;color:#6b7280;">Sluttfaktura sendt</div>
+            </div>
+            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 20px;min-width:130px;text-align:center;">
+                <div style="font-size:1.6rem;font-weight:bold;color:#15803d;">${stats.invoicesPaid}</div>
+                <div style="font-size:0.8rem;color:#6b7280;">Fullt betalt</div>
+            </div>
+        </div>
+        ${vippsBookings.length === 0
+            ? '<p style="color:#9ca3af;font-size:0.9rem;">Ingen bookinger med Vipps-betaling ennå.</p>'
+            : `<div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
+                    <thead>
+                        <tr style="text-align:left;border-bottom:2px solid #e5e7eb;color:#6b7280;font-weight:600;">
+                            <th style="padding:6px;">Navn</th>
+                            <th style="padding:6px;">Dato</th>
+                            <th style="padding:6px;">Arrangement</th>
+                            <th style="padding:6px;">Depositum</th>
+                            <th style="padding:6px;">Sluttfaktura</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+               </div>`
+        }`;
 }
 
 async function sendInvoice(id) {
