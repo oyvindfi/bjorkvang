@@ -52,6 +52,108 @@
         font-weight: 600;
       }
       #date { cursor: pointer; }
+
+      /* ---- Booking confirmation receipt ---- */
+      .booking-confirmation {
+        text-align: center;
+        padding: 2.5rem 1rem 1.5rem;
+        animation: confFadeIn 0.45s ease;
+      }
+      @keyframes confFadeIn {
+        from { opacity: 0; transform: translateY(16px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      .confirmation-icon {
+        font-size: 4rem;
+        line-height: 1;
+        margin-bottom: 0.75rem;
+      }
+      .booking-confirmation h2 {
+        font-size: 1.9rem;
+        color: #1a6644;
+        margin: 0 0 0.6rem;
+      }
+      .confirmation-lead {
+        max-width: 520px;
+        margin: 0 auto 2rem;
+        color: #4b5563;
+        line-height: 1.65;
+        font-size: 1rem;
+      }
+      .confirmation-receipt {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1.5rem;
+        max-width: 520px;
+        margin: 0 auto 1.25rem;
+        text-align: left;
+      }
+      .confirmation-receipt h3 {
+        font-size: 0.95rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #6b7280;
+        margin: 0 0 1rem;
+        padding-bottom: 0.6rem;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      .receipt-list { margin: 0; padding: 0; }
+      .receipt-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 1.5rem;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f3f4f6;
+      }
+      .receipt-row:last-child { border-bottom: none; }
+      .receipt-row dt {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #6b7280;
+        flex-shrink: 0;
+        list-style: none;
+      }
+      .receipt-row dd {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #111827;
+        text-align: right;
+        word-break: break-word;
+      }
+      .receipt-row--accent dt,
+      .receipt-row--accent dd {
+        color: #1a6644;
+        font-weight: 600;
+      }
+      .receipt-row--total {
+        margin-top: 0.4rem;
+        padding-top: 0.75rem;
+        border-top: 2px solid #e5e7eb;
+      }
+      .receipt-row--total dt,
+      .receipt-row--total dd {
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: #111827;
+      }
+      .confirmation-notice {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+        max-width: 520px;
+        margin: 0 auto 1.5rem;
+        text-align: left;
+      }
+      .confirmation-notice p {
+        margin: 0.35rem 0;
+        color: #166534;
+        font-size: 0.9rem;
+        line-height: 1.5;
+      }
     </style>
 </head>
 <body>
@@ -325,6 +427,70 @@
                         <p id="booking-status" class="form-status" role="status" aria-live="polite"></p>
                     </div>
                 </form>
+
+                <!-- Kvittering vises etter vellykket innsending -->
+                <div id="booking-confirmation" class="booking-confirmation" hidden aria-live="polite">
+                    <div class="confirmation-icon" aria-hidden="true">&#x2705;</div>
+                    <h2>Forespørsel sendt!</h2>
+                    <p class="confirmation-lead">
+                        Styret vil behandle forespørselen og ta kontakt innen kort tid for bekreftelse og signering av leieavtale.
+                        En kopi er sendt til e-postadressen din.
+                    </p>
+
+                    <div class="confirmation-receipt" role="region" aria-label="Oppsummering av bookingforespørsel">
+                        <h3>Oppsummering</h3>
+                        <dl class="receipt-list">
+                            <div class="receipt-row receipt-row--accent">
+                                <dt>Dato</dt>
+                                <dd id="conf-date">—</dd>
+                            </div>
+                            <div class="receipt-row receipt-row--accent">
+                                <dt>Tidspunkt og varighet</dt>
+                                <dd id="conf-time">—</dd>
+                            </div>
+                            <div class="receipt-row">
+                                <dt>Formål</dt>
+                                <dd id="conf-eventtype">—</dd>
+                            </div>
+                            <div class="receipt-row">
+                                <dt>Lokale</dt>
+                                <dd id="conf-spaces">—</dd>
+                            </div>
+                            <div class="receipt-row">
+                                <dt>Navn</dt>
+                                <dd id="conf-name">—</dd>
+                            </div>
+                            <div class="receipt-row">
+                                <dt>E-post</dt>
+                                <dd id="conf-email">—</dd>
+                            </div>
+                            <div class="receipt-row receipt-row--total">
+                                <dt>Estimert leiesum</dt>
+                                <dd id="conf-price">—</dd>
+                            </div>
+                            <div class="receipt-row">
+                                <dt>Depositum (50 %)</dt>
+                                <dd id="conf-deposit">—</dd>
+                            </div>
+                            <div class="receipt-row">
+                                <dt>Betalingsmetode for depositum</dt>
+                                <dd id="conf-payment">—</dd>
+                            </div>
+                            <div class="receipt-row" style="font-size:0.8rem;color:#9ca3af;">
+                                <dt>Referansenummer</dt>
+                                <dd id="conf-id">—</dd>
+                            </div>
+                        </dl>
+                    </div>
+
+                    <div class="confirmation-notice">
+                        <p>&#x1F4E7; Bekreftelse sendt til <strong id="conf-email-sent">—</strong>.</p>
+                        <p>&#x1F4B0; Etter godkjenning sender styret en betalingsforespørsel for depositumet (50 %).</p>
+                        <p>&#x1F4DD; Du vil også motta leieavtale til digital signering.</p>
+                    </div>
+
+                    <button onclick="resetBookingForm()" class="button ghost" style="margin-top:1.5rem;">&#x21A9; Send ny forespørsel</button>
+                </div>
             </div>
         </section>
 

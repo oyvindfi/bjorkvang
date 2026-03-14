@@ -1047,6 +1047,19 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   // ----------------------------------------
 
+  // Resets the confirmation receipt and shows the form again
+  window.resetBookingForm = function () {
+    const formEl = document.getElementById('booking-form');
+    const sectionHeading = document.querySelector('.booking-form-section .section-heading');
+    const confirmation = document.getElementById('booking-confirmation');
+    if (confirmation) confirmation.hidden = true;
+    if (formEl) { formEl.hidden = false; }
+    if (sectionHeading) sectionHeading.hidden = false;
+    // Scroll smoothly back to the form
+    const target = sectionHeading || formEl;
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   // --- Image gallery navigation ---
   window.changeImage = function(direction, galleryElement) {
     if (!galleryElement) return;

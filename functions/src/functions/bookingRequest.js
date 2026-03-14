@@ -67,7 +67,7 @@ app.http('bookingRequest', {
         }
 
         const body = await parseBody(request);
-        const { date, time, requesterName, requesterEmail, message, duration, eventType, spaces, services, attendees, paymentOrderId, paymentStatus, isMember } = body;
+        const { date, time, requesterName, requesterEmail, message, duration, eventType, spaces, services, attendees, paymentOrderId, paymentStatus, isMember, paymentMethod, totalAmount } = body;
 
         // Validate required fields
         if (!date || !time || !requesterName || !requesterEmail) {
@@ -236,6 +236,8 @@ app.http('bookingRequest', {
                 status: bookingStatus,
                 paymentOrderId: paymentOrderId || null,
                 paymentStatus: paymentStatus || 'unpaid',
+                paymentMethod: paymentMethod || 'vipps',
+                totalAmount: totalAmount || paymentAmount / 100,
                 paymentAmount: paymentAmount // Store amount in øre
             });
             
@@ -386,6 +388,7 @@ app.http('bookingRequest', {
             return createJsonResponse(202, {
                 id: booking.id,
                 status: booking.status,
+                paymentMethod: booking.paymentMethod,
             }, request);
         } catch (error) {
             context.error('bookingRequest: Failed to process booking request', {
