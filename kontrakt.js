@@ -214,19 +214,31 @@ const loadContract = async () => {
         const displayId = booking.id.replace('booking-', '').toUpperCase();
         document.getElementById('contract-id').textContent = displayId;
 
-        document.getElementById('renter-name').textContent = booking.name;
-        document.getElementById('renter-email').textContent = booking.email;
-        document.getElementById('renter-phone').textContent = booking.phone;
+        document.getElementById('renter-name').textContent = booking.requesterName || booking.name || '–';
+        document.getElementById('renter-email').textContent = booking.requesterEmail || booking.email || '–';
+        document.getElementById('renter-phone').textContent = booking.phone || '–';
         document.getElementById('renter-address').textContent = booking.address || '–';
         
         document.getElementById('rental-date').textContent = formatDate(booking.date);
         document.getElementById('rental-time').textContent = `${booking.time} (${booking.duration} timer)`;
-        document.getElementById('rental-rooms').textContent = Array.isArray(booking.spaces) ? booking.spaces.join(', ') : booking.spaces;
-        document.getElementById('rental-type').textContent = booking.eventType;
+        document.getElementById('rental-rooms').textContent = Array.isArray(booking.spaces) ? booking.spaces.join(', ') : (booking.spaces || '–');
+        document.getElementById('rental-type').textContent = booking.eventType || '–';
 
-        // Price calculation (if not in booking object, calculate it)
-        const price = booking.price || calculatePrice(booking.spaces, booking.eventType);
-        document.getElementById('rental-price').textContent = formatCurrency(price);
+        // Price: prefer stored totalAmount, fall back to paymentAmount (stored in øre), then calculate
+        const totalNOK = booking.totalAmount
+            || (booking.paymentAmount ? booking.paymentAmount / 100 : null)
+            || calculatePrice(booking.spaces, booking.eventType);
+        const depositNOK = booking.depositAmount
+            || (totalNOK ? Math.round(totalNOK * 0.5) : null);
+        const remainderNOK = (totalNOK && depositNOK) ? (totalNOK - depositNOK) : null;
+
+        document.getElementById('rental-price').textContent = totalNOK ? formatCurrency(totalNOK) : 'Etter avtale';
+
+        // Populate deposit row if element exists
+        const depositEl = document.getElementById('rental-deposit');
+        if (depositEl) depositEl.textContent = depositNOK ? formatCurrency(depositNOK) : '–';
+        const remainderEl = document.getElementById('rental-remainder');
+        if (remainderEl) remainderEl.textContent = remainderNOK ? formatCurrency(remainderNOK) : '–';
 
         // State Management
         const contract = booking.contract || {};

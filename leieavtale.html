@@ -242,6 +242,32 @@
         </header>
 
         <div class="contract-section">
+            <h2>Utleier</h2>
+            <div class="details-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Navn</span>
+                    <div class="detail-value">Helgøens Vel</div>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Organisasjonsnavn</span>
+                    <div class="detail-value">Bjørkvang forsamlingslokale</div>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">E-post</span>
+                    <div class="detail-value"><a href="mailto:styret@bjørkvang.no">styret@bjørkvang.no</a></div>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Telefon</span>
+                    <div class="detail-value">916 64 918</div>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Adresse</span>
+                    <div class="detail-value">Helgøya, Ringsaker kommune</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="contract-section">
             <h2>Leietaker</h2>
             <div class="details-grid">
                 <div class="detail-item">
@@ -292,8 +318,16 @@
                     <span class="detail-label">Totalpris (estimert)</span>
                     <div class="detail-value" id="rental-price">...</div>
                 </div>
+                <div class="detail-item">
+                    <span class="detail-label">Depositum (50 %) – forfaller innen 5 dager</span>
+                    <div class="detail-value" id="rental-deposit">...</div>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Restbeløp – faktureres etter arrangement</span>
+                    <div class="detail-value" id="rental-remainder">...</div>
+                </div>
             </div>
-            <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">* Faktura sendes etter gjennomført arrangement. Eventuelle skader eller manglende vask kan medføre tillegg.</p>
+            <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">* Faktura for restbeløp sendes etter gjennomført arrangement. Eventuelle skader eller manglende vask kan meføre tillegg.</p>
         </div>
 
         <div class="contract-section">
@@ -343,16 +377,16 @@
                 </div>
                 <div class="print-signature-line">
                     <p>For Helgøens Vel / Bjørkvang</p>
-                    <span class="print-signature-label">Underskrift utleier</span>
+                    <span class="print-signature-label">Underskrift utleier (Helgøens Vel)</span>
                 </div>
             </div>
-            
+
             <div style="margin: 20px 0; text-align: left; background: white; padding: 15px; border-radius: 4px; border: 1px solid #ddd;">
                 <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer;">
                     <input type="checkbox" id="payment-confirm" style="margin-top: 4px;">
                     <span>
-                        <strong>Jeg bekrefter at depositum (50% av leiesummen) er innbetalt.</strong><br>
-                        <span style="font-size: 0.9rem; color: #666;">Resterende beløp skal betales før arrangementet starter.</span>
+                        <strong>Jeg bekrefter at depositum (50 % av leiesummen) er innbetalt eller vil bli innbetalt innen 5 dager.</strong><br>
+                        <span style="font-size: 0.9rem; color: #666;">Resterende beløp faktureres etter arrangementet.</span>
                     </span>
                 </label>
             </div>
