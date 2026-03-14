@@ -15,8 +15,13 @@ app.http('getCalendar', {
         try {
             const allBookings = await listBookings();
             
+            // Exclude rejected and cancelled bookings — they don't block dates
+            const activeBookings = allBookings.filter(
+                b => b.status !== 'rejected' && b.status !== 'cancelled'
+            );
+
             // Only expose minimal information for public calendar
-            const bookings = allBookings.map((booking) => ({
+            const bookings = activeBookings.map((booking) => ({
                 id: booking.id,
                 date: booking.date,
                 time: booking.time,
