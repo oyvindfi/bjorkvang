@@ -1005,11 +1005,11 @@ document.addEventListener('DOMContentLoaded', function () {
         if (eventTypeSelect) eventTypeSelect.selectedIndex = 0;
 
         const paymentNote = paymentMethod === 'vipps'
-          ? 'Du vil motta en Vipps-betalingsforesp\u00f8rsel for depositum (50 %) etter godkjenning.'
-          : \Du vil motta en betalingsforesp\u00f8rsel for depositum (50 % av ca. kr \) etter godkjenning.\;
+          ? 'Du vil motta en Vipps-betalingsforespørsel for depositum (50 %) etter godkjenning.'
+          : `Du vil motta en betalingsforespørsel for depositum (50 % av ca. kr ${totalAmount.toLocaleString('nb-NO')}) etter godkjenning.`;
 
         showStatus(
-          \Bookingforesp\u00f8rsel sendt! Styret vil vurdere foresp\u00f8rselen og ta kontakt innen kort tid. \,
+          `Bookingforespørsel sendt! Styret vil vurdere forespørselen og ta kontakt innen kort tid. ${paymentNote}`,
           'success'
         );
       } catch (error) {

@@ -49,8 +49,9 @@ app.http('vippsInitiateBooking', {
                 date,
                 time,
                 requesterName,
-            eventType,
-            isMember
+                eventType,
+                isMember
+            } = body;
 
             if (!date || !time || !requesterName) {
                 return createJsonResponse(400, { error: 'Date, time, and name are required' });
