@@ -88,6 +88,7 @@ const saveBooking = async (booking) => {
         // Add partition key field (using first 7 chars of date: YYYY-MM)
         const item = {
             ...booking,
+            type: 'booking', // Distinguishes from member records in cross-partition queries
             bjorkvang: booking.date ? booking.date.substring(0, 7) : new Date().toISOString().substring(0, 7),
             createdAt: booking.createdAt || new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -285,10 +286,12 @@ const listBookings = async ({ startDate, endDate } = {}) => {
         let querySpec;
         
         // Note: ORDER BY removed from queries to avoid requiring composite index
-        // Sorting is done client-side instead
+        // Sorting is done client-side instead.
+        // Always exclude member records (c.type = 'member') so SELECT * doesn't
+        // contaminate the booking list with non-booking documents.
         if (startDate && endDate) {
             querySpec = {
-                query: 'SELECT * FROM c WHERE c.date >= @startDate AND c.date <= @endDate',
+                query: "SELECT * FROM c WHERE (NOT IS_DEFINED(c.type) OR c.type != 'member') AND c.date >= @startDate AND c.date <= @endDate",
                 parameters: [
                     { name: '@startDate', value: startDate },
                     { name: '@endDate', value: endDate }
@@ -296,12 +299,12 @@ const listBookings = async ({ startDate, endDate } = {}) => {
             };
         } else if (startDate) {
             querySpec = {
-                query: 'SELECT * FROM c WHERE c.date >= @startDate',
+                query: "SELECT * FROM c WHERE (NOT IS_DEFINED(c.type) OR c.type != 'member') AND c.date >= @startDate",
                 parameters: [{ name: '@startDate', value: startDate }]
             };
         } else {
             querySpec = {
-                query: 'SELECT * FROM c'
+                query: "SELECT * FROM c WHERE NOT IS_DEFINED(c.type) OR c.type != 'member'"
             };
         }
 

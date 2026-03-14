@@ -151,8 +151,18 @@ if (sessionStorage.getItem('admin_auth') === 'true') {
 
 async function loadDashboard() {
     try {
-        const response = await fetch(`${API_BASE_URL}/booking/admin`);
-        if (!response.ok) throw new Error('Failed to fetch bookings');
+        const ctrl = new AbortController();
+        const timeout = setTimeout(() => ctrl.abort(), 20000); // 20s timeout
+        let response;
+        try {
+            response = await fetch(`${API_BASE_URL}/booking/admin`, { signal: ctrl.signal });
+        } finally {
+            clearTimeout(timeout);
+        }
+        if (!response.ok) {
+            const errBody = await response.json().catch(() => ({}));
+            throw new Error(`Server svarte ${response.status}: ${errBody.error || response.statusText}`);
+        }
         const data = await response.json();
         let bookings = data.bookings || [];
 
@@ -178,8 +188,12 @@ async function loadDashboard() {
 
         renderDashboard(bookings);
     } catch (error) {
-        console.error('Error loading dashboard:', error);
-        alert('Kunne ikke laste bookinger. Sjekk konsollen for detaljer.');
+        const msg = error.name === 'AbortError'
+            ? 'Forespørselen tok for lang tid (>20s) — sannsynligvis timeout mot Cosmos DB. Sjekk Azure Portal.'
+            : (error.message || 'Ukjent feil');
+        console.error('Error loading dashboard:', msg, error);
+        document.getElementById('pending-list').innerHTML = `<p style="color:#ef4444;">⚠ Feil: ${msg}</p>`;
+        alert('Kunne ikke laste bookinger: ' + msg);
     }
 }
 
