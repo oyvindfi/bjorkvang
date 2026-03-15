@@ -159,7 +159,7 @@ async function unlockLandlordSigning() {
     btn.textContent = 'Verifiserer...';
 
     try {
-        const response = await fetch(`${API_BASE}/admin/verify`, {
+        const response = await fetch(`${API_BASE}/auth/verify-admin`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ password: input })

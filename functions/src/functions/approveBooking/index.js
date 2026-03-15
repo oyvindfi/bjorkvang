@@ -162,7 +162,7 @@ app.http('approveBooking', {
 
                 // Secondary sign-contract link (shown below Vipps button when Vipps is primary)
                 const contractAnchor = vippsPaymentUrl
-                    ? `<p style="text-align:center;margin-top:16px;"><a href="${contractLink}" style="color:#1a823b;font-size:0.95rem;">&#128394; Signer leieavtale &rarr;</a></p>`
+                    ? ''
                     : '';
 
                 const htmlContent = `
@@ -171,8 +171,9 @@ app.http('approveBooking', {
                     ${summaryTable}
 
                     <h3 style="margin:20px 0 6px;font-size:1rem;">Steg&nbsp;1 &ndash; Signer leieavtalen</h3>
-                    <p style="margin:0 0 4px;">Les gjennom og signer avtalen digitalt f\u00f8r arrangementet.</p>
-
+                    <p style="margin:0 0 4px;">Les gjennom og signer avtalen digitalt f\u00f8r arrangementet.</p>                    <div style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:8px;padding:16px 20px;margin:12px 0 16px;">
+                        <a href="${contractLink}" style="display:inline-block;background:#1a56db;color:#fff;font-weight:700;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:1rem;">&#128394; Signer leieavtalen</a>
+                    </div>
                     <h3 style="margin:20px 0 6px;font-size:1rem;">Steg&nbsp;2 &ndash; Betal depositum</h3>
                     ${paymentBlock}
                     ${contractAnchor}
