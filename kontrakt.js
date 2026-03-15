@@ -144,42 +144,7 @@ function getSignatureData(canvasId, inputId) {
 }
 
 // --- Admin Security ---
-
-async function unlockLandlordSigning() {
-    const input = document.getElementById('admin-pin-input').value;
-    const btn = document.querySelector('#landlord-auth-container button');
-    
-    if (!input) {
-        alert('Vennligst skriv inn kode.');
-        return;
-    }
-
-    const originalText = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = 'Verifiserer...';
-
-    try {
-        const response = await fetch(`${API_BASE}/auth/verify-admin`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password: input })
-        });
-
-        if (response.ok) {
-            document.getElementById('landlord-auth-container').style.display = 'none';
-            document.getElementById('landlord-signature-pad-container').style.display = 'block';
-            initCanvas('landlord-signature-canvas');
-        } else {
-            alert('Feil kode.');
-        }
-    } catch (error) {
-        console.error('Verification error:', error);
-        alert('Kunne ikke verifisere kode.');
-    } finally {
-        btn.disabled = false;
-        btn.textContent = originalText;
-    }
-}
+// No password required — landlord area is only shown when ?mode=admin is in the URL
 
 // --- Main Logic ---
 
@@ -254,8 +219,11 @@ const loadContract = async () => {
                 // Waiting for Landlord
                 if (getQueryParam('mode') === 'admin') {
                     // Show Landlord Signature Area for signing (Only for admin)
-                    document.getElementById('landlord-signature-area').style.display = 'block';
-                    // Don't init canvas yet, wait for unlock
+                    const landlordArea = document.getElementById('landlord-signature-area');
+                    landlordArea.style.display = 'block';
+                    document.getElementById('landlord-auth-container').style.display = 'none';
+                    document.getElementById('landlord-signature-pad-container').style.display = 'block';
+                    initCanvas('landlord-signature-canvas');
                 } else {
                     // Show waiting message for regular users
                     showWaitingForLandlordState();
