@@ -25,6 +25,11 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
   const durationInputEl = document.getElementById('duration');
+  const endDateInputEl = document.getElementById('end-date');
+  const endTimeInputEl = document.getElementById('end-time');
+  const durationFieldEl = document.getElementById('duration-field');
+  const endDateFieldEl = document.getElementById('end-date-field');
+  const endTimeFieldEl = document.getElementById('end-time-field');
   const eventTypeSelect = document.getElementById('event-type');
   const calculatedPriceEl = document.getElementById('calculated-price');
   const attendeesInput = document.getElementById('attendees');
@@ -744,11 +749,18 @@ document.addEventListener('DOMContentLoaded', function () {
         if (timeInput && !selectionInfo.allDay) {
           timeInput.value = selectionInfo.startStr.slice(11, 16);
         }
-        if (durationInputEl && selectionInfo.end) {
-          const diff = (selectionInfo.end.getTime() - selectionInfo.start.getTime()) / (60 * 60 * 1000);
-          if (!Number.isNaN(diff) && diff >= 1) {
-            const clamped = Math.min(12, Math.round(diff));
-            durationInputEl.value = String(clamped);
+        if (selectionInfo.end) {
+          const isWeddingSelected = !!form?.querySelector('input[name="spaces"][value="Bryllupspakke"]:checked');
+          if (isWeddingSelected && endDateInputEl) {
+            endDateInputEl.value = selectionInfo.endStr.slice(0, 10);
+            if (endTimeInputEl && !selectionInfo.allDay) {
+              endTimeInputEl.value = selectionInfo.endStr.slice(11, 16);
+            }
+          } else if (durationInputEl) {
+            const diff = (selectionInfo.end.getTime() - selectionInfo.start.getTime()) / (60 * 60 * 1000);
+            if (!Number.isNaN(diff) && diff >= 1) {
+              durationInputEl.value = String(Math.min(72, Math.round(diff)));
+            }
           }
         }
         if (statusEl) {
@@ -896,12 +908,15 @@ document.addEventListener('DOMContentLoaded', function () {
       const address = (formValues.address || '').trim();
       const dateValue = formValues.date || '';
       const timeValue = formValues.time || '';
+      const endDateValue = formValues.endDate || '';
+      const endTimeValue = formValues.endTime || '';
       const durationInput = formValues.duration || '';
       const eventType = (formValues.eventType || '').trim();
       const message = (formValues.message || '').trim();
       const attendeesValue = (formValues.attendees || '').trim();
       const selectedSpaces = Array.from(form.querySelectorAll('input[name="spaces"]:checked')).map((input) => input.value);
       const selectedServices = Array.from(form.querySelectorAll('input[name="services"]:checked')).map((input) => input.value);
+      const isWedding = selectedSpaces.includes('Bryllupspakke');
       const notificationEmailRaw = (formValues.notificationEmail || '').trim();
       const paymentMethod = formValues.paymentMethod || 'vipps';
 
@@ -919,7 +934,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
-      if (!name || !email || !phone || !dateValue || !timeValue || !durationInput || !eventType) {
+      if (!name || !email || !phone || !dateValue || !timeValue || !eventType) {
         showStatus('Vennligst fyll ut alle obligatoriske felter.', 'error');
         isSubmitting = false;
         return;
@@ -931,13 +946,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
-      const duration = parseFloat(durationInput);
-      if (!Number.isFinite(duration) || duration <= 0) {
-        showStatus('Varighet må være minst én time.', 'error');
-        isSubmitting = false;
-        return;
-      }
-
       const startDate = new Date(`${dateValue}T${timeValue}`);
       if (Number.isNaN(startDate.getTime())) {
         showStatus('Ugyldig dato eller klokkeslett.', 'error');
@@ -945,7 +953,30 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
-      const endDate = new Date(startDate.getTime() + duration * 60 * 60 * 1000);
+      let endDate, duration;
+      if (isWedding) {
+        if (!endDateValue || !endTimeValue) {
+          showStatus('Angi ca. sluttdato og slutttid for bryllupspakken.', 'error');
+          isSubmitting = false;
+          return;
+        }
+        endDate = new Date(`${endDateValue}T${endTimeValue}`);
+        if (Number.isNaN(endDate.getTime()) || endDate <= startDate) {
+          showStatus('Sluttidspunkt må være etter starttidspunkt.', 'error');
+          isSubmitting = false;
+          return;
+        }
+        duration = (endDate.getTime() - startDate.getTime()) / (60 * 60 * 1000);
+      } else {
+        const durationParsed = parseFloat(durationInput);
+        if (!Number.isFinite(durationParsed) || durationParsed <= 0) {
+          showStatus('Varighet må være minst én time.', 'error');
+          isSubmitting = false;
+          return;
+        }
+        duration = durationParsed;
+        endDate = new Date(startDate.getTime() + duration * 60 * 60 * 1000);
+      }
 
       const conflictingEvent = events.find((event) => {
         const existingStart = new Date(event.start);
@@ -1001,7 +1032,13 @@ document.addEventListener('DOMContentLoaded', function () {
         await submitBooking(bookingDetails);
 
         form.reset();
-        if (durationInputEl) durationInputEl.value = '4';
+        // Re-show duration field and hide wedding fields after reset
+        if (durationFieldEl) durationFieldEl.hidden = false;
+        if (endDateFieldEl) endDateFieldEl.hidden = true;
+        if (endTimeFieldEl) endTimeFieldEl.hidden = true;
+        if (durationInputEl) durationInputEl.required = true;
+        if (endDateInputEl) endDateInputEl.required = false;
+        if (endTimeInputEl) endTimeInputEl.required = false;
         if (eventTypeSelect) eventTypeSelect.selectedIndex = 0;
 
         const paymentNote = paymentMethod === 'vipps'
@@ -1020,28 +1057,42 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // --- NEW: Handle Bryllupspakke logic ---
-  const spacesCheckboxes = document.querySelectorAll('input[name="spaces"]');
-  spacesCheckboxes.forEach(checkbox => {
+  // --- Handle Bryllupspakke auto-fill ---
+  const getNextThursday = () => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    const day = date.getDay(); // 0=Sun, 1=Mon, ..., 4=Thu
+    const daysUntil = ((4 - day + 7) % 7) || 7; // always at least 1 day ahead
+    date.setDate(date.getDate() + daysUntil);
+    return date;
+  };
+
+  const toDateStr = (d) => d.toISOString().slice(0, 10);
+
+  const weddingSpacesCheckboxes = document.querySelectorAll('input[name="spaces"]');
+  weddingSpacesCheckboxes.forEach(checkbox => {
     checkbox.addEventListener('change', (e) => {
       if (e.target.value === 'Bryllupspakke' && e.target.checked) {
-        // Uncheck others to avoid confusion
-        spacesCheckboxes.forEach(cb => {
-          if (cb !== e.target) cb.checked = false;
-        });
-        // Suggest duration (e.g. whole weekend = 48+ hours)
-        if (durationInputEl) durationInputEl.value = 48; 
-        // Auto-select event type
-        if (eventTypeSelect) eventTypeSelect.value = 'Familiefeiring';
-        
-        showStatus('Bryllupspakke valgt. Varighet satt til helg (48t).', 'info');
-      } else if (e.target.checked && e.target.value !== 'Bryllupspakke') {
-        // If selecting regular spaces, uncheck Bryllupspakke
-        const wedding = document.querySelector('input[name="spaces"][value="Bryllupspakke"]');
-        if (wedding && wedding.checked) {
-            wedding.checked = false;
-            if (durationInputEl) durationInputEl.value = 4; // Reset to default
+        const thursday = getNextThursday();
+        const sunday = new Date(thursday);
+        sunday.setDate(thursday.getDate() + 3);
+
+        // Auto-fill start: next Thursday 18:00
+        if (datepicker) {
+          datepicker.setDate(toDateStr(thursday), true);
+        } else if (dateInput) {
+          dateInput.value = toDateStr(thursday);
         }
+        if (timeInput) timeInput.value = '18:00';
+
+        // Auto-fill end: Sunday 16:00
+        if (endDateInputEl) endDateInputEl.value = toDateStr(sunday);
+        if (endTimeInputEl) endTimeInputEl.value = '16:00';
+
+        // Auto-select event type
+        if (eventTypeSelect) eventTypeSelect.value = 'Bryllup';
+
+        showStatus('Bryllupspakke valgt. Datoer satt til torsdag–søndag (kan justeres).', 'info');
       }
     });
   });
