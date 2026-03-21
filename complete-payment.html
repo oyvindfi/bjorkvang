@@ -332,7 +332,9 @@
 
                 // Show payment view
                 document.getElementById('loading-state').style.display = 'none';
-                document.getElementById('payment-view').style.display = 'block';
+                const paymentView = document.getElementById('payment-view');
+                paymentView.style.display = 'block';
+                paymentView.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
             } catch (error) {
                 console.error(error);
@@ -368,14 +370,19 @@
             const statusMsg = document.getElementById('status-message');
 
             btn.disabled = true;
-            btn.textContent = 'Starter Vipps...';
+            btn.innerHTML = '<span class="vipps-icon-large">V</span><span>Starter Vipps...</span>';
+
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 10000);
 
             try {
                 const response = await fetch(`${API_BASE}/vipps/initiate-contract-payment`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ bookingId })
+                    body: JSON.stringify({ bookingId }),
+                    signal: controller.signal
                 });
+                clearTimeout(timeout);
 
                 if (!response.ok) {
                     const error = await response.json();
@@ -388,9 +395,14 @@
                 window.location.href = data.url;
 
             } catch (error) {
+                clearTimeout(timeout);
+                const message = error.name === 'AbortError'
+                    ? 'Forespørselen tok for lang tid. Sjekk internettforbindelsen og prøv igjen.'
+                    : error.message;
                 console.error(error);
-                statusMsg.textContent = error.message;
+                statusMsg.textContent = message;
                 statusMsg.className = 'status-message error';
+                statusMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 btn.disabled = false;
                 btn.innerHTML = '<span class="vipps-icon-large">V</span><span>Betal med Vipps</span>';
             }

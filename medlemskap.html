@@ -15,7 +15,7 @@
     <link rel="canonical" href="https://bjørkvang.no/medlemskap">
     <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="style.css">
-    <script async type="text/javascript" src="https://checkout.vipps.no/checkout-button/v1/vipps-checkout-button.js"></script>
+
 </head>
 <body>
     <a class="skip-link" href="#main-content">Hopp til hovedinnhold</a>
@@ -140,19 +140,10 @@
                         </div>
                         <p>Godkjenn den løpende avtalen i Vipps for å registrere ditt medlemskap:</p>
                         
-                        <vipps-mobilepay-button
-                            id="vipps-pay-btn"
-                            type="button"
-                            brand="vipps"
-                            language="no"
-                            variant="primary"
-                            rounded="true"
-                            verb="pay"
-                            stretched="false"
-                            branded="true"
-                            loading="false"
-                            style="cursor:pointer;"
-                        ></vipps-mobilepay-button>
+                        <button id="vipps-pay-btn" class="vipps-button-primary" type="button">
+                            <span class="vipps-icon">V</span>
+                            <span>Betal med Vipps</span>
+                        </button>
                         <p id="vipps-status" class="form-status" style="display:none; margin-top: 1rem;"></p>
                     </div>
 
@@ -167,49 +158,65 @@
                 const btn = document.getElementById('vipps-pay-btn');
                 const statusEl = document.getElementById('vipps-status');
 
-                btn.setAttribute('loading', 'true');
-                if (statusEl) statusEl.style.display = 'none';
+                btn.disabled = true;
+                btn.innerHTML = '<span class="vipps-icon">V</span><span>Starter Vipps...</span>';
+                if (statusEl) {
+                    statusEl.style.display = 'none';
+                    statusEl.classList.remove('is-error');
+                }
+
+                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                const apiBase = isLocal ? 'http://localhost:7071' : 'https://bjorkvang-duhsaxahgfe0btgv.westeurope-01.azurewebsites.net';
+
+                const name = document.getElementById('member-name').value.trim();
+                const phone = document.getElementById('member-phone').value.trim();
+
+                if (!name) {
+                    if (statusEl) {
+                        statusEl.textContent = 'Vennligst oppgi navn.';
+                        statusEl.style.display = 'block';
+                        statusEl.classList.add('is-error');
+                        statusEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    btn.disabled = false;
+                    btn.innerHTML = '<span class="vipps-icon">V</span><span>Betal med Vipps</span>';
+                    return;
+                }
+
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 10000);
 
                 try {
-                    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-                    const apiBase = isLocal ? 'http://localhost:7071' : 'https://bjorkvang-duhsaxahgfe0btgv.westeurope-01.azurewebsites.net';
-
-                    const name = document.getElementById('member-name').value.trim();
-                    const phone = document.getElementById('member-phone').value.trim();
-
-                    if (!name) {
-                        if (statusEl) {
-                            statusEl.textContent = 'Vennligst oppgi navn.';
-                            statusEl.style.display = 'block';
-                            statusEl.classList.add('is-error');
-                        }
-                        btn.setAttribute('loading', 'false');
-                        return;
-                    }
-
                     const response = await fetch(`${apiBase}/api/vipps/membership/create`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name, phoneNumber: phone || undefined })
+                        body: JSON.stringify({ name, phoneNumber: phone || undefined }),
+                        signal: controller.signal
                     });
+                    clearTimeout(timeout);
 
                     const data = await response.json();
 
                     if (response.ok && data.url) {
-                        // Lagre agreementId så vi kan sjekke status etter redirect
                         sessionStorage.setItem('membershipAgreementId', data.agreementId);
                         window.location.href = data.url;
                     } else {
                         throw new Error(data.error || 'Kunne ikke starte Vipps-betaling');
                     }
                 } catch (err) {
+                    clearTimeout(timeout);
+                    const message = err.name === 'AbortError'
+                        ? 'Forespørselen tok for lang tid. Sjekk internettforbindelsen og prøv igjen.'
+                        : err.message;
                     console.error(err);
                     if (statusEl) {
-                        statusEl.textContent = 'Beklager, noe gikk galt. Vennligst prøv manuell betaling.';
+                        statusEl.textContent = message;
                         statusEl.style.display = 'block';
                         statusEl.classList.add('is-error');
+                        statusEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
-                    btn.setAttribute('loading', 'false');
+                    btn.disabled = false;
+                    btn.innerHTML = '<span class="vipps-icon">V</span><span>Betal med Vipps</span>';
                 }
             });
         </script>

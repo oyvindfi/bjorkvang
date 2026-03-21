@@ -48,6 +48,7 @@ body {
         radial-gradient(circle at bottom right, rgba(20, 100, 160, 0.05), transparent 55%),
         #faf8f5;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
 }
 
 main {
@@ -417,13 +418,20 @@ body.nav-open .nav-backdrop {
     .site-nav.is-open li:nth-child(5) { opacity: 1; transform: none; transition-delay: 0.20s; }
     .site-nav.is-open li:nth-child(6) { opacity: 1; transform: none; transition-delay: 0.24s; }
     .site-nav.is-open li:nth-child(7) { opacity: 1; transform: none; transition-delay: 0.28s; }
+    .site-nav.is-open li:nth-child(8) { opacity: 1; transform: none; transition-delay: 0.32s; }
 
     .site-nav a {
         justify-content: flex-start;
         padding: 0.9rem 1.1rem;
         border-radius: var(--radius-sm);
         border-left: 3px solid transparent;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
         transition: background var(--transition), color var(--transition), border-color var(--transition);
+    }
+
+    .site-nav a:active {
+        background: rgba(14, 82, 133, 0.12);
     }
 
     .site-nav a[aria-current="page"] {
@@ -2422,6 +2430,10 @@ button[type="submit"] {
         padding: 0.4rem;
     }
 
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
     .info-card,
     .inventory-card,
     .product-card,
@@ -2535,6 +2547,57 @@ button[type="submit"] {
     font-size: 0.85rem;
     display: inline-block;
     margin-right: 0.25rem;
+}
+
+/* Reliable mobile-friendly Vipps button (replaces web component on mobile) */
+.vipps-button-primary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    width: 100%;
+    padding: 1rem 1.5rem;
+    min-height: 52px;
+    background: #ff5b24;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.2s, transform 0.12s;
+}
+
+.vipps-button-primary:hover {
+    background: #e04e1d;
+}
+
+.vipps-button-primary:active {
+    background: #c9441b;
+    transform: scale(0.98);
+}
+
+.vipps-button-primary:disabled {
+    background: #bbb;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.vipps-button-primary .vipps-icon {
+    background: white;
+    color: #ff5b24;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-style: italic;
+    font-weight: 900;
+    font-size: 1rem;
+    flex-shrink: 0;
 }
 
 /* ==========================================
@@ -2726,17 +2789,29 @@ textarea:focus {
     .page-hero {
         padding: 3rem 0;
     }
-    
+
     .hero-inner {
         gap: 2rem;
     }
-    
+
     .page-section {
         padding: 3rem 0;
     }
-    
+
     .container {
         width: min(1120px, 90vw);
+    }
+
+    /* Prevent iOS Safari from auto-zooming on input focus */
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="date"],
+    input[type="time"],
+    input[type="number"],
+    select,
+    textarea {
+        font-size: 16px;
     }
 }
 
