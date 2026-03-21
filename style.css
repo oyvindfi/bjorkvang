@@ -35,6 +35,10 @@
     box-sizing: border-box;
 }
 
+html {
+    overflow-x: hidden;
+}
+
 body {
     font-family: 'Nunito', 'Segoe UI', system-ui, -apple-system, sans-serif;
     margin: 0;
@@ -48,7 +52,6 @@ body {
         radial-gradient(circle at bottom right, rgba(20, 100, 160, 0.05), transparent 55%),
         #faf8f5;
     -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
 }
 
 main {
@@ -550,6 +553,8 @@ button {
     background: var(--brand-600);
     color: #fff;
     box-shadow: 0 2px 8px rgba(14, 82, 133, 0.25);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
     transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
 }
 
