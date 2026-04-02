@@ -133,8 +133,7 @@
                              data-small-header="false"
                              data-adapt-container-width="true"
                              data-hide-cover="false"
-                             data-show-facepile="true"
-                             data-lazy="true">
+                             data-show-facepile="true">
                         </div>
                     </div>
                 </div>
@@ -195,7 +194,7 @@
             window.fbAsyncInit = function() {
                 FB.init({
                     xfbml: true,
-                    version: 'v21.0'
+                    version: 'v22.0'
                 });
                 
                 // Hide loading spinner once SDK is initialized
@@ -244,13 +243,13 @@
                 }
             }
 
-            // Aggressive timeout - show fallback after just 3 seconds
+            // Show fallback if Facebook SDK fails or takes too long
             setTimeout(function() {
                 if (!feedLoaded) {
                     console.log('Facebook feed timeout - showing fallback');
                     showFallback();
                 }
-            }, 3000);
+            }, 8000);
         })();
     </script>
 </body>

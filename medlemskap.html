@@ -16,6 +16,12 @@
     <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="style.css">
 
+    <script
+      async
+      type="text/javascript"
+      src="https://checkout.vipps.no/checkout-button/v1/vipps-checkout-button.js"
+    ></script>
+
 </head>
 <body>
     <a class="skip-link" href="#main-content">Hopp til hovedinnhold</a>
@@ -140,10 +146,16 @@
                         </div>
                         <p>Godkjenn den løpende avtalen i Vipps for å registrere ditt medlemskap:</p>
                         
-                        <button id="vipps-pay-btn" class="vipps-button-primary" type="button">
-                            <span class="vipps-icon">V</span>
-                            <span>Betal med Vipps</span>
-                        </button>
+                        <vipps-mobilepay-button
+                            id="vipps-pay-btn"
+                            brand="vipps"
+                            language="no"
+                            variant="primary"
+                            rounded="true"
+                            verb="register"
+                            stretched="false"
+                            branded="true"
+                            loading="false"></vipps-mobilepay-button>
                         <p id="vipps-status" class="form-status" style="display:none; margin-top: 1rem;"></p>
                     </div>
 
@@ -154,12 +166,14 @@
         </section>
 
         <script>
+            let isSubmitting = false;
             document.getElementById('vipps-pay-btn').addEventListener('click', async () => {
+                if (isSubmitting) return;
+                isSubmitting = true;
                 const btn = document.getElementById('vipps-pay-btn');
                 const statusEl = document.getElementById('vipps-status');
 
-                btn.disabled = true;
-                btn.innerHTML = '<span class="vipps-icon">V</span><span>Starter Vipps...</span>';
+                btn.setAttribute('loading', 'true');
                 if (statusEl) {
                     statusEl.style.display = 'none';
                     statusEl.classList.remove('is-error');
@@ -178,8 +192,8 @@
                         statusEl.classList.add('is-error');
                         statusEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
-                    btn.disabled = false;
-                    btn.innerHTML = '<span class="vipps-icon">V</span><span>Betal med Vipps</span>';
+                    btn.setAttribute('loading', 'false');
+                    isSubmitting = false;
                     return;
                 }
 
@@ -215,8 +229,8 @@
                         statusEl.classList.add('is-error');
                         statusEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
-                    btn.disabled = false;
-                    btn.innerHTML = '<span class="vipps-icon">V</span><span>Betal med Vipps</span>';
+                    btn.setAttribute('loading', 'false');
+                    isSubmitting = false;
                 }
             });
         </script>
