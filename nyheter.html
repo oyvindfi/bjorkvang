@@ -116,23 +116,30 @@
                     <p>Se våre siste oppdateringer, bilder og arrangementer fra Helgøens Vel</p>
                 </div>
                 <div class="facebook-feed-wrapper">
-                    <div id="fb-feed-container" style="position: relative; max-width: 500px; margin: 0 auto;">
-                        <div id="fb-loading" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: white; border-radius: 8px; z-index: 1;">
-                            <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #1877f2; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                            <p style="margin-top: 16px; color: #666;">Laster Facebook-feed...</p>
+                    <div style="max-width: 560px; margin: 0 auto; background: white; border-radius: 16px; box-shadow: 0 2px 16px rgba(0,0,0,0.08); overflow: hidden;">
+                        <div style="background: #1877f2; padding: 24px 32px; display: flex; align-items: center; gap: 16px;">
+                            <svg style="width: 40px; height: 40px; fill: white; flex-shrink: 0;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                            </svg>
+                            <div>
+                                <div style="color: white; font-weight: 700; font-size: 1.1rem;">Helgøens Vel</div>
+                                <div style="color: rgba(255,255,255,0.85); font-size: 0.875rem;">Facebook-side</div>
+                            </div>
                         </div>
-                        <iframe
-                            id="fb-iframe"
-                            src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fprofile.php%3Fid%3D100064406991223&tabs=timeline&width=500&height=600&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true&appId"
-                            width="500"
-                            height="600"
-                            style="border:none; overflow:hidden; display:block; max-width:100%; opacity:0; transition: opacity 0.3s;"
-                            scrolling="no"
-                            frameborder="0"
-                            allowfullscreen="true"
-                            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                            onload="this.style.opacity='1'; document.getElementById('fb-loading').style.display='none'; clearTimeout(window._fbTimeout);">
-                        </iframe>
+                        <div style="padding: 32px;">
+                            <p style="color: #444; line-height: 1.7; margin: 0 0 24px;">
+                                Følg oss på Facebook for nyheter, bilder fra arrangementer, informasjon om dugnad og aktiviteter i lokalmiljøet på Helgøya.
+                            </p>
+                            <a href="https://www.facebook.com/profile.php?id=100064406991223"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               style="display: inline-flex; align-items: center; gap: 10px; padding: 14px 28px; background: #1877f2; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 1rem;">
+                                <svg style="width: 20px; height: 20px; fill: white;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                </svg>
+                                Besøk oss på Facebook
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -174,44 +181,6 @@
         <p class="footer-meta">&copy; 2025 Bjørkvang forsamlingslokale og Helgøens Vel.</p>
     </footer>
 
-    <style>
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
-
     <script src="app.js"></script>
-    <script>
-        window._fbTimeout = setTimeout(function() {
-            const iframe = document.getElementById('fb-iframe');
-            if (iframe && parseFloat(iframe.style.opacity) < 1) {
-                showFbFallback();
-            }
-        }, 10000);
-
-        function showFbFallback() {
-            const container = document.getElementById('fb-feed-container');
-            if (container) {
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 48px 32px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto;">
-                        <svg style="width: 64px; height: 64px; margin-bottom: 24px; fill: #1877f2;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                        </svg>
-                        <h3 style="font-size: 1.5rem; margin-bottom: 16px; color: #1c1e21;">Hold deg oppdatert</h3>
-                        <p style="color: #65676b; margin-bottom: 24px; line-height: 1.6;">
-                            Følg Helgøens Vel på Facebook for nyheter, bilder fra arrangementer, og informasjon om dugnad og aktiviteter i lokalmiljøet.
-                        </p>
-                        <a href="https://www.facebook.com/profile.php?id=100064406991223"
-                           target="_blank"
-                           rel="noopener noreferrer"
-                           style="display: inline-block; padding: 14px 32px; background: #1877f2; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 1rem;">
-                            Besøk oss på Facebook →
-                        </a>
-                    </div>
-                `;
-            }
-        }
-    </script>
 </body>
 </html>
