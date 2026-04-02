@@ -116,24 +116,24 @@
                     <p>Se våre siste oppdateringer, bilder og arrangementer fra Helgøens Vel</p>
                 </div>
                 <div class="facebook-feed-wrapper">
-                    <div id="fb-root"></div>
                     <div id="fb-feed-container">
-                        <!-- Loading state -->
+                        <iframe
+                            id="fb-iframe"
+                            src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fprofile.php%3Fid%3D100064406991223&tabs=timeline&width=500&height=600&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true"
+                            width="500"
+                            height="600"
+                            style="border:none; overflow:hidden; display:block; max-width:100%;"
+                            scrolling="no"
+                            frameborder="0"
+                            allowfullscreen="true"
+                            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                            loading="lazy"
+                            onload="document.getElementById('fb-loading').style.display='none'"
+                            onerror="showFbFallback()">
+                        </iframe>
                         <div id="fb-loading" style="text-align: center; padding: 40px; background: white; border-radius: 8px;">
                             <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #1877f2; border-radius: 50%; animation: spin 1s linear infinite;"></div>
                             <p style="margin-top: 16px; color: #666;">Laster Facebook-feed...</p>
-                        </div>
-                        
-                        <!-- Facebook Page Plugin -->
-                        <div class="fb-page"
-                             data-href="https://www.facebook.com/profile.php?id=100064406991223"
-                             data-tabs="timeline"
-                             data-width="500"
-                             data-height="600"
-                             data-small-header="false"
-                             data-adapt-container-width="true"
-                             data-hide-cover="false"
-                             data-show-facepile="true">
                         </div>
                     </div>
                 </div>
@@ -184,73 +184,29 @@
     </style>
 
     <script src="app.js"></script>
-    
-    <!-- Facebook SDK with aggressive timeout -->
     <script>
-        (function() {
-            let feedLoaded = false;
-            
-            // Initialize Facebook SDK
-            window.fbAsyncInit = function() {
-                FB.init({
-                    xfbml: true,
-                    version: 'v22.0'
-                });
-                
-                // Hide loading spinner once SDK is initialized
-                FB.Event.subscribe('xfbml.render', function() {
-                    feedLoaded = true;
-                    const loading = document.getElementById('fb-loading');
-                    if (loading) {
-                        loading.style.display = 'none';
-                    }
-                });
-            };
-
-            // Load Facebook SDK
-            (function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "https://connect.facebook.net/nb_NO/sdk.js";
-                js.onerror = function() {
-                    showFallback();
-                };
-                fjs.parentNode.insertBefore(js, fjs);
-            }(document, 'script', 'facebook-jssdk'));
-
-            // Fallback if Facebook SDK fails or takes too long
-            function showFallback() {
-                const container = document.getElementById('fb-feed-container');
-                if (container) {
-                    container.innerHTML = `
-                        <div style="text-align: center; padding: 48px 32px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto;">
-                            <svg style="width: 64px; height: 64px; margin-bottom: 24px; fill: #1877f2;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                            </svg>
-                            <h3 style="font-size: 1.5rem; margin-bottom: 16px; color: #1c1e21;">Hold deg oppdatert</h3>
-                            <p style="color: #65676b; margin-bottom: 24px; line-height: 1.6;">
-                                Følg Helgøens Vel på Facebook for nyheter, bilder fra arrangementer, og informasjon om dugnad og aktiviteter i lokalmiljøet.
-                            </p>
-                            <a href="https://www.facebook.com/profile.php?id=100064406991223" 
-                               target="_blank" 
-                               rel="noopener noreferrer"
-                               style="display: inline-block; padding: 14px 32px; background: #1877f2; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 1rem; transition: background 0.2s;">
-                                Besøk oss på Facebook →
-                            </a>
-                        </div>
-                    `;
-                }
+        function showFbFallback() {
+            const container = document.getElementById('fb-feed-container');
+            if (container) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 48px 32px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto;">
+                        <svg style="width: 64px; height: 64px; margin-bottom: 24px; fill: #1877f2;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                        </svg>
+                        <h3 style="font-size: 1.5rem; margin-bottom: 16px; color: #1c1e21;">Hold deg oppdatert</h3>
+                        <p style="color: #65676b; margin-bottom: 24px; line-height: 1.6;">
+                            Følg Helgøens Vel på Facebook for nyheter, bilder fra arrangementer, og informasjon om dugnad og aktiviteter i lokalmiljøet.
+                        </p>
+                        <a href="https://www.facebook.com/profile.php?id=100064406991223"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           style="display: inline-block; padding: 14px 32px; background: #1877f2; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 1rem;">
+                            Besøk oss på Facebook →
+                        </a>
+                    </div>
+                `;
             }
-
-            // Show fallback if Facebook SDK fails or takes too long
-            setTimeout(function() {
-                if (!feedLoaded) {
-                    console.log('Facebook feed timeout - showing fallback');
-                    showFallback();
-                }
-            }, 8000);
-        })();
+        }
     </script>
 </body>
 </html>
