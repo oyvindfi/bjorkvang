@@ -1074,7 +1074,8 @@ document.addEventListener('DOMContentLoaded', function () {
   const weddingSpacesCheckboxes = document.querySelectorAll('input[name="spaces"]');
   weddingSpacesCheckboxes.forEach(checkbox => {
     checkbox.addEventListener('change', (e) => {
-      if (e.target.value === 'Bryllupspakke' && e.target.checked) {
+      if (e.target.value === 'Bryllupspakke') {
+        if (e.target.checked) {
         const thursday = getNextThursday();
         const sunday = new Date(thursday);
         sunday.setDate(thursday.getDate() + 3);
@@ -1091,10 +1092,27 @@ document.addEventListener('DOMContentLoaded', function () {
         if (endDateInputEl) endDateInputEl.value = toDateStr(sunday);
         if (endTimeInputEl) endTimeInputEl.value = '16:00';
 
+        // Show end-date/time fields, hide duration
+        if (durationFieldEl) durationFieldEl.hidden = true;
+        if (endDateFieldEl) endDateFieldEl.hidden = false;
+        if (endTimeFieldEl) endTimeFieldEl.hidden = false;
+        if (durationInputEl) durationInputEl.required = false;
+        if (endDateInputEl) endDateInputEl.required = true;
+        if (endTimeInputEl) endTimeInputEl.required = true;
+
         // Auto-select event type
         if (eventTypeSelect) eventTypeSelect.value = 'Bryllup';
 
         showStatus('Bryllupspakke valgt. Datoer satt til torsdag–søndag (kan justeres).', 'info');
+        } else {
+          // Restore duration field when unchecked
+          if (durationFieldEl) durationFieldEl.hidden = false;
+          if (endDateFieldEl) endDateFieldEl.hidden = true;
+          if (endTimeFieldEl) endTimeFieldEl.hidden = true;
+          if (durationInputEl) durationInputEl.required = true;
+          if (endDateInputEl) endDateInputEl.required = false;
+          if (endTimeInputEl) endTimeInputEl.required = false;
+        }
       }
     });
   });

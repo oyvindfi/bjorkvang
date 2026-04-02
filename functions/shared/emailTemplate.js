@@ -11,8 +11,7 @@
  * @returns {string} The complete HTML email string.
  */
 const generateEmailHtml = ({ title, content, action, previewText }) => {
-    const primaryColor = '#1a823b'; // Green brand color
-    const accentColor = '#d97706'; // Orange accent
+    const primaryColor = '#1a6fa3';
     const backgroundColor = '#f3f4f6';
     const containerColor = '#ffffff';
     const textColor = '#1f2937';
@@ -22,8 +21,8 @@ const generateEmailHtml = ({ title, content, action, previewText }) => {
         ? `
         <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin-top: 24px; margin-bottom: 24px;">
             <tr>
-                <td align="center" bgcolor="${primaryColor}" style="border-radius: 6px;">
-                    <a href="${action.url}" target="_blank" style="font-family: sans-serif; font-size: 16px; font-weight: bold; color: #ffffff; text-decoration: none; display: inline-block; padding: 12px 24px; border: 1px solid ${primaryColor}; border-radius: 6px;">
+                <td align="center" bgcolor="${primaryColor}" style="border-radius: 8px;">
+                    <a href="${action.url}" target="_blank" style="font-family: sans-serif; font-size: 16px; font-weight: bold; color: #ffffff; text-decoration: none; display: inline-block; padding: 14px 28px; border: 1px solid ${primaryColor}; border-radius: 8px;">
                         ${action.text}
                     </a>
                 </td>
@@ -41,11 +40,14 @@ const generateEmailHtml = ({ title, content, action, previewText }) => {
     <title>${title}</title>
     <style>
         body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: ${backgroundColor}; color: ${textColor}; line-height: 1.6; }
-        .container { max-width: 600px; margin: 0 auto; background-color: ${containerColor}; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .header { background-color: ${primaryColor}; padding: 24px; text-align: center; }
-        .header h1 { margin: 0; color: #ffffff; font-size: 24px; font-weight: bold; letter-spacing: -0.5px; }
-        .content { padding: 32px 24px; }
-        .footer { background-color: #f9fafb; padding: 24px; text-align: center; font-size: 14px; color: ${mutedColor}; border-top: 1px solid #e5e7eb; }
+        .container { max-width: 600px; margin: 0 auto; background-color: ${containerColor}; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.10); }
+        .header { background-color: ${primaryColor}; padding: 0; text-align: center; }
+        .header-hero { width: 100%; max-height: 200px; object-fit: cover; display: block; }
+        .header-inner { padding: 20px 24px 18px; }
+        .header h1 { margin: 0; color: #ffffff; font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+        .header-sub { margin: 4px 0 0; color: rgba(255,255,255,0.80); font-size: 13px; }
+        .content { padding: 32px 28px; }
+        .footer { background-color: #f9fafb; padding: 24px; text-align: center; font-size: 13px; color: ${mutedColor}; border-top: 1px solid #e5e7eb; }
         .footer a { color: ${primaryColor}; text-decoration: none; }
         .info-list { list-style: none; padding: 0; margin: 16px 0; }
         .info-list li { padding: 8px 0; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; }
@@ -66,7 +68,11 @@ const generateEmailHtml = ({ title, content, action, previewText }) => {
     <div style="padding: 24px 12px;">
         <div class="container">
             <div class="header">
-                <h1>Helgøens Vel</h1>
+                <img class="header-hero" src="https://xn--bjrkvang-64a.no/images/bjorkvang-sommer.png" alt="Bjørkvang forsamlingslokale" width="600">
+                <div class="header-inner">
+                    <h1>Bjørkvang forsamlingslokale</h1>
+                    <p class="header-sub">Helgøens Vel &mdash; Helgøyvegen 219, Nes på Hedmarken</p>
+                </div>
             </div>
             <div class="content">
                 <h2 style="margin-top: 0; font-size: 20px; color: ${textColor};">${title}</h2>
@@ -74,9 +80,8 @@ const generateEmailHtml = ({ title, content, action, previewText }) => {
                 ${buttonHtml}
             </div>
             <div class="footer">
-                <p>Dette er en automatisk melding fra Helgøens Vel.</p>
-                <p>Organisasjonsnummer: 995 519 240</p>
-                <p><a href="https://bjørkvang.no">bjørkvang.no</a></p>
+                <p style="margin: 0 0 4px;">Dette er en automatisk melding fra Helgøens Vel.</p>
+                <p style="margin: 0 0 4px;">Org.nr: 995 519 240 &nbsp;|&nbsp; <a href="mailto:styret@bj%C3%B8rkvang.no">styret@bjørkvang.no</a> &nbsp;|&nbsp; <a href="https://xn--bjrkvang-64a.no">bjørkvang.no</a></p>
             </div>
         </div>
     </div>

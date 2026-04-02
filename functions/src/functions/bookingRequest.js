@@ -67,7 +67,7 @@ app.http('bookingRequest', {
         }
 
         const body = await parseBody(request);
-        const { date, time, requesterName, requesterEmail, message, duration, eventType, spaces, services, attendees, paymentOrderId, paymentStatus, isMember, paymentMethod, totalAmount } = body;
+        const { date, time, requesterName, requesterEmail, message, duration, eventType, spaces, services, attendees, paymentOrderId, paymentStatus, isMember, paymentMethod, totalAmount, cateringContact, endDate, endTime, phone, address } = body;
 
         // Validate required fields
         if (!date || !time || !requesterName || !requesterEmail) {
@@ -225,8 +225,12 @@ app.http('bookingRequest', {
                 id: bookingId,
                 date: trimmedDate,
                 time: trimmedTime,
+                endDate: endDate ? String(endDate).trim() : null,
+                endTime: endTime ? String(endTime).trim() : null,
                 requesterName: trimmedName,
                 requesterEmail: trimmedEmail,
+                phone: phone ? String(phone).trim() : null,
+                address: address ? String(address).trim() : null,
                 message: trimmedMessage,
                 eventType: trimmedEventType,
                 duration: safeDuration,
@@ -238,7 +242,8 @@ app.http('bookingRequest', {
                 paymentStatus: paymentStatus || 'unpaid',
                 paymentMethod: paymentMethod || 'vipps',
                 totalAmount: totalAmount || paymentAmount / 100,
-                paymentAmount: paymentAmount // Store amount in øre
+                paymentAmount: paymentAmount,
+                cateringContact: cateringContact === true || cateringContact === 'true'
             });
             
             context.info('bookingRequest: Created booking', {
@@ -276,6 +281,52 @@ app.http('bookingRequest', {
             const safeSpacesStr = escapeHtml(booking.spaces.join(', ') || 'Ingen valgt');
             const safeServicesStr = escapeHtml(booking.services.join(', ') || 'Ingen valgt');
 
+            // Format dates for email
+            const startDateObj = new Date(`${booking.date}T${booking.time}`);
+            const formattedStartDate = !isNaN(startDateObj)
+                ? startDateObj.toLocaleDateString('nb-NO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+                : safeDate;
+            const formattedStartTime = booking.time || '';
+
+            let formattedEnd = '';
+            if (booking.endDate && booking.endTime) {
+                const endDateObj = new Date(`${booking.endDate}T${booking.endTime}`);
+                formattedEnd = !isNaN(endDateObj)
+                    ? `${endDateObj.toLocaleDateString('nb-NO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} kl. ${booking.endTime}`
+                    : `${booking.endDate} kl. ${booking.endTime}`;
+            } else {
+                const endMs = startDateObj.getTime() + (booking.duration || 4) * 60 * 60 * 1000;
+                const endDateCalc = new Date(endMs);
+                formattedEnd = !isNaN(endDateCalc)
+                    ? `${escapeHtml(endDateCalc.toLocaleDateString('nb-NO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }))} kl. ${endDateCalc.toTimeString().slice(0, 5)}`
+                    : '';
+            }
+
+            const totalNOK = booking.totalAmount || 0;
+            const depositNOK = totalNOK ? Math.round(totalNOK * 0.5) : 0;
+            const priceRow = totalNOK
+                ? `<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 0;color:#6b7280;">Estimert leiesum</td><td style="padding:8px 0;text-align:right;font-weight:600;">kr\u00a0${totalNOK.toLocaleString('nb-NO')}</td></tr>
+                   <tr><td style="padding:8px 0;color:#6b7280;">Depositum (50\u00a0%)</td><td style="padding:8px 0;text-align:right;font-weight:700;color:#166534;">kr\u00a0${depositNOK.toLocaleString('nb-NO')}</td></tr>`
+                : '';
+
+            const cateringNote = booking.cateringContact
+                ? `<div style="margin-top:16px;padding:12px 16px;background:#fef9ec;border:1px solid #fde68a;border-radius:8px;font-size:0.9rem;">
+                       <strong>N\u00e6s Mat og Event:</strong> Kunden har bedt om \u00e5 bli kontaktet med tilbud p\u00e5 catering.
+                   </div>`
+                : '';
+
+            // Booking summary table (reused in both emails)
+            const summaryTable = `
+                <table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:15px;">
+                    <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 0;color:#6b7280;">Dato</td><td style="padding:8px 0;text-align:right;font-weight:600;">${formattedStartDate}</td></tr>
+                    <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 0;color:#6b7280;">Fra</td><td style="padding:8px 0;text-align:right;">kl.\u00a0${formattedStartTime}</td></tr>
+                    <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 0;color:#6b7280;">Til</td><td style="padding:8px 0;text-align:right;">${escapeHtml(formattedEnd)}</td></tr>
+                    <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 0;color:#6b7280;">Form\u00e5l</td><td style="padding:8px 0;text-align:right;">${safeEventType}</td></tr>
+                    <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 0;color:#6b7280;">Lokale</td><td style="padding:8px 0;text-align:right;">${safeSpacesStr}</td></tr>
+                    <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 0;color:#6b7280;">Antall gjester</td><td style="padding:8px 0;text-align:right;">${booking.attendees || 'Ikke oppgitt'}</td></tr>
+                    ${priceRow}
+                </table>`;
+
             // --- Board Notification Email ---
             const paymentInfo = isPaid
                 ? `<li style="color: #1a823b;"><strong>Betaling: Betalt via Vipps (${paymentOrderId})</strong></li>`
@@ -288,18 +339,14 @@ app.http('bookingRequest', {
             const boardHtmlContent = `
                 <p>Det har kommet en ny bookingforespørsel som venter på godkjenning.</p>
                 ${statusNote}
+                ${summaryTable}
                 <ul class="info-list">
-                    <li><span class="info-label">Dato</span> <span class="info-value">${safeDate}</span></li>
-                    <li><span class="info-label">Tid</span> <span class="info-value">${safeTime}</span></li>
-                    <li><span class="info-label">Type</span> <span class="info-value">${safeEventType}</span></li>
-                    <li><span class="info-label">Varighet</span> <span class="info-value">${booking.duration} timer</span></li>
                     <li><span class="info-label">Navn</span> <span class="info-value">${safeName}</span></li>
                     <li><span class="info-label">E-post</span> <span class="info-value">${safeEmail}</span></li>
-                    <li><span class="info-label">Arealer</span> <span class="info-value">${safeSpacesStr}</span></li>
                     <li><span class="info-label">Tjenester</span> <span class="info-value">${safeServicesStr}</span></li>
-                    <li><span class="info-label">Antall</span> <span class="info-value">${booking.attendees || 'Ikke oppgitt'}</span></li>
                     ${paymentInfo}
                 </ul>
+                ${cateringNote}
                 <div style="background-color: #f9fafb; padding: 16px; border-radius: 6px; margin-top: 16px;">
                     <strong>Melding:</strong><br>
                     ${safeMessage}
@@ -344,28 +391,22 @@ app.http('bookingRequest', {
 
             const confirmationHtmlContent = `
                 <p>Hei ${safeName},</p>
-                <p>Takk for din forespørsel om å booke Bjørkvang. Vi har mottatt følgende detaljer:</p>
+                <p>Takk for din forespørsel om å booke Bjørkvang forsamlingslokale. Her er en oppsummering av hva vi har mottatt:</p>
                 ${paymentConfirmation}
-                <ul class="info-list">
-                    <li><span class="info-label">Dato</span> <span class="info-value">${safeDate}</span></li>
-                    <li><span class="info-label">Tid</span> <span class="info-value">${safeTime}</span></li>
-                    <li><span class="info-label">Type</span> <span class="info-value">${safeEventType}</span></li>
-                    <li><span class="info-label">Arealer</span> <span class="info-value">${safeSpacesStr}</span></li>
-                </ul>
-                <div style="background-color: #f9fafb; padding: 16px; border-radius: 6px; margin-top: 16px;">
-                    <strong>Din melding:</strong><br>
-                    ${safeMessage}
-                </div>
+                ${summaryTable}
+                ${booking.message ? `<div style="background-color: #f9fafb; padding: 16px; border-radius: 6px; margin-top: 16px;"><strong>Din melding:</strong><br>${safeMessage}</div>` : ''}
                 ${nextStepsText}
+                <p style="margin-top: 16px; font-size: 0.9em; color: #6b7280;">Spørsmål? Ta kontakt på <a href="mailto:styret@bjørkvang.no" style="color:#1a6fa3;">styret@bjørkvang.no</a> eller ring oss på <a href="tel:+4748060273" style="color:#1a6fa3;">+47 480 60 273</a>.</p>
             `;
 
             const confirmationHtml = generateEmailHtml({
-                title: 'Forespørsel mottatt',
+                title: 'Forespørsel mottatt ✅',
                 content: confirmationHtmlContent,
-                previewText: 'Takk for din forespørsel om å booke Bjørkvang.'
+                action: { text: 'Se kalender og tilgjengelighet', url: 'https://bjørkvang.no/booking' },
+                previewText: `Forespørselen din for ${formattedStartDate} er mottatt – vi behandler den snarest.`
             });
 
-            const confirmationText = `Hei ${booking.requesterName},\n\nTakk for din forespørsel om å booke Bjørkvang.\n\nOppsummering av forespørselen:\n- Dato: ${booking.date}\n- Tid: ${booking.time}\n- Type: ${booking.eventType}\n- Melding: ${booking.message || 'Ingen melding oppgitt.'}\n\nStyret vil ta kontakt med deg så snart som mulig.\n\nVennlig hilsen\nHelgøens Vel`;
+            const confirmationText = `Hei ${booking.requesterName},\n\nTakk for din forespørsel om å booke Bjørkvang forsamlingslokale.\n\nOppsummering:\n- Dato: ${booking.date}\n- Fra: kl. ${booking.time}\n- Til: ${formattedEnd}\n- Formål: ${booking.eventType}\n- Lokale: ${booking.spaces.join(', ')}\n- Antall gjester: ${booking.attendees || 'Ikke oppgitt'}${totalNOK ? `\n- Estimert leiesum: kr ${totalNOK.toLocaleString('nb-NO')}\n- Depositum (50 %): kr ${depositNOK.toLocaleString('nb-NO')}` : ''}\n\nStyret vil behandle forespørselen og ta kontakt innen 2\u20133 virkedager.\n\nVennlig hilsen\nHelgøens Vel\nstyret@bjørkvang.no | +47 480 60 273`;
 
             try {
                 await sendEmail({
