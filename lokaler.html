@@ -119,14 +119,14 @@
                     </div>
                     <div style="justify-self: center; width: 100%; max-width: 640px;">
                         <div class="image-gallery" style="position: relative;">
-                            <div class="gallery-images" style="position: relative; overflow: hidden; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                                <img class="gallery-image active" src="images/oversikt_salen.jpg" alt="Oversikt over salen på Bjørkvang" loading="eager" style="width: 100%; height: auto; display: block;">
-                                <img class="gallery-image" src="images/oversikt_salen_v2.jpg" alt="Oversikt over salen - alternativt perspektiv" loading="eager" style="width: 100%; height: auto; display: none;">
-                                <img class="gallery-image" src="images/Salen_med_overgang_peisestue.jpg" alt="Salen med overgang til peisestue" loading="eager" style="width: 100%; height: auto; display: none;">
-                                <img class="gallery-image" src="images/salen_med_peis.jpg" alt="Salen med peis" loading="eager" style="width: 100%; height: auto; display: none;">
-                                <img class="gallery-image" src="images/Salen_med_servise.jpg" alt="Salen dekket til selskap" loading="eager" style="width: 100%; height: auto; display: none;">
-                                <img class="gallery-image" src="images/Salen_sett_fra_klebersteinovnen.jpg" alt="Salen sett fra klebersteinovnen" loading="eager" style="width: 100%; height: auto; display: none;">
-                                <img class="gallery-image" src="images/Salen_v4.jpg" alt="Salen på Bjørkvang" loading="eager" style="width: 100%; height: auto; display: none;">
+                            <div class="gallery-images" style="position: relative; overflow: hidden; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); aspect-ratio: 4/3;">
+                                <img class="gallery-image active" src="images/oversikt_salen.jpg" alt="Oversikt over salen på Bjørkvang" loading="eager" style="width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;">
+                                <img class="gallery-image" src="images/oversikt_salen_v2.jpg" alt="Oversikt over salen - alternativt perspektiv" loading="eager" style="width: 100%; height: 100%; object-fit: cover; object-position: center; display: none;">
+                                <img class="gallery-image" src="images/Salen_med_overgang_peisestue.jpg" alt="Salen med overgang til peisestue" loading="eager" style="width: 100%; height: 100%; object-fit: cover; object-position: center; display: none;">
+                                <img class="gallery-image" src="images/salen_med_peis.jpg" alt="Salen med peis" loading="eager" style="width: 100%; height: 100%; object-fit: cover; object-position: center; display: none;">
+                                <img class="gallery-image" src="images/Salen_med_servise.jpg" alt="Salen dekket til selskap" loading="eager" style="width: 100%; height: 100%; object-fit: cover; object-position: center; display: none;">
+                                <img class="gallery-image" src="images/Salen_sett_fra_klebersteinovnen.jpg" alt="Salen sett fra klebersteinovnen" loading="eager" style="width: 100%; height: 100%; object-fit: cover; object-position: center; display: none;">
+                                <img class="gallery-image" src="images/Salen_v4.jpg" alt="Salen på Bjørkvang" loading="eager" style="width: 100%; height: 100%; object-fit: cover; object-position: center; display: none;">
                             </div>
                             <button class="gallery-prev" onclick="changeImage(-1, this.closest('.image-gallery'))" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;">‹</button>
                             <button class="gallery-next" onclick="changeImage(1, this.closest('.image-gallery'))" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;">›</button>
@@ -151,9 +151,9 @@
                 <div class="upcoming-activities__inner">
                     <div style="justify-self: center; width: 100%; max-width: 640px;">
                         <div class="image-gallery" style="position: relative;">
-                            <div class="gallery-images" style="position: relative; overflow: hidden; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                                <img class="gallery-image active" src="images/Peisestua.jpg" alt="Peisestua på Bjørkvang" loading="eager" style="width: 100%; height: auto; display: block;">
-                                <img class="gallery-image" src="images/Peisestua_v2.jpg" alt="Peisestua - alternativt perspektiv" loading="eager" style="width: 100%; height: auto; display: none;">
+                            <div class="gallery-images" style="position: relative; overflow: hidden; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); aspect-ratio: 4/3;">
+                                <img class="gallery-image active" src="images/Peisestua.jpg" alt="Peisestua på Bjørkvang" loading="eager" style="width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;">
+                                <img class="gallery-image" src="images/Peisestua_v2.jpg" alt="Peisestua - alternativt perspektiv" loading="eager" style="width: 100%; height: 100%; object-fit: cover; object-position: center; display: none;">
                             </div>
                             <button class="gallery-prev" onclick="changeImage(-1, this.closest('.image-gallery'))" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;">‹</button>
                             <button class="gallery-next" onclick="changeImage(1, this.closest('.image-gallery'))" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;">›</button>
