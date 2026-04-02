@@ -252,9 +252,10 @@ app.http('bookingRequest', {
                 email: booking.requesterEmail
             });
             
-            const baseUrl = resolveBaseUrl(request);
-            const approveLink = `${baseUrl}/api/booking/approve?id=${encodeURIComponent(booking.id)}`;
-            const rejectLink = `${baseUrl}/api/booking/reject?id=${encodeURIComponent(booking.id)}`;
+            const websiteUrl = (process.env.WEBSITE_URL || 'https://xn--bjrkvang-64a.no').replace(/\/$/, '');
+            const adminLink = `${websiteUrl}/admin#${encodeURIComponent(booking.id)}`;
+            const approveLink = `${resolveBaseUrl(request)}/api/booking/approve?id=${encodeURIComponent(booking.id)}`;
+            const rejectLink = `${resolveBaseUrl(request)}/api/booking/reject?id=${encodeURIComponent(booking.id)}`;
 
             const to = process.env.BOARD_TO_ADDRESS || process.env.DEFAULT_TO_ADDRESS || 'skype.oyvind@hotmail.com';
             let from = process.env.DEFAULT_FROM_ADDRESS || 'styret@bjørkvang.no';
@@ -351,7 +352,10 @@ app.http('bookingRequest', {
                     <strong>Melding:</strong><br>
                     ${safeMessage}
                 </div>
-                <p style="margin-top: 24px;">Bruk knappene under for å behandle forespørselen:</p>
+                <p style="margin-top: 24px;">Behandle forespørselen i admin-grensesnittet, eller bruk direktelenkene under:</p>
+                <div style="margin-bottom:12px;">
+                    <a href="${escapeHtml(adminLink)}" style="display:inline-block;padding:12px 24px;background:#1a6fa3;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;font-size:1rem;">&#128196; Åpne i admin</a>
+                </div>
                 <div style="display: flex; gap: 12px; flex-wrap: wrap;">
                     <a href="${escapeHtml(approveLink)}" style="display:inline-block;padding:10px 20px;background:#1a823b;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">Godkjenn booking</a>
                     <a href="${escapeHtml(rejectLink)}" style="display:inline-block;padding:10px 20px;background:#b91c1c;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">Avvis booking</a>
@@ -364,7 +368,7 @@ app.http('bookingRequest', {
                 previewText: `Ny forespørsel fra ${safeName} for ${safeDate}`
             });
 
-            const text = `Ny bookingforespørsel:\nDato: ${booking.date}\nTid: ${booking.time}\nType: ${booking.eventType}\nNavn: ${booking.requesterName}\nE-post: ${booking.requesterEmail}\nMelding: ${booking.message || 'Ingen melding'}\nGodkjenn: ${approveLink}\nAvvis: ${rejectLink}`;
+            const text = `Ny bookingforespørsel:\nDato: ${booking.date}\nTid: ${booking.time}\nType: ${booking.eventType}\nNavn: ${booking.requesterName}\nE-post: ${booking.requesterEmail}\nMelding: ${booking.message || 'Ingen melding'}\n\nÅpne i admin: ${adminLink}\nGodkjenn (direkte): ${approveLink}\nAvvis (direkte): ${rejectLink}`;
 
             await sendEmail({
                 to,

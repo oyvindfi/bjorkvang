@@ -245,11 +245,24 @@ function renderDashboard(bookings) {
     document.getElementById('stat-total').textContent = totalYearCount;
 
     renderVippsDashboard(bookings);
+
+    // Scroll to and highlight booking from URL hash (e.g. /admin#booking-123)
+    const hashId = decodeURIComponent(window.location.hash.slice(1));
+    if (hashId) {
+        const target = document.querySelector(`[data-booking-id="${CSS.escape(hashId)}"]`);
+        if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            target.style.outline = '3px solid #1a6fa3';
+            target.style.boxShadow = '0 0 0 6px rgba(26,111,163,0.15)';
+            setTimeout(() => { target.style.outline = ''; target.style.boxShadow = ''; }, 4000);
+        }
+    }
 }
 
 function createBookingCard(booking) {
     const div = document.createElement('div');
     div.className = `booking-card ${booking.status}`;
+    div.setAttribute('data-booking-id', booking.id);
     
     const spaces = Array.isArray(booking.spaces) ? booking.spaces.join(', ') : booking.spaces;
     const services = Array.isArray(booking.services) ? booking.services.join(', ') : booking.services;

@@ -78,6 +78,11 @@ const resolveBaseUrl = (request) => {
         return PUBLIC_BASE_URL;
     }
 
+    const websiteUrl = (process.env.WEBSITE_URL || '').replace(/\/$/, '');
+    if (websiteUrl) {
+        return websiteUrl;
+    }
+
     try {
         const url = new URL(request.url);
         return `${url.protocol}//${url.host}`;
