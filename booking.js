@@ -226,6 +226,7 @@ document.addEventListener('DOMContentLoaded', function () {
           services: bookingDetails.services,
           attendees: bookingDetails.attendees,
           isMember: bookingDetails.isMember || false,
+          cateringContact: bookingDetails.cateringContact || false,
           paymentMethod: bookingDetails.paymentMethod || 'vipps',
           paymentStatus: 'unpaid',
           totalAmount: bookingDetails.totalAmount || null,
@@ -1019,6 +1020,7 @@ document.addEventListener('DOMContentLoaded', function () {
         services: selectedServices,
         attendees: attendeeCount,
         isMember: form.querySelector('#is-member')?.checked ?? false,
+        cateringContact: form.querySelector('#catering-contact')?.checked ?? false,
         startDate,
         endDate
       };
