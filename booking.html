@@ -414,10 +414,10 @@
                         <legend id="catering-label">Catering</legend>
                         <div style="background: var(--surface-muted, #f8f8f6); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
                             <div style="display: flex; gap: 16px; overflow-x: auto; padding-bottom: 4px;">
-                                <img src="images/nes_mat_og_event_spekemat.jpg" alt="Spekemat fra Næs Mat og Event" style="height: 120px; width: 120px; object-fit: cover; border-radius: 8px; flex-shrink: 0;">
-                                <img src="images/nes_mat_og_event_smørbrød.jpg" alt="Smørbrød fra Næs Mat og Event" style="height: 120px; width: 120px; object-fit: cover; border-radius: 8px; flex-shrink: 0;">
-                                <img src="images/nes_mat_og_event_smørbrød2.jpg" alt="Smørbrød fra Næs Mat og Event" style="height: 120px; width: 120px; object-fit: cover; border-radius: 8px; flex-shrink: 0;">
-                                <img src="images/nes_mat_og_event_dessert.jpg" alt="Dessert fra Næs Mat og Event" style="height: 120px; width: 120px; object-fit: cover; border-radius: 8px; flex-shrink: 0;">
+                                <img src="images/nes_mat_og_event_spekemat.jpg" alt="Spekemat fra Næs Mat og Event" onclick="openLightbox(this)" style="height: 120px; width: 120px; object-fit: cover; border-radius: 8px; flex-shrink: 0; cursor: zoom-in;">
+                                <img src="images/nes_mat_og_event_smørbrød.jpg" alt="Smørbrød fra Næs Mat og Event" onclick="openLightbox(this)" style="height: 120px; width: 120px; object-fit: cover; border-radius: 8px; flex-shrink: 0; cursor: zoom-in;">
+                                <img src="images/nes_mat_og_event_smørbrød2.jpg" alt="Smørbrød fra Næs Mat og Event" onclick="openLightbox(this)" style="height: 120px; width: 120px; object-fit: cover; border-radius: 8px; flex-shrink: 0; cursor: zoom-in;">
+                                <img src="images/nes_mat_og_event_dessert.jpg" alt="Dessert fra Næs Mat og Event" onclick="openLightbox(this)" style="height: 120px; width: 120px; object-fit: cover; border-radius: 8px; flex-shrink: 0; cursor: zoom-in;">
                             </div>
                             <div>
                                 <p style="margin: 0 0 4px; font-weight: 600;">Næs Mat og Event</p>
@@ -671,5 +671,27 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/no.js"></script>
     <script src="booking.js"></script>
+
+    <!-- Lightbox -->
+    <div id="lightbox" role="dialog" aria-modal="true" aria-label="Bildevisning" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; padding:16px;" onclick="closeLightbox()">
+        <button onclick="closeLightbox()" aria-label="Lukk" style="position:absolute; top:16px; right:20px; background:none; border:none; color:white; font-size:2rem; cursor:pointer; line-height:1;">&times;</button>
+        <img id="lightbox-img" src="" alt="" style="max-width:100%; max-height:90vh; object-fit:contain; border-radius:8px; box-shadow:0 8px 40px rgba(0,0,0,0.5);" onclick="event.stopPropagation()">
+    </div>
+    <script>
+        function openLightbox(img) {
+            const lb = document.getElementById('lightbox');
+            document.getElementById('lightbox-img').src = img.src;
+            document.getElementById('lightbox-img').alt = img.alt;
+            lb.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+        function closeLightbox() {
+            document.getElementById('lightbox').style.display = 'none';
+            document.body.style.overflow = '';
+        }
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeLightbox();
+        });
+    </script>
 </body>
 </html>
