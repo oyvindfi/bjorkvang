@@ -1,0 +1,20 @@
+{
+  "name": "bjorkvang-e2e-tests",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:calendar": "playwright test e2e/01-calendar.spec.js",
+    "test:form": "playwright test e2e/02-form-validation.spec.js",
+    "test:submission": "playwright test e2e/03-submission.spec.js",
+    "test:admin": "playwright test e2e/04-admin-flow.spec.js",
+    "test:payment": "playwright test e2e/05-payment.spec.js",
+    "test:ux": "playwright test e2e/06-ux-accessibility.spec.js",
+    "test:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0"
+  }
+}
