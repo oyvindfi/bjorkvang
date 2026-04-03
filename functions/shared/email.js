@@ -1,4 +1,4 @@
-const DEFAULT_PLUNK_API_URL = 'https://api.useplunk.com/v1/send';
+const DEFAULT_PLUNK_API_URL = 'https://next-api.useplunk.com/v1/send';
 
 const getPlunkApiUrl = () => {
     const configured = process.env.PLUNK_API_URL && process.env.PLUNK_API_URL.trim();
@@ -11,11 +11,10 @@ const buildPayload = (options) => {
         to: options.to,
         subject: options.subject,
         body: options.html || options.text, // Plunk expects 'body' for the content
-        no_tracking: true,
     };
 
     if (options.replyTo) {
-        payload.replyTo = options.replyTo;
+        payload.reply = options.replyTo;
     }
 
     return payload;

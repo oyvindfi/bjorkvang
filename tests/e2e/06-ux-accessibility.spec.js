@@ -196,23 +196,23 @@ test.describe('TC-31 · Page load performance', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-test.describe('TC-32 · Email no_tracking regression', () => {
-  test('functions/shared/email.js contains no_tracking: true in buildPayload', () => {
+test.describe('TC-32 · Email API configuration', () => {
+  test('functions/shared/email.js uses the current Plunk API URL', () => {
     const emailPath = path.resolve(__dirname, '../../functions/shared/email.js');
     expect(fs.existsSync(emailPath)).toBe(true);
 
     const source = fs.readFileSync(emailPath, 'utf-8');
 
-    // Verify the fix from the no-tracking commit is present
-    expect(source).toContain('no_tracking: true');
+    // Verify using the current next-api endpoint
+    expect(source).toContain('next-api.useplunk.com/v1/send');
   });
 
-  test('no_tracking is set inside the buildPayload function, not elsewhere', () => {
+  test('buildPayload does not include unsupported no_tracking field', () => {
     const emailPath = path.resolve(__dirname, '../../functions/shared/email.js');
     const source = fs.readFileSync(emailPath, 'utf-8');
 
-    // The no_tracking line should be inside the buildPayload object literal
+    // no_tracking is not a real Plunk parameter — tracking is set in the dashboard
     const buildPayloadBlock = source.match(/const buildPayload[\s\S]+?\);/)?.[0] ?? '';
-    expect(buildPayloadBlock).toContain('no_tracking: true');
+    expect(buildPayloadBlock).not.toContain('no_tracking');
   });
 });

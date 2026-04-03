@@ -728,13 +728,28 @@ document.addEventListener('DOMContentLoaded', function () {
         return classes;
       },
       dateClick: function (info) {
+        // Check if the clicked date is blocked (confirmed/approved)
+        const clickedCell = calendarEl.querySelector(`.fc-daygrid-day[data-date="${info.dateStr}"]`);
+        const isBlocked = clickedCell && clickedCell.classList.contains('is-blocked');
+
+        if (isBlocked) {
+          showStatus('Denne datoen er allerede reservert. Velg en annen ledig dato.', 'error');
+          return;
+        }
+
         if (datepicker) {
           datepicker.setDate(info.dateStr, true);
         } else if (dateInput) {
           dateInput.value = info.dateStr;
         }
+
+        const isPending = clickedCell && clickedCell.classList.contains('is-pending');
         if (statusEl) {
-          showStatus('Datoen er lagt inn i skjemaet. Fullfør feltene under for å sende forespørselen.', 'info');
+          if (isPending) {
+            showStatus('Det finnes en forespørsel på denne datoen som ikke er godkjent ennå. Du kan fortsatt sende din forespørsel.', 'info');
+          } else {
+            showStatus('Datoen er lagt inn i skjemaet. Fullfør feltene under for å sende forespørselen.', 'info');
+          }
         }
         if (form) {
           form.scrollIntoView({ behavior: 'smooth', block: 'start' });

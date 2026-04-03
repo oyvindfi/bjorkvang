@@ -15,7 +15,7 @@ function checkForDoubleBooking(newBooking, existingBookings) {
     const newIncludesWhole = newBooking.spaces.some(s => WHOLE_PREMISES.includes(s));
 
     for (const existing of existingBookings) {
-        if (['rejected', 'cancelled'].includes(existing.status)) continue;
+        if (['rejected', 'cancelled', 'pending'].includes(existing.status)) continue;
 
         // Skip the booking being rescheduled
         if (newBooking.id && existing.id === newBooking.id) continue;
