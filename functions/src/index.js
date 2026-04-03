@@ -94,6 +94,7 @@ loadFunction('vippsInitiateContractPayment', './functions/vippsInitiateContractP
 loadFunction('vippsCheckStatus', './functions/vippsCheckStatus');
 loadFunction('vippsCallback', './functions/vippsCallback');
 loadFunction('depositPaid', './functions/depositPaid');
+loadFunction('finalInvoicePaid', './functions/finalInvoicePaid');
 loadFunction('sendInvoice', './functions/sendInvoice');
 loadFunction('sendDepositRequest', './functions/sendDepositRequest');
 loadFunction('checkVippsStatuses', './functions/checkVippsStatuses');

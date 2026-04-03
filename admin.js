@@ -296,26 +296,77 @@ function createBookingCard(booking) {
 
     // --- Deposit/invoice status badges ---
     let paymentBadges = '';
+    let paymentTimeline = '';
     if (booking.status === 'approved') {
+        // Compact badges for card header
         if (!depositRequested) {
             paymentBadges += `<span style="background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-size:0.8rem;margin-left:5px;">💰 Depositum ikke sendt</span>`;
         } else if (depositRequested && !depositPaid) {
             const sentDate = booking.depositRequestedAt ? new Date(booking.depositRequestedAt).toLocaleDateString('nb-NO') : '';
-            const method = depositViaVipps ? '(Vipps)' : '(bank)';
-            paymentBadges += `<span style="background:#e0f2fe;color:#075985;padding:2px 7px;border-radius:4px;font-size:0.8rem;margin-left:5px;">⏳ Depositum sendt ${sentDate} ${method}</span>`;
-        } else if (depositPaid) {
-            paymentBadges += `<span style="background:#d1fae5;color:#065f46;padding:2px 7px;border-radius:4px;font-size:0.8rem;margin-left:5px;">✅ Depositum betalt${depositNOK ? ' kr ' + depositNOK.toLocaleString('nb-NO') : ''}</span>`;
+            const method = depositViaVipps ? 'Vipps' : 'bank';
+            paymentBadges += `<span style="background:#e0f2fe;color:#075985;padding:2px 7px;border-radius:4px;font-size:0.8rem;margin-left:5px;">⏳ Venter depositum (${method})</span>`;
+        } else if (depositPaid && !finalInvoiceSent) {
+            paymentBadges += `<span style="background:#d1fae5;color:#065f46;padding:2px 7px;border-radius:4px;font-size:0.8rem;margin-left:5px;">✅ Depositum OK</span>`;
+        } else if (finalInvoiceSent && !finalInvoicePaid) {
+            paymentBadges += `<span style="background:#d1fae5;color:#065f46;padding:2px 7px;border-radius:4px;font-size:0.8rem;margin-left:5px;">✅ Dep.</span>`;
+            paymentBadges += `<span style="background:#e0f2fe;color:#075985;padding:2px 7px;border-radius:4px;font-size:0.8rem;margin-left:3px;">⏳ Venter sluttoppgjør</span>`;
+        } else if (finalInvoicePaid) {
+            paymentBadges += `<span style="background:#d1fae5;color:#065f46;padding:2px 7px;border-radius:4px;font-size:0.8rem;margin-left:5px;">✅ Alt betalt</span>`;
         }
 
+        // Detailed payment timeline section
+        const timelineSteps = [];
+
+        // Step 1: Deposit request
+        if (depositRequested) {
+            const sentDate = booking.depositRequestedAt ? new Date(booking.depositRequestedAt).toLocaleString('nb-NO') : '';
+            const method = depositViaVipps ? 'Vipps' : 'Bank';
+            timelineSteps.push({ icon: '✅', text: `Depositumforespørsel sendt (${method})`, date: sentDate, color: '#059669' });
+        } else {
+            timelineSteps.push({ icon: '⏳', text: 'Depositumforespørsel ikke sendt', date: '', color: '#92400e' });
+        }
+
+        // Step 2: Deposit paid
         if (depositPaid) {
-            if (!finalInvoiceSent) {
-                paymentBadges += `<span style="background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-size:0.8rem;margin-left:5px;">📄 Sluttfaktura ikke sendt</span>`;
-            } else if (finalInvoiceSent && !finalInvoicePaid) {
-                const method = finalViaVipps ? '(Vipps)' : '(bank)';
-                paymentBadges += `<span style="background:#e0f2fe;color:#075985;padding:2px 7px;border-radius:4px;font-size:0.8rem;margin-left:5px;">⏳ Sluttfaktura sendt ${method}</span>`;
-            } else if (finalInvoicePaid) {
-                paymentBadges += `<span style="background:#d1fae5;color:#065f46;padding:2px 7px;border-radius:4px;font-size:0.8rem;margin-left:5px;">✅ Sluttfaktura betalt</span>`;
-            }
+            const paidDate = booking.depositPaidAt ? new Date(booking.depositPaidAt).toLocaleString('nb-NO') : '';
+            timelineSteps.push({ icon: '✅', text: `Depositum betalt${depositNOK ? ' – kr ' + depositNOK.toLocaleString('nb-NO') : ''}`, date: paidDate, color: '#059669' });
+        } else if (depositRequested) {
+            timelineSteps.push({ icon: '⏳', text: `Venter på depositum${depositNOK ? ' – kr ' + depositNOK.toLocaleString('nb-NO') : ''}`, date: '', color: '#075985' });
+        }
+
+        // Step 3: Final invoice
+        if (finalInvoiceSent) {
+            const sentDate = (booking.finalInvoiceSentAt || booking.invoiceSentAt) ? new Date(booking.finalInvoiceSentAt || booking.invoiceSentAt).toLocaleString('nb-NO') : '';
+            const invoiceAmt = booking.finalInvoiceAmountNOK ? 'kr ' + booking.finalInvoiceAmountNOK.toLocaleString('nb-NO') : '';
+            const method = finalViaVipps ? 'Vipps' : 'Bank';
+            timelineSteps.push({ icon: '✅', text: `Sluttfaktura sendt (${method})${invoiceAmt ? ' – ' + invoiceAmt : ''}`, date: sentDate, color: '#059669' });
+        } else if (depositPaid) {
+            timelineSteps.push({ icon: '⏳', text: 'Sluttfaktura ikke sendt ennå', date: '', color: '#92400e' });
+        }
+
+        // Step 4: Final invoice paid
+        if (finalInvoicePaid) {
+            const paidDate = booking.finalInvoicePaidAt ? new Date(booking.finalInvoicePaidAt).toLocaleString('nb-NO') : '';
+            timelineSteps.push({ icon: '✅', text: 'Sluttfaktura betalt', date: paidDate, color: '#059669' });
+        } else if (finalInvoiceSent) {
+            timelineSteps.push({ icon: '⏳', text: 'Venter på sluttbetaling', date: '', color: '#075985' });
+        }
+
+        if (timelineSteps.length > 0) {
+            const stepsHtml = timelineSteps.map(s =>
+                `<div style="display:flex;align-items:flex-start;gap:8px;padding:4px 0;">
+                    <span style="flex-shrink:0;">${s.icon}</span>
+                    <div>
+                        <span style="color:${s.color};font-size:0.85rem;font-weight:500;">${s.text}</span>
+                        ${s.date ? `<span style="color:#9ca3af;font-size:0.78rem;margin-left:6px;">${s.date}</span>` : ''}
+                    </div>
+                </div>`
+            ).join('');
+            paymentTimeline = `
+                <div style="margin-top:8px;padding:10px 12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;">
+                    <div style="font-weight:600;font-size:0.85rem;color:#374151;margin-bottom:4px;">Betalingsstatus</div>
+                    ${stepsHtml}
+                </div>`;
         }
     }
 
@@ -340,20 +391,24 @@ function createBookingCard(booking) {
             approvedActions += `<button onclick="sendDepositRequest('${booking.id}')" class="btn-sm" style="background:#0ea5e9;">💸 Send depositumforespørsel</button>`;
         } else if (depositRequested && !depositPaid) {
             if (paymentMethod === 'bank') {
-                // For bank: allow admin to manually mark as paid
                 approvedActions += `<button onclick="markDepositPaid('${booking.id}')" class="btn-sm" style="background:#0ea5e9;">💰 Depositum mottatt (bank)</button>`;
             }
-            // For Vipps: auto-checked on load, but also allow manual mark as fallback
             if (paymentMethod === 'vipps') {
-                approvedActions += `<button onclick="markDepositPaid('${booking.id}')" class="btn-sm" style="background:#64748b;font-size:0.75rem;">🔄 Merk depositum betalt (manuelt)</button>`;
+                if (booking.depositVippsOrderId) {
+                    approvedActions += `<button onclick="checkVippsPayment('${booking.depositVippsOrderId}', '${booking.id}')" class="btn-sm" style="background:#ff5b24;color:#fff;">🔍 Sjekk Vipps-status</button>`;
+                }
+                approvedActions += `<button onclick="markDepositPaid('${booking.id}')" class="btn-sm" style="background:#64748b;font-size:0.75rem;">💰 Merk betalt (manuelt)</button>`;
             }
         }
 
         // Final invoice — only available after deposit is paid
         if (depositPaid && !finalInvoiceSent) {
             approvedActions += `<button onclick="openFinalInvoiceModal('${booking.id}', ${totalNOK}, ${depositNOK})" class="btn-sm" style="background:#8b5cf6;">📧 Send sluttfaktura</button>`;
-        } else if (finalInvoiceSent && !finalInvoicePaid && paymentMethod === 'bank') {
-            approvedActions += `<button onclick="markFinalInvoicePaid('${booking.id}')" class="btn-sm" style="background:#0ea5e9;">✅ Sluttfaktura betalt (bank)</button>`;
+        } else if (finalInvoiceSent && !finalInvoicePaid) {
+            if (finalViaVipps && booking.finalInvoiceVippsOrderId) {
+                approvedActions += `<button onclick="checkVippsPayment('${booking.finalInvoiceVippsOrderId}', '${booking.id}')" class="btn-sm" style="background:#ff5b24;color:#fff;">🔍 Sjekk Vipps-status</button>`;
+            }
+            approvedActions += `<button onclick="markFinalInvoicePaid('${booking.id}')" class="btn-sm" style="background:#0ea5e9;">✅ Sluttfaktura betalt${paymentMethod === 'bank' ? ' (bank)' : ' (manuelt)'}</button>`;
         }
 
         approvedActions += `<button onclick="sendReminder('${booking.id}')" class="btn-sm" style="background:#f59e0b;color:black;">Påminnelse</button>`;
@@ -388,6 +443,8 @@ function createBookingCard(booking) {
             ${booking.depositRequestedAt ? `<div class="booking-meta" style="color:#075985;font-size:0.8rem;">💸 Depositumforespørsel sendt: ${new Date(booking.depositRequestedAt).toLocaleString('nb-NO')}</div>` : ''}
             ${booking.depositPaidAt ? `<div class="booking-meta" style="color:#059669;font-size:0.8rem;">✅ Depositum betalt: ${new Date(booking.depositPaidAt).toLocaleString('nb-NO')}</div>` : ''}
             ${booking.finalInvoiceSentAt ? `<div class="booking-meta" style="color:#059669;font-size:0.8rem;">📧 Sluttfaktura sendt: ${new Date(booking.finalInvoiceSentAt).toLocaleString('nb-NO')}</div>` : booking.invoiceSentAt ? `<div class="booking-meta" style="color:#059669;font-size:0.8rem;">📧 Sluttfaktura sendt: ${new Date(booking.invoiceSentAt).toLocaleString('nb-NO')}</div>` : ''}
+            ${booking.finalInvoicePaidAt ? `<div class="booking-meta" style="color:#059669;font-size:0.8rem;">✅ Sluttfaktura betalt: ${new Date(booking.finalInvoicePaidAt).toLocaleString('nb-NO')}</div>` : ''}
+            ${paymentTimeline}
             ${booking.previousDate ? `<div class="booking-meta" style="color:#6366f1;font-size:0.8rem;">↺ Ombooket fra: ${booking.previousDate}${booking.previousTime ? ' kl. ' + booking.previousTime : ''}</div>` : ''}
         </div>
         <div class="booking-actions">
@@ -633,22 +690,60 @@ async function submitFinalInvoice() {
 async function markFinalInvoicePaid(id) {
     if (!confirm('Bekreft at sluttfaktura er betalt (bankoverføring)?')) return;
     try {
-        const res = await fetch(`${API_BASE_URL}/booking/deposit-paid?id=${id}`, {
+        const res = await fetch(`${API_BASE_URL}/booking/final-invoice-paid?id=${id}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ markFinalInvoice: true })
+            headers: { 'Accept': 'application/json' }
         });
         if (res.ok) {
-            // There's no dedicated endpoint yet — use updateBookingFields approach via a generic patch if available,
-            // otherwise fall back to a simple alert instructing the admin.
-            alert('Merk: for nå markeres dette manuelt. Kontakt utvikler for å legge til et dedikert endepunkt for sluttfaktura-betaling via bank.');
+            alert('Sluttfaktura markert som betalt! Kvittering sendt til leietaker.');
             loadDashboard();
         } else {
-            alert('Noe gikk galt.');
+            const data = await res.json().catch(() => ({}));
+            alert(data.error || 'Noe gikk galt.');
         }
     } catch (err) {
         console.error(err);
         alert('Nettverksfeil.');
+    }
+}
+
+async function checkVippsPayment(orderId, bookingId) {
+    const btn = event.target;
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Sjekker...';
+    try {
+        const res = await fetch(`${API_BASE_URL}/vipps/check-status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ orderId })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+            const status = data.status || 'UNKNOWN';
+            const statusMap = {
+                'CREATED': '⏳ Opprettet – venter på bruker',
+                'AUTHORIZED': '✅ Autorisert – betaling godkjent!',
+                'CAPTURED': '✅ Fanget – betaling fullført!',
+                'CANCELLED': '❌ Kansellert av bruker',
+                'EXPIRED': '⏰ Utløpt',
+                'FAILED': '❌ Feilet',
+                'ABORTED': '❌ Avbrutt',
+            };
+            const statusText = statusMap[status] || `Status: ${status}`;
+            alert(`Vipps-status for ordre ${orderId}:\n\n${statusText}`);
+            if (status === 'AUTHORIZED' || status === 'CAPTURED') {
+                loadDashboard();
+            }
+        } else {
+            alert(`Feil ved sjekk: ${data.error || 'Ukjent feil'}`);
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Nettverksfeil ved Vipps-statussjekk.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = original;
     }
 }
 

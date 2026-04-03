@@ -3,7 +3,6 @@ const { sendEmail } = require('../../../shared/email');
 const { createHtmlResponse, createJsonResponse, parseBody } = require('../../../shared/http');
 const { getBooking, updateBookingStatus, updateBookingFields } = require('../../../shared/cosmosDb');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
-const vipps = require('../../../shared/vipps');
 
 /**
  * Build the admin action page HTML (confirm before approving).
@@ -192,8 +191,6 @@ app.http('approveBooking', {
                         : (existingBooking.spaces || 'Ikke oppgitt')
                 );
                 const safeDuration = Number(existingBooking.duration) || 0;
-                const paymentMethod = existingBooking.paymentMethod || 'bank';
-                const bankAccount = process.env.BANK_ACCOUNT || '(kontonummer sendes separat)';
 
                 // Format date nicely in Norwegian
                 const dateObj = new Date(`${existingBooking.date}T00:00:00`);
@@ -204,71 +201,11 @@ app.http('approveBooking', {
                 // Prices
                 const totalNOK = existingBooking.totalAmount || (existingBooking.paymentAmount ? existingBooking.paymentAmount / 100 : 0);
                 const depositNOK = existingBooking.depositAmount || (totalNOK ? Math.round(totalNOK * 0.5) : 0);
-                const remainderNOK = (totalNOK && depositNOK) ? (totalNOK - depositNOK) : 0;
                 const depositStr = depositNOK ? `kr\u00a0${depositNOK.toLocaleString('nb-NO')}` : '(beregnes av styret)';
                 const totalStr = totalNOK ? `kr\u00a0${totalNOK.toLocaleString('nb-NO')}` : '(beregnes av styret)';
-                const remainderStr = remainderNOK ? `kr\u00a0${remainderNOK.toLocaleString('nb-NO')}` : '\u2013';
 
                 const websiteUrl = (process.env.WEBSITE_URL || 'https://bj\u00f8rkvang.no').replace(/\/$/, '');
                 const contractLink = `${websiteUrl}/leieavtale.html?id=${existingBooking.id}`;
-
-                // Auto-initiate Vipps deposit payment if payment method is vipps
-                let vippsPaymentUrl = null;
-                if (paymentMethod === 'vipps' && depositNOK > 0) {
-                    try {
-                        const safeRef = existingBooking.id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 24);
-                        const orderId = `dep-${safeRef}-${Date.now().toString(36)}`.slice(0, 50);
-                        const returnUrl = `${websiteUrl}/booking?depositReturn=1&orderId=${encodeURIComponent(orderId)}`;
-                        const vippsResp = await vipps.initiatePayment({
-                            amount: depositNOK * 100,
-                            orderId,
-                            returnUrl,
-                            text: `Depositum \u2013 Bj\u00f8rkvang (${existingBooking.eventType || 'leie'})`,
-                            phoneNumber: existingBooking.phone || undefined
-                        });
-                        vippsPaymentUrl = vippsResp.redirectUrl;
-                        await updateBookingFields(existingBooking.id, null, {
-                            depositRequested: true,
-                            depositRequestedAt: new Date().toISOString(),
-                            depositAmount: depositNOK,
-                            depositVippsOrderId: orderId
-                        });
-                        context.info(`approveBooking: Vipps deposit initiated, orderId=${orderId}`);
-                    } catch (vippsErr) {
-                        context.warn('approveBooking: Could not initiate Vipps deposit', { error: vippsErr.message });
-                    }
-                }
-
-                // Build the payment block for the email
-                let paymentBlock, paymentTextInstructions;
-                if (paymentMethod === 'vipps') {
-                    if (vippsPaymentUrl) {
-                        paymentBlock = `
-                            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px 20px;margin:16px 0;">
-                                <p style="margin:0 0 8px;font-weight:700;color:#166534;">Betal depositum med Vipps</p>
-                                <p style="margin:0 0 10px;color:#166534;">Klikk på knappen under for å betale <strong>${depositStr}</strong> via Vipps. Forfaller innen 5&nbsp;dager.</p>
-                                <a href="${vippsPaymentUrl}" style="display:inline-block;padding:12px 24px;background:#ff5b24;color:#fff;font-weight:700;border-radius:6px;text-decoration:none;font-size:1rem;">Betal ${depositStr} med Vipps</a>
-                                <p style="margin:10px 0 0;font-size:0.85rem;color:#4b5563;">Restbel\u00f8p (${remainderStr}) faktureres etter arrangementet.</p>
-                            </div>`;
-                        paymentTextInstructions = `Betal depositum ${depositStr} med Vipps:\n${vippsPaymentUrl}`;
-                    } else {
-                        paymentBlock = `
-                            <div style="background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:16px 20px;margin:16px 0;">
-                                <p style="margin:0 0 8px;font-weight:700;color:#92400e;">&#128184; Depositum via Vipps</p>
-                                <p style="margin:0;color:#92400e;">Styret sender deg snart en Vipps-betalingslenke for <strong>${depositStr}</strong>.</p>
-                            </div>`;
-                        paymentTextInstructions = `Styret sender deg snart en Vipps-betalingslenke for depositum ${depositStr}.`;
-                    }
-                } else {
-                    paymentBlock = `
-                        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px 20px;margin:16px 0;">
-                            <p style="margin:0 0 8px;font-weight:700;color:#166534;">&#127968; Betal depositum via bank</p>
-                            <p style="margin:0 0 6px;color:#166534;">Betal <strong>${depositStr}</strong> til kontonummer <strong>${bankAccount}</strong>.</p>
-                            <p style="margin:0 0 6px;color:#166534;">Merk betalingen med: <code style="background:#e6f4ea;padding:2px 6px;border-radius:4px;">${existingBooking.id}</code></p>
-                            <p style="margin:0;font-size:0.85rem;color:#4b5563;">Forfaller innen 5&nbsp;dager. Restbel\u00f8p (${remainderStr}) faktureres etter arrangementet.</p>
-                        </div>`;
-                    paymentTextInstructions = `Betal depositum ${depositStr} til kontonummer ${bankAccount}, merk med: ${existingBooking.id}`;
-                }
 
                 // Booking summary table
                 const summaryTable = `
@@ -294,31 +231,30 @@ app.http('approveBooking', {
                     ${adminMessageHtml}
                     ${summaryTable}
 
-                    <h3 style="margin:20px 0 6px;font-size:1rem;">Steg&nbsp;1 &ndash; Signer leieavtalen</h3>
-                    <p style="margin:0 0 4px;">Les gjennom og signer avtalen digitalt f\u00f8r arrangementet.</p>
+                    <h3 style="margin:20px 0 6px;font-size:1rem;">Neste steg &ndash; Signer leieavtalen</h3>
+                    <p style="margin:0 0 4px;">Les gjennom og signer avtalen digitalt. N\u00e5r begge parter har signert, sender vi informasjon om depositumsbetaling.</p>
                     <div style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:8px;padding:16px 20px;margin:12px 0 16px;">
                         <a href="${contractLink}" style="display:inline-block;background:#1a56db;color:#fff;font-weight:700;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:1rem;">&#128394; Signer leieavtalen</a>
                     </div>
-                    <h3 style="margin:20px 0 6px;font-size:1rem;">Steg&nbsp;2 &ndash; Betal depositum</h3>
-                    ${paymentBlock}
 
-                    <h3 style="margin:20px 0 6px;font-size:1rem;">Steg&nbsp;3 &ndash; Etter arrangementet</h3>
-                    <p style="margin:0 0 20px;font-size:0.9rem;color:#4b5563;">Styret sender sluttfaktura for restbel\u00f8pet etter at arrangementet er avholdt.</p>
+                    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px 20px;margin:16px 0;">
+                        <p style="margin:0 0 6px;font-weight:600;color:#374151;">Slik fungerer prosessen:</p>
+                        <ol style="margin:0;padding-left:20px;color:#4b5563;font-size:0.9rem;">
+                            <li>Signer leieavtalen digitalt (lenke over)</li>
+                            <li>Styret signerer som utleier</li>
+                            <li>Du mottar depositumsforesp\u00f8rsel (${depositStr})</li>
+                            <li>Etter arrangementet sendes sluttfaktura for restbel\u00f8pet</li>
+                        </ol>
+                    </div>
 
                     <p style="font-size:0.9em;color:#6b7280;">Sp\u00f8rsm\u00e5l? Ta kontakt p\u00e5 <a href="mailto:styret@bj\u00f8rkvang.no" style="color:#1a823b;">styret@bj\u00f8rkvang.no</a>.</p>
                 `;
 
-                const primaryAction = vippsPaymentUrl
-                    ? { text: '&#128179; Betal depositum med Vipps', url: vippsPaymentUrl }
-                    : { text: 'Signer leieavtale', url: contractLink };
-
                 const html = generateEmailHtml({
                     title: 'Din booking er godkjent &#127881;',
                     content: htmlContent,
-                    action: primaryAction,
-                    previewText: vippsPaymentUrl
-                        ? `Booking godkjent! Betal depositum ${depositStr} med Vipps og signer leieavtalen.`
-                        : `Booking godkjent! Signer avtalen og betal depositum ${depositStr}.`
+                    action: { text: '&#128394; Signer leieavtalen', url: contractLink },
+                    previewText: `Booking godkjent! Signer leieavtalen for ${formattedDate}.`
                 });
 
                 await sendEmail({
@@ -331,18 +267,17 @@ app.http('approveBooking', {
                         `Din booking for ${formattedDate} kl. ${safeTime} er godkjent.`,
                         ...(adminMessage ? ['', `Melding fra styret: ${adminMessage}`] : []),
                         '',
-                        'Steg 1 \u2013 Signer leieavtalen:',
+                        'Neste steg \u2013 Signer leieavtalen:',
                         contractLink,
                         '',
-                        'Steg 2 \u2013 Betal depositum:',
-                        paymentTextInstructions,
+                        'N\u00e5r begge parter har signert, sender vi depositumsforesp\u00f8rsel.',
                         '',
                         'Vennlig hilsen',
                         'Helg\u00f8ens Vel'
                     ].join('\n'),
                     html,
                 });
-                context.info(`approveBooking: Approval email sent to ${existingBooking.requesterEmail}${vippsPaymentUrl ? ' (with Vipps deposit link)' : ''}`);
+                context.info(`approveBooking: Approval email sent to ${existingBooking.requesterEmail}`);
             }
         } catch (error) {
             context.error('approveBooking: Failed to send booking approval email', {

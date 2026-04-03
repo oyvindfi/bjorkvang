@@ -46,10 +46,13 @@ app.http('sendDepositRequest', {
             }, request);
         }
 
-        // Idempotent — safe to call again, returns current state
-        if (booking.depositRequested) {
+        // Allow force resend via ?force=true or body.force
+        const forceResend = body.force === true || request.query.get('force') === 'true';
+
+        // If already sent and not forcing, return current state
+        if (booking.depositRequested && !forceResend) {
             return createJsonResponse(200, {
-                message: 'Depositumforespørsel allerede sendt.',
+                message: 'Depositumforespørsel allerede sendt. Bruk force=true for å sende på nytt.',
                 booking
             }, request);
         }
