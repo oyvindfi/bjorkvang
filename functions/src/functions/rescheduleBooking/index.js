@@ -1,8 +1,9 @@
 const { app } = require('@azure/functions');
 const { sendEmail } = require('../../../shared/email');
 const { createJsonResponse, parseBody } = require('../../../shared/http');
-const { getBooking, updateBookingFields } = require('../../../shared/cosmosDb');
+const { getBooking, updateBookingFields, listBookings } = require('../../../shared/cosmosDb');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
+const { checkForDoubleBooking } = require('../../../shared/conflictCheck');
 
 const MAX_REBOOKS = 1;
 
@@ -46,6 +47,18 @@ app.http('rescheduleBooking', {
 
             const previousDate = booking.date;
             const previousTime = booking.time;
+
+            // Check for conflicts at the new date/time
+            const existingBookings = await listBookings({ startDate: newDate, endDate: newDate });
+            const { conflict, conflictingBooking } = checkForDoubleBooking(
+                { date: newDate, time: newTime, duration: booking.duration, spaces: booking.spaces, id },
+                existingBookings
+            );
+            if (conflict) {
+                return createJsonResponse(409, {
+                    error: `Lokalet er allerede booket på den nye datoen/tiden (konflikt med booking ${conflictingBooking.id}).`,
+                });
+            }
 
             const updated = await updateBookingFields(id, booking.bjorkvang, {
                 date: newDate,

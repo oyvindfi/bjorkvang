@@ -377,6 +377,7 @@ function createBookingCard(booking) {
             ${booking.attendees ? `<div class="booking-meta"><strong>Antall:</strong> ${booking.attendees}</div>` : ''}
             <div class="booking-meta"><strong>Betalingsmetode:</strong> ${paymentMethod === 'vipps' ? 'Vipps' : 'Bank'}</div>
             ${totalNOK ? `<div class="booking-meta"><strong>Estimert total:</strong> kr ${totalNOK.toLocaleString('nb-NO')} &nbsp;|&nbsp; <strong>Depositum (50%):</strong> kr ${depositNOK.toLocaleString('nb-NO')} &nbsp;|&nbsp; <strong>Restbeløp:</strong> kr ${(totalNOK - depositNOK).toLocaleString('nb-NO')}</div>` : ''}
+            ${booking.cateringContact ? `<div class="booking-meta" style="margin-top:5px;"><span style="background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-size:0.8rem;">🍽 Catering: Ønsker kontakt fra Næs Mat og Event</span></div>` : ''}
             ${booking.message ? `<div class="booking-meta" style="margin-top:5px;font-style:italic;">"${booking.message}"</div>` : ''}
             <div class="booking-meta" style="margin-top:5px;font-size:0.8rem;color:#999;">
                 Sendt inn: ${createdStr}<br>

@@ -1031,7 +1031,43 @@ document.addEventListener('DOMContentLoaded', function () {
         const totalAmount = calculatePrice();
         bookingDetails.paymentMethod = paymentMethod;
         bookingDetails.totalAmount = totalAmount;
-        await submitBooking(bookingDetails);
+        const result = await submitBooking(bookingDetails);
+
+        // --- Show confirmation receipt ---
+        const confirmation = document.getElementById('booking-confirmation');
+        const sectionHeading = document.querySelector('.booking-form-section .section-heading');
+        if (confirmation) {
+          const dateFormatted = startDate.toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+          const timeFormatted = `kl. ${startDate.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })} (${Math.round(duration)} t)`;
+          const deposit = Math.round(totalAmount / 2);
+          const paymentLabel = paymentMethod === 'vipps' ? 'Vipps' : 'Bankinnbetaling';
+
+          const setField = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
+          setField('conf-date', dateFormatted);
+          setField('conf-time', timeFormatted);
+          setField('conf-eventtype', eventType || 'Ikke oppgitt');
+          setField('conf-spaces', formatList(selectedSpaces));
+          setField('conf-name', name);
+          setField('conf-email', email);
+          setField('conf-price', `${totalAmount.toLocaleString('nb-NO')} kr`);
+          setField('conf-deposit', `${deposit.toLocaleString('nb-NO')} kr`);
+          setField('conf-payment', paymentLabel);
+          setField('conf-id', result.id || '—');
+          setField('conf-email-sent', email);
+
+          // Catering row — only show if checked
+          const cateringRow = document.getElementById('conf-catering-row');
+          const wantsCatering = form.querySelector('#catering-contact')?.checked;
+          if (cateringRow && wantsCatering) {
+            setField('conf-catering', 'Næs Mat og Event tar kontakt');
+            cateringRow.hidden = false;
+          }
+
+          form.hidden = true;
+          if (sectionHeading) sectionHeading.hidden = true;
+          confirmation.hidden = false;
+          confirmation.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
 
         form.reset();
         // Re-show duration field and hide wedding fields after reset

@@ -278,7 +278,7 @@
                     <h2 id="booking-form-heading">Send leieforespørsel</h2>
                     <p>Fyll ut skjemaet så tar styret kontakt for bekreftelse og signering av leieavtale.</p>
                 </div>
-                <form id="booking-form">
+                <form id="booking-form" novalidate>
                     <fieldset class="form-fieldset">
                         <legend>Kontaktinformasjon</legend>
                         <div class="form-grid">
@@ -504,6 +504,10 @@
                                 <dt>Betalingsmetode for depositum</dt>
                                 <dd id="conf-payment">—</dd>
                             </div>
+                            <div class="receipt-row" id="conf-catering-row" hidden>
+                                <dt>Catering</dt>
+                                <dd id="conf-catering">—</dd>
+                            </div>
                             <div class="receipt-row" style="font-size:0.8rem;color:#9ca3af;">
                                 <dt>Referansenummer</dt>
                                 <dd id="conf-id">—</dd>
@@ -562,68 +566,37 @@
             <div class="container">
                 <div class="section-heading">
                     <h2 id="space-gallery-heading">Se lokalene</h2>
-                    <p>Få et glimt av rom og muligheter når du planlegger.</p>
+                    <p>Klikk på et rom for å se større bilder og detaljer.</p>
                 </div>
                 <div class="space-gallery" role="list">
-                    <article class="space-card" role="listitem">
-                        <div class="image-gallery" style="position: relative;">
-                            <div class="gallery-images" style="position: relative; overflow: hidden;">
-                                <img class="gallery-image active" src="images/salen.png?v=6" alt="Storsalen - bilde 1" loading="eager" style="display: block; width: 100%; height: auto; object-fit: cover; aspect-ratio: 4/3;">
-                                <img class="gallery-image" src="images/salen2.png?v=1" alt="Storsalen - bilde 2" loading="eager" style="display: none; width: 100%; height: auto; object-fit: cover; aspect-ratio: 4/3;">
-                            </div>
-                            <button class="gallery-prev" onclick="changeImage(-1, this.closest('.image-gallery'))" style="position: absolute; left: 5px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;">‹</button>
-                            <button class="gallery-next" onclick="changeImage(1, this.closest('.image-gallery'))" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;">›</button>
-                            <div class="gallery-dots" style="position: absolute; bottom: 10px; width: 100%; text-align: center; z-index: 10;">
-                                <span class="dot active" onclick="showImage(0, this.closest('.image-gallery'))" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: white; margin: 0 4px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span>
-                                <span class="dot" onclick="showImage(1, this.closest('.image-gallery'))" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.5); margin: 0 4px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span>
-                            </div>
+                    <article class="space-card" role="listitem" tabindex="0" onclick="openRoomLightbox('salen')" onkeydown="if(event.key==='Enter')openRoomLightbox('salen')" style="cursor:pointer;">
+                        <div class="space-card__image">
+                            <img src="images/salen.png?v=6" alt="Storsalen på Bjørkvang" loading="eager">
+                            <span class="space-card__badge">7 bilder</span>
                         </div>
                         <div class="space-card__body">
                             <h3>Salen</h3>
-                            <p>Romslig sal med scene og plass til både langbord og dansegulv.</p>
-                            <a href="lokaler#salen" class="card-link">Se alle bilder →</a>
+                            <p>Romslig sal med scene og plass til både langbord og dansegulv. Ca. 100 personer.</p>
                         </div>
                     </article>
-                    <article class="space-card" role="listitem">
-                        <div class="image-gallery" style="position: relative;">
-                            <div class="gallery-images" style="position: relative; overflow: hidden;">
-                                <img class="gallery-image active" src="images/peisestuve.png?v=2" alt="Peisestua - bilde 1" loading="eager" style="display: block; width: 100%; height: auto; object-fit: cover; aspect-ratio: 4/3;">
-                                <img class="gallery-image" src="images/peisestuve2.png?v=1" alt="Peisestua - bilde 2" loading="eager" style="display: none; width: 100%; height: auto; object-fit: cover; aspect-ratio: 4/3;">
-                            </div>
-                            <button class="gallery-prev" onclick="changeImage(-1, this.closest('.image-gallery'))" style="position: absolute; left: 5px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;">‹</button>
-                            <button class="gallery-next" onclick="changeImage(1, this.closest('.image-gallery'))" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;">›</button>
-                            <div class="gallery-dots" style="position: absolute; bottom: 10px; width: 100%; text-align: center; z-index: 10;">
-                                <span class="dot active" onclick="showImage(0, this.closest('.image-gallery'))" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: white; margin: 0 4px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span>
-                                <span class="dot" onclick="showImage(1, this.closest('.image-gallery'))" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.5); margin: 0 4px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span>
-                            </div>
+                    <article class="space-card" role="listitem" tabindex="0" onclick="openRoomLightbox('peisestua')" onkeydown="if(event.key==='Enter')openRoomLightbox('peisestua')" style="cursor:pointer;">
+                        <div class="space-card__image">
+                            <img src="images/peisestuve.png?v=2" alt="Peisestua på Bjørkvang" loading="eager">
+                            <span class="space-card__badge">2 bilder</span>
                         </div>
                         <div class="space-card__body">
                             <h3>Peisestua</h3>
-                            <p>Intim stue med peis som passer til mindre selskap og møter.</p>
-                            <a href="lokaler#peisestua" class="card-link">Se alle bilder →</a>
+                            <p>Intim stue med peis som passer til mindre selskap og møter. Ca. 30–40 personer.</p>
                         </div>
                     </article>
-                    <article class="space-card" role="listitem">
-                        <div class="image-gallery" style="position: relative;">
-                            <div class="gallery-images" style="position: relative; overflow: hidden;">
-                                <img class="gallery-image active" src="images/kjokken1.png?v=2" alt="Kjøkkenet - bilde 1" loading="eager" style="display: block; width: 100%; height: auto; object-fit: cover; aspect-ratio: 4/3;">
-                                <img class="gallery-image" src="images/kjokken2.png?v=1" alt="Kjøkkenet - bilde 2" loading="eager" style="display: none; width: 100%; height: auto; object-fit: cover; aspect-ratio: 4/3;">
-                                <img class="gallery-image" src="images/kjokken3.png?v=1" alt="Kjøkkenet - bilde 3" loading="eager" style="display: none; width: 100%; height: auto; object-fit: cover; aspect-ratio: 4/3;">
-                                <img class="gallery-image" src="images/kjokken4.png?v=1" alt="Kjøkkenet - bilde 4" loading="eager" style="display: none; width: 100%; height: auto; object-fit: cover; aspect-ratio: 4/3;">
-                            </div>
-                            <button class="gallery-prev" onclick="changeImage(-1, this.closest('.image-gallery'))" style="position: absolute; left: 5px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;">‹</button>
-                            <button class="gallery-next" onclick="changeImage(1, this.closest('.image-gallery'))" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;">›</button>
-                            <div class="gallery-dots" style="position: absolute; bottom: 10px; width: 100%; text-align: center; z-index: 10;">
-                                <span class="dot active" onclick="showImage(0, this.closest('.image-gallery'))" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: white; margin: 0 4px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span>
-                                <span class="dot" onclick="showImage(1, this.closest('.image-gallery'))" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.5); margin: 0 4px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span>
-                                <span class="dot" onclick="showImage(2, this.closest('.image-gallery'))" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.5); margin: 0 4px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span>
-                                <span class="dot" onclick="showImage(3, this.closest('.image-gallery'))" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.5); margin: 0 4px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span>
-                            </div>
+                    <article class="space-card" role="listitem" tabindex="0" onclick="openRoomLightbox('kjokken')" onkeydown="if(event.key==='Enter')openRoomLightbox('kjokken')" style="cursor:pointer;">
+                        <div class="space-card__image">
+                            <img src="images/kjokken1.png?v=2" alt="Kjøkkenet på Bjørkvang" loading="eager">
+                            <span class="space-card__badge">4 bilder</span>
                         </div>
                         <div class="space-card__body">
                             <h3>Kjøkken</h3>
-                            <p>Fullt utstyrt kjøkken med dekketøy og serveringsløsninger.</p>
-                            <a href="lokaler#kjokken" class="card-link">Se alle bilder →</a>
+                            <p>Fullt utstyrt storkjøkken med servise til 100 personer. Inkludert i leien.</p>
                         </div>
                     </article>
                 </div>
@@ -672,26 +645,180 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/no.js"></script>
     <script src="booking.js"></script>
 
-    <!-- Lightbox -->
-    <div id="lightbox" role="dialog" aria-modal="true" aria-label="Bildevisning" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; padding:16px;" onclick="closeLightbox()">
-        <button onclick="closeLightbox()" aria-label="Lukk" style="position:absolute; top:16px; right:20px; background:none; border:none; color:white; font-size:2rem; cursor:pointer; line-height:1;">&times;</button>
-        <img id="lightbox-img" src="" alt="" style="max-width:100%; max-height:90vh; object-fit:contain; border-radius:8px; box-shadow:0 8px 40px rgba(0,0,0,0.5);" onclick="event.stopPropagation()">
+    <!-- Catering lightbox -->
+    <div id="lightbox" role="dialog" aria-modal="true" aria-label="Bildevisning" style="display:none; position:fixed; inset:0; z-index:9999; align-items:center; justify-content:center;" onclick="closeLightbox()">
+        <div style="position:absolute; inset:0; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); background:rgba(0,0,0,0.45);"></div>
+        <div style="position:relative; z-index:1; max-width:520px; width:calc(100% - 32px); background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 24px 64px rgba(0,0,0,0.35);" onclick="event.stopPropagation()">
+            <div style="position:relative; aspect-ratio:4/3; background:#111;">
+                <img id="lightbox-img" src="" alt="" style="width:100%; height:100%; object-fit:cover; display:block;">
+                <button id="lb-prev" aria-label="Forrige bilde" onclick="lbNav(-1)" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.9); border:none; border-radius:50%; width:40px; height:40px; font-size:20px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.2);">&#8249;</button>
+                <button id="lb-next" aria-label="Neste bilde" onclick="lbNav(1)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.9); border:none; border-radius:50%; width:40px; height:40px; font-size:20px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.2);">&#8250;</button>
+                <button onclick="closeLightbox()" aria-label="Lukk" style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.5); border:none; border-radius:50%; width:32px; height:32px; color:white; font-size:18px; cursor:pointer; line-height:1;">&times;</button>
+            </div>
+            <div style="padding:14px 16px; display:flex; align-items:center; justify-content:space-between;">
+                <span id="lightbox-caption" style="font-size:0.9rem; color:#555;"></span>
+                <span id="lightbox-counter" style="font-size:0.85rem; color:#999;"></span>
+            </div>
+        </div>
     </div>
     <script>
+        const _lbImages = [
+            { src: 'images/nes_mat_og_event_spekemat.jpg', alt: 'Spekemat fra Næs Mat og Event' },
+            { src: 'images/nes_mat_og_event_smørbrød.jpg', alt: 'Smørbrød fra Næs Mat og Event' },
+            { src: 'images/nes_mat_og_event_smørbrød2.jpg', alt: 'Smørbrød fra Næs Mat og Event' },
+            { src: 'images/nes_mat_og_event_dessert.jpg', alt: 'Dessert fra Næs Mat og Event' },
+        ];
+        let _lbIndex = 0;
+
         function openLightbox(img) {
-            const lb = document.getElementById('lightbox');
-            document.getElementById('lightbox-img').src = img.src;
-            document.getElementById('lightbox-img').alt = img.alt;
-            lb.style.display = 'flex';
+            const src = img.src.split('/').pop();
+            _lbIndex = _lbImages.findIndex(i => i.src.split('/').pop() === src);
+            if (_lbIndex < 0) _lbIndex = 0;
+            _lbRender();
+            document.getElementById('lightbox').style.display = 'flex';
             document.body.style.overflow = 'hidden';
+        }
+        function _lbRender() {
+            const item = _lbImages[_lbIndex];
+            document.getElementById('lightbox-img').src = item.src;
+            document.getElementById('lightbox-img').alt = item.alt;
+            document.getElementById('lightbox-caption').textContent = item.alt;
+            document.getElementById('lightbox-counter').textContent = `${_lbIndex + 1} / ${_lbImages.length}`;
+        }
+        function lbNav(dir) {
+            _lbIndex = (_lbIndex + dir + _lbImages.length) % _lbImages.length;
+            _lbRender();
         }
         function closeLightbox() {
             document.getElementById('lightbox').style.display = 'none';
             document.body.style.overflow = '';
         }
         document.addEventListener('keydown', function(e) {
+            if (!document.getElementById('lightbox').style.display || document.getElementById('lightbox').style.display === 'none') return;
             if (e.key === 'Escape') closeLightbox();
+            if (e.key === 'ArrowLeft') lbNav(-1);
+            if (e.key === 'ArrowRight') lbNav(1);
         });
+    </script>
+
+    <!-- Room lightbox for venue gallery -->
+    <div id="room-lightbox" role="dialog" aria-modal="true" aria-label="Romvisning" style="display:none; position:fixed; inset:0; z-index:10000; align-items:center; justify-content:center;" onclick="closeRoomLightbox()">
+        <div style="position:absolute; inset:0; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); background:rgba(0,0,0,0.5);"></div>
+        <div class="room-lightbox__panel" onclick="event.stopPropagation()">
+            <button onclick="closeRoomLightbox()" aria-label="Lukk" class="room-lightbox__close">&times;</button>
+            <div class="room-lightbox__image-wrap">
+                <img id="room-lb-img" src="" alt="" style="width:100%; height:100%; object-fit:cover; display:block;">
+                <button id="room-lb-prev" aria-label="Forrige bilde" onclick="roomLbNav(-1)" class="room-lightbox__nav room-lightbox__nav--prev">&#8249;</button>
+                <button id="room-lb-next" aria-label="Neste bilde" onclick="roomLbNav(1)" class="room-lightbox__nav room-lightbox__nav--next">&#8250;</button>
+                <div id="room-lb-counter" class="room-lightbox__counter"></div>
+            </div>
+            <div class="room-lightbox__info">
+                <h3 id="room-lb-title" style="margin:0 0 0.5rem; font-size:1.3rem; color:var(--brand-600);"></h3>
+                <p id="room-lb-desc" style="margin:0 0 1rem; color:var(--text-secondary); line-height:1.6;"></p>
+                <ul id="room-lb-features" class="feature-list" style="margin:0 0 1.25rem; padding-left:1.2rem;"></ul>
+                <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                    <a id="room-lb-book" class="button" href="booking" style="font-size:0.9rem;"></a>
+                    <a id="room-lb-details" class="button secondary" href="" style="font-size:0.9rem;">Se alle detaljer →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const _roomData = {
+            salen: {
+                title: 'Salen',
+                desc: 'Vår romslige sal er hjertet i huset. Med god takhøyde, scene og god akustikk passer den perfekt til større selskaper, konserter, teater og konferanser.',
+                features: ['Plass til ca. 100 personer til bords', 'Stor scene', 'God plass til dansegulv', 'Direkte tilgang til kjøkken og toaletter'],
+                price: 'Lei Salen (3 000 kr)',
+                detailsLink: 'lokaler#salen',
+                images: [
+                    { src: 'images/oversikt_salen.jpg', alt: 'Oversikt over salen' },
+                    { src: 'images/oversikt_salen_v2.jpg', alt: 'Salen – alternativt perspektiv' },
+                    { src: 'images/Salen_med_overgang_peisestue.jpg', alt: 'Salen med overgang til peisestue' },
+                    { src: 'images/salen_med_peis.jpg', alt: 'Salen med peis' },
+                    { src: 'images/Salen_med_servise.jpg', alt: 'Salen dekket til selskap' },
+                    { src: 'images/Salen_sett_fra_klebersteinovnen.jpg', alt: 'Salen sett fra klebersteinovnen' },
+                    { src: 'images/Salen_v4.jpg', alt: 'Salen på Bjørkvang' },
+                ]
+            },
+            peisestua: {
+                title: 'Peisestua',
+                desc: 'Peisestua er et hyggelig og intimt rom som egner seg godt til mindre selskaper, møter, minnesamvær eller som et supplement til salen.',
+                features: ['Plass til ca. 30–40 personer', 'Koselig peis', 'Sofagrupper og bord', 'Kan leies separat eller sammen med salen'],
+                price: 'Lei Peisestua (1 500 kr)',
+                detailsLink: 'lokaler#peisestua',
+                images: [
+                    { src: 'images/Peisestua.jpg', alt: 'Peisestua på Bjørkvang' },
+                    { src: 'images/Peisestua_v2.jpg', alt: 'Peisestua – alternativt perspektiv' },
+                ]
+            },
+            kjokken: {
+                title: 'Kjøkkenet',
+                desc: 'Vi har et stort og funksjonelt storkjøkken som gjør det enkelt å servere mat til mange gjester. Kjøkkenet er inkludert i leien.',
+                features: ['Komfyr med stekeovn og industrielt utstyr', 'Industriell oppvaskmaskin', 'Stort kjøleskap og fryser', 'Servise, glass og bestikk til ca. 100 personer'],
+                price: 'Inkludert i leien',
+                detailsLink: 'lokaler#kjokken',
+                images: [
+                    { src: 'images/kjokken1.png', alt: 'Kjøkkenet – oversikt' },
+                    { src: 'images/kjokken2.png', alt: 'Kjøkkenet – arbeidsflate' },
+                    { src: 'images/kjokken3.png', alt: 'Kjøkkenet – servise' },
+                    { src: 'images/kjokken4.png', alt: 'Kjøkkenet – utstyr' },
+                ]
+            }
+        };
+        let _roomLbIndex = 0;
+        let _roomLbCurrent = null;
+
+        function openRoomLightbox(room) {
+            _roomLbCurrent = _roomData[room];
+            if (!_roomLbCurrent) return;
+            _roomLbIndex = 0;
+            _renderRoomLb();
+            document.getElementById('room-lb-title').textContent = _roomLbCurrent.title;
+            document.getElementById('room-lb-desc').textContent = _roomLbCurrent.desc;
+            const featuresList = document.getElementById('room-lb-features');
+            featuresList.innerHTML = _roomLbCurrent.features.map(f => '<li>' + f + '</li>').join('');
+            const bookBtn = document.getElementById('room-lb-book');
+            bookBtn.textContent = _roomLbCurrent.price;
+            bookBtn.href = 'booking';
+            document.getElementById('room-lb-details').href = _roomLbCurrent.detailsLink;
+            document.getElementById('room-lightbox').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+        function _renderRoomLb() {
+            const item = _roomLbCurrent.images[_roomLbIndex];
+            document.getElementById('room-lb-img').src = item.src;
+            document.getElementById('room-lb-img').alt = item.alt;
+            document.getElementById('room-lb-counter').textContent = (_roomLbIndex + 1) + ' / ' + _roomLbCurrent.images.length;
+        }
+        function roomLbNav(dir) {
+            _roomLbIndex = (_roomLbIndex + dir + _roomLbCurrent.images.length) % _roomLbCurrent.images.length;
+            _renderRoomLb();
+        }
+        function closeRoomLightbox() {
+            document.getElementById('room-lightbox').style.display = 'none';
+            document.body.style.overflow = '';
+            _roomLbCurrent = null;
+        }
+        document.addEventListener('keydown', function(e) {
+            const rl = document.getElementById('room-lightbox');
+            if (!rl || rl.style.display === 'none') return;
+            if (e.key === 'Escape') closeRoomLightbox();
+            if (e.key === 'ArrowLeft') roomLbNav(-1);
+            if (e.key === 'ArrowRight') roomLbNav(1);
+        });
+        // Touch swipe support for room lightbox
+        (function() {
+            let startX = 0;
+            const el = document.getElementById('room-lightbox');
+            if (!el) return;
+            el.addEventListener('touchstart', function(e) { startX = e.changedTouches[0].screenX; }, { passive: true });
+            el.addEventListener('touchend', function(e) {
+                if (!_roomLbCurrent) return;
+                const diff = e.changedTouches[0].screenX - startX;
+                if (Math.abs(diff) > 50) roomLbNav(diff < 0 ? 1 : -1);
+            }, { passive: true });
+        })();
     </script>
 </body>
 </html>

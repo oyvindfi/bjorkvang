@@ -3,54 +3,7 @@ const { sendEmail } = require('../../shared/email');
 const { createJsonResponse, parseBody, resolveBaseUrl } = require('../../shared/http');
 const { saveBooking, listBookings } = require('../../shared/cosmosDb');
 const { generateEmailHtml } = require('../../shared/emailTemplate');
-
-/**
- * Check if a new booking overlaps with any existing (non-rejected/cancelled) bookings.
- * Handles the "Hele lokalet" rule: booking the whole premises conflicts with any
- * individual room, and any individual room conflicts with a whole-premises booking.
- *
- * Note: the rental contract grants access from 18:00 the day before — but only if the
- * venue is free. This is a conditional perk, not a hard reservation. Conflict detection
- * therefore uses actual booking times, not an expanded window.
- *
- * @param {Object} newBooking - { date, time, duration, spaces }
- * @param {Array}  existingBookings
- * @returns {{ conflict: boolean, conflictingBooking: Object|null }}
- */
-function checkForDoubleBooking(newBooking, existingBookings) {
-    const newStart = new Date(`${newBooking.date}T${newBooking.time}`);
-    const newEnd = new Date(newStart.getTime() + newBooking.duration * 60 * 60 * 1000);
-
-    const WHOLE_PREMISES = ['Hele lokalet', 'Bryllupspakke'];
-    const newIncludesWhole = newBooking.spaces.some(s => WHOLE_PREMISES.includes(s));
-
-    for (const existing of existingBookings) {
-        if (['rejected', 'cancelled'].includes(existing.status)) continue;
-
-        const existingSpaces = Array.isArray(existing.spaces)
-            ? existing.spaces
-            : [existing.spaces].filter(Boolean);
-        const existingIncludesWhole = existingSpaces.some(s => WHOLE_PREMISES.includes(s));
-
-        // Spaces overlap if either side covers the whole premises or they share a room
-        const spacesOverlap =
-            newIncludesWhole ||
-            existingIncludesWhole ||
-            newBooking.spaces.some((s) => existingSpaces.includes(s));
-
-        if (!spacesOverlap) continue;
-
-        const existingStart = new Date(`${existing.date}T${existing.time || '00:00'}`);
-        const existingEnd = new Date(existingStart.getTime() + (existing.duration || 1) * 60 * 60 * 1000);
-
-        // Conflict if the actual time windows overlap
-        if (newStart < existingEnd && newEnd > existingStart) {
-            return { conflict: true, conflictingBooking: existing };
-        }
-    }
-
-    return { conflict: false, conflictingBooking: null };
-}
+const { checkForDoubleBooking } = require('../../shared/conflictCheck');
 
 /**
  * Handle incoming booking submissions from the public website.
@@ -393,11 +346,18 @@ app.http('bookingRequest', {
                 ? '<p style="margin-top: 24px;"><strong>Hva skjer nå?</strong><br>Din booking er bekreftet! Du vil få en leieavtale til signering i nær framtid.</p>'
                 : '<p style="margin-top: 24px;"><strong>Hva skjer nå?</strong><br>Styret vil se gjennom forespørselen din. Du vil motta en e-post så snart bookingen er behandlet (vanligvis innen 2-3 dager).</p>';
 
+            const customerCateringNote = booking.cateringContact
+                ? `<div style="margin-top:16px;padding:12px 16px;background:#fef9ec;border:1px solid #fde68a;border-radius:8px;font-size:0.9rem;">
+                       🍽 <strong>Catering:</strong> Du har bedt om å bli kontaktet av Næs Mat og Event med tilbud på catering. De vil ta kontakt med deg direkte.
+                   </div>`
+                : '';
+
             const confirmationHtmlContent = `
                 <p>Hei ${safeName},</p>
                 <p>Takk for din forespørsel om å booke Bjørkvang forsamlingslokale. Her er en oppsummering av hva vi har mottatt:</p>
                 ${paymentConfirmation}
                 ${summaryTable}
+                ${customerCateringNote}
                 ${booking.message ? `<div style="background-color: #f9fafb; padding: 16px; border-radius: 6px; margin-top: 16px;"><strong>Din melding:</strong><br>${safeMessage}</div>` : ''}
                 ${nextStepsText}
                 <p style="margin-top: 16px; font-size: 0.9em; color: #6b7280;">Spørsmål? Ta kontakt på <a href="mailto:styret@bjørkvang.no" style="color:#1a6fa3;">styret@bjørkvang.no</a> eller ring oss på <a href="tel:+4748060273" style="color:#1a6fa3;">+47 480 60 273</a>.</p>
@@ -410,7 +370,7 @@ app.http('bookingRequest', {
                 previewText: `Forespørselen din for ${formattedStartDate} er mottatt – vi behandler den snarest.`
             });
 
-            const confirmationText = `Hei ${booking.requesterName},\n\nTakk for din forespørsel om å booke Bjørkvang forsamlingslokale.\n\nOppsummering:\n- Dato: ${booking.date}\n- Fra: kl. ${booking.time}\n- Til: ${formattedEnd}\n- Formål: ${booking.eventType}\n- Lokale: ${booking.spaces.join(', ')}\n- Antall gjester: ${booking.attendees || 'Ikke oppgitt'}${totalNOK ? `\n- Estimert leiesum: kr ${totalNOK.toLocaleString('nb-NO')}\n- Depositum (50 %): kr ${depositNOK.toLocaleString('nb-NO')}` : ''}\n\nStyret vil behandle forespørselen og ta kontakt innen 2\u20133 virkedager.\n\nVennlig hilsen\nHelgøens Vel\nstyret@bjørkvang.no | +47 480 60 273`;
+            const confirmationText = `Hei ${booking.requesterName},\n\nTakk for din forespørsel om å booke Bjørkvang forsamlingslokale.\n\nOppsummering:\n- Dato: ${booking.date}\n- Fra: kl. ${booking.time}\n- Til: ${formattedEnd}\n- Formål: ${booking.eventType}\n- Lokale: ${booking.spaces.join(', ')}\n- Antall gjester: ${booking.attendees || 'Ikke oppgitt'}${totalNOK ? `\n- Estimert leiesum: kr ${totalNOK.toLocaleString('nb-NO')}\n- Depositum (50 %): kr ${depositNOK.toLocaleString('nb-NO')}` : ''}${booking.cateringContact ? '\n- Catering: Du har bedt om å bli kontaktet av Næs Mat og Event' : ''}\n\nStyret vil behandle forespørselen og ta kontakt innen 2\u20133 virkedager.\n\nVennlig hilsen\nHelgøens Vel\nstyret@bjørkvang.no | +47 480 60 273`;
 
             try {
                 await sendEmail({

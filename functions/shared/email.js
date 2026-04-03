@@ -11,6 +11,7 @@ const buildPayload = (options) => {
         to: options.to,
         subject: options.subject,
         body: options.html || options.text, // Plunk expects 'body' for the content
+        no_tracking: true,
     };
 
     if (options.replyTo) {
