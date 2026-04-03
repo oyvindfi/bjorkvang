@@ -750,11 +750,17 @@ async function sendInvoice(id) {
 
 async function approveBooking(id) {
     if (!confirm('Er du sikker på at du vil godkjenne denne bookingen?')) return;
+    
+    const message = prompt('Melding til leietaker (valgfritt – sendes i godkjennings-e-posten):') || '';
 
     try {
         const response = await fetch(`${API_BASE_URL}/booking/approve?id=${id}`, {
             method: 'POST',
-            headers: { 'Accept': 'application/json' }
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ message })
         });
         
         if (response.ok) {

@@ -1,12 +1,120 @@
 const { app } = require('@azure/functions');
 const { sendEmail } = require('../../../shared/email');
-const { createHtmlResponse, createJsonResponse } = require('../../../shared/http');
+const { createHtmlResponse, createJsonResponse, parseBody } = require('../../../shared/http');
 const { getBooking, updateBookingStatus, updateBookingFields } = require('../../../shared/cosmosDb');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
 const vipps = require('../../../shared/vipps');
 
 /**
- * Approve a booking via a direct link.
+ * Build the admin action page HTML (confirm before approving).
+ */
+function buildConfirmPage(booking, actionUrl) {
+    const escapeHtml = (str) => String(str).replace(/[&<>"']/g, (m) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[m]);
+
+    const dateObj = new Date(`${booking.date}T00:00:00`);
+    const formattedDate = !isNaN(dateObj)
+        ? dateObj.toLocaleDateString('nb-NO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+        : booking.date;
+
+    return `<!DOCTYPE html>
+<html lang="nb"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Godkjenn booking – Bjørkvang</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f3f4f6;color:#1f2937;line-height:1.6}
+.wrap{max-width:560px;margin:40px auto;background:#fff;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.1);overflow:hidden}
+.hdr{background:#1a6fa3;color:#fff;padding:24px 28px}
+.hdr h1{font-size:1.25rem;font-weight:700}
+.hdr p{font-size:.85rem;opacity:.8;margin-top:4px}
+.body{padding:28px}
+table{width:100%;border-collapse:collapse;margin:12px 0 20px;font-size:.95rem}
+td{padding:8px 0;border-bottom:1px solid #e5e7eb}
+td:first-child{color:#6b7280}
+td:last-child{text-align:right;font-weight:600}
+label{display:block;font-weight:600;font-size:.9rem;margin-bottom:6px}
+textarea{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:6px;font-family:inherit;font-size:.9rem;resize:vertical;min-height:80px}
+.hint{font-size:.8rem;color:#9ca3af;margin-top:4px}
+.btns{display:flex;gap:12px;margin-top:24px}
+.btn{padding:12px 24px;border:none;border-radius:6px;font-weight:700;font-size:1rem;cursor:pointer;text-decoration:none;text-align:center;flex:1}
+.btn-approve{background:#10b981;color:#fff}
+.btn-approve:hover{background:#059669}
+.btn-cancel{background:#f3f4f6;color:#6b7280;border:1px solid #d1d5db}
+.btn-cancel:hover{background:#e5e7eb}
+.result{display:none;text-align:center;padding:40px 28px}
+.result h2{margin-bottom:8px}
+.result.ok h2{color:#059669}
+.result.fail h2{color:#dc2626}
+.spinner{display:none;margin:0 auto 12px;width:28px;height:28px;border:3px solid #e5e7eb;border-top-color:#10b981;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style></head><body>
+<div class="wrap">
+  <div class="hdr">
+    <h1>Godkjenn booking</h1>
+    <p>Bjørkvang forsamlingslokale – Helgøens Vel</p>
+  </div>
+  <div class="body" id="form-view">
+    <table>
+      <tr><td>Dato</td><td>${escapeHtml(formattedDate)}</td></tr>
+      <tr><td>Tidspunkt</td><td>kl. ${escapeHtml(booking.time || '')}${booking.duration ? ` (${booking.duration} timer)` : ''}</td></tr>
+      <tr><td>Formål</td><td>${escapeHtml(booking.eventType || 'Reservasjon')}</td></tr>
+      <tr><td>Lokale</td><td>${escapeHtml(Array.isArray(booking.spaces) ? booking.spaces.join(', ') : (booking.spaces || ''))}</td></tr>
+      <tr><td>Navn</td><td>${escapeHtml(booking.requesterName || '')}</td></tr>
+      <tr><td>E-post</td><td>${escapeHtml(booking.requesterEmail || '')}</td></tr>
+      ${booking.phone ? `<tr><td>Telefon</td><td>${escapeHtml(booking.phone)}</td></tr>` : ''}
+    </table>
+    <label for="msg">Melding til leietaker (valgfritt)</label>
+    <textarea id="msg" placeholder="F.eks. «Velkommen! Nøkkel hentes hos…»"></textarea>
+    <p class="hint">Meldingen inkluderes i godkjennings-e-posten som sendes til kunden.</p>
+    <div class="btns">
+      <button class="btn btn-approve" onclick="doApprove()">✓ Godkjenn booking</button>
+      <a class="btn btn-cancel" href="javascript:history.back()">Avbryt</a>
+    </div>
+  </div>
+  <div class="result" id="result-view">
+    <div class="spinner" id="spinner"></div>
+    <h2 id="result-title"></h2>
+    <p id="result-text"></p>
+  </div>
+</div>
+<script>
+async function doApprove(){
+  var formEl=document.getElementById('form-view');
+  var resultEl=document.getElementById('result-view');
+  var spin=document.getElementById('spinner');
+  formEl.style.display='none';
+  resultEl.style.display='block';
+  spin.style.display='block';
+  try{
+    var res=await fetch('${escapeHtml(actionUrl)}',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({message:document.getElementById('msg').value})
+    });
+    spin.style.display='none';
+    var data=await res.json();
+    if(res.ok){
+      resultEl.className='result ok';
+      document.getElementById('result-title').textContent='Booking godkjent ✓';
+      document.getElementById('result-text').textContent='Bekreftelse med kontrakt- og betalingsinfo er sendt til leietaker.';
+    }else{
+      resultEl.className='result fail';
+      document.getElementById('result-title').textContent='Noe gikk galt';
+      document.getElementById('result-text').textContent=data.error||'Ukjent feil. Prøv igjen.';
+    }
+  }catch(e){
+    spin.style.display='none';
+    resultEl.className='result fail';
+    document.getElementById('result-title').textContent='Nettverksfeil';
+    document.getElementById('result-text').textContent='Kunne ikke nå serveren. Sjekk internettforbindelsen.';
+  }
+}
+</script></body></html>`;
+}
+
+/**
+ * Approve a booking via a direct link (GET = form, POST = execute).
  */
 app.http('approveBooking', {
     methods: ['GET', 'POST', 'OPTIONS'],
@@ -18,7 +126,7 @@ app.http('approveBooking', {
         }
 
         const id = request.query.get('id');
-        const isApiRequest = request.method === 'POST' || request.headers.get('accept')?.includes('application/json');
+        const isApiRequest = request.headers.get('accept')?.includes('application/json');
         
         // Validate booking ID
         if (!id || typeof id !== 'string' || id.trim().length === 0) {
@@ -29,7 +137,8 @@ app.http('approveBooking', {
         const existingBooking = await getBooking(id.trim());
         if (!existingBooking) {
             context.warn(`approveBooking: Booking not found for ID: ${id}`);
-            return createJsonResponse(404, { error: 'Booking not found.' }, request);
+            if (isApiRequest) return createJsonResponse(404, { error: 'Booking not found.' }, request);
+            return createHtmlResponse(404, '<p>Bookingen ble ikke funnet.</p>', request);
         }
 
         if (existingBooking.status === 'approved') {
@@ -39,6 +148,16 @@ app.http('approveBooking', {
             }
             return createHtmlResponse(200, '<p>Booking var allerede godkjent. Bekreftelse er tidligere sendt.</p>', request);
         }
+
+        // --- GET: Show confirmation form ---
+        if (request.method === 'GET') {
+            const actionUrl = `${new URL(request.url).origin}/api/booking/approve?id=${encodeURIComponent(id.trim())}`;
+            return createHtmlResponse(200, buildConfirmPage(existingBooking, actionUrl), request);
+        }
+
+        // --- POST: Execute approval ---
+        const body = await parseBody(request);
+        const adminMessage = (body.message || '').trim().substring(0, 2000);
 
         const updatedBooking = await updateBookingStatus(id.trim(), null, 'approved');
         if (!updatedBooking) {
@@ -113,7 +232,6 @@ app.http('approveBooking', {
                         });
                         context.info(`approveBooking: Vipps deposit initiated, orderId=${orderId}`);
                     } catch (vippsErr) {
-                        // Non-fatal: still send the approval email; admin can retry from dashboard
                         context.warn('approveBooking: Could not initiate Vipps deposit', { error: vippsErr.message });
                     }
                 }
@@ -160,23 +278,26 @@ app.http('approveBooking', {
                         <tr><td style="padding:8px 0;color:#6b7280;">Depositum (50&nbsp;%)</td><td style="padding:8px 0;text-align:right;font-weight:700;color:#166534;">${depositStr}</td></tr>
                     </table>`;
 
-                // Secondary sign-contract link (shown below Vipps button when Vipps is primary)
-                const contractAnchor = vippsPaymentUrl
-                    ? ''
+                // Optional admin message block
+                const adminMessageHtml = adminMessage
+                    ? `<div style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px 18px;margin:16px 0;">
+                           <strong>Melding fra styret:</strong><br>${escapeHtml(adminMessage)}
+                       </div>`
                     : '';
 
                 const htmlContent = `
                     <p>Hei ${safeName},</p>
                     <p>&#127881; Gode nyheter! Din bookingforesp\u00f8rsel er godkjent.</p>
+                    ${adminMessageHtml}
                     ${summaryTable}
 
                     <h3 style="margin:20px 0 6px;font-size:1rem;">Steg&nbsp;1 &ndash; Signer leieavtalen</h3>
-                    <p style="margin:0 0 4px;">Les gjennom og signer avtalen digitalt f\u00f8r arrangementet.</p>                    <div style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:8px;padding:16px 20px;margin:12px 0 16px;">
+                    <p style="margin:0 0 4px;">Les gjennom og signer avtalen digitalt f\u00f8r arrangementet.</p>
+                    <div style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:8px;padding:16px 20px;margin:12px 0 16px;">
                         <a href="${contractLink}" style="display:inline-block;background:#1a56db;color:#fff;font-weight:700;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:1rem;">&#128394; Signer leieavtalen</a>
                     </div>
                     <h3 style="margin:20px 0 6px;font-size:1rem;">Steg&nbsp;2 &ndash; Betal depositum</h3>
                     ${paymentBlock}
-                    ${contractAnchor}
 
                     <h3 style="margin:20px 0 6px;font-size:1rem;">Steg&nbsp;3 &ndash; Etter arrangementet</h3>
                     <p style="margin:0 0 20px;font-size:0.9rem;color:#4b5563;">Styret sender sluttfaktura for restbel\u00f8pet etter at arrangementet er avholdt.</p>
@@ -184,7 +305,6 @@ app.http('approveBooking', {
                     <p style="font-size:0.9em;color:#6b7280;">Sp\u00f8rsm\u00e5l? Ta kontakt p\u00e5 <a href="mailto:styret@bj\u00f8rkvang.no" style="color:#1a823b;">styret@bj\u00f8rkvang.no</a>.</p>
                 `;
 
-                // Primary action: Vipps payment button if available, otherwise sign contract
                 const primaryAction = vippsPaymentUrl
                     ? { text: '&#128179; Betal depositum med Vipps', url: vippsPaymentUrl }
                     : { text: 'Signer leieavtale', url: contractLink };
@@ -206,6 +326,7 @@ app.http('approveBooking', {
                         `Hei ${existingBooking.requesterName || 'Bruker'}!`,
                         '',
                         `Din booking for ${formattedDate} kl. ${safeTime} er godkjent.`,
+                        ...(adminMessage ? ['', `Melding fra styret: ${adminMessage}`] : []),
                         '',
                         'Steg 1 \u2013 Signer leieavtalen:',
                         contractLink,

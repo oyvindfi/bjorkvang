@@ -296,7 +296,9 @@ app.http('bookingRequest', {
                 ${summaryTable}
                 <ul class="info-list">
                     <li><span class="info-label">Navn</span> <span class="info-value">${safeName}</span></li>
-                    <li><span class="info-label">E-post</span> <span class="info-value">${safeEmail}</span></li>
+                    <li><span class="info-label">E-post</span> <span class="info-value"><a href="mailto:${safeEmail}">${safeEmail}</a></span></li>
+                    ${booking.phone ? `<li><span class="info-label">Telefon</span> <span class="info-value"><a href="tel:${escapeHtml(booking.phone)}">${escapeHtml(booking.phone)}</a></span></li>` : ''}
+                    ${booking.address ? `<li><span class="info-label">Adresse</span> <span class="info-value">${escapeHtml(booking.address)}</span></li>` : ''}
                     <li><span class="info-label">Tjenester</span> <span class="info-value">${safeServicesStr}</span></li>
                     ${paymentInfo}
                 </ul>
@@ -321,7 +323,7 @@ app.http('bookingRequest', {
                 previewText: `Ny forespørsel fra ${safeName} for ${safeDate}`
             });
 
-            const text = `Ny bookingforespørsel:\nDato: ${booking.date}\nTid: ${booking.time}\nType: ${booking.eventType}\nNavn: ${booking.requesterName}\nE-post: ${booking.requesterEmail}\nMelding: ${booking.message || 'Ingen melding'}\n\nÅpne i admin: ${adminLink}\nGodkjenn (direkte): ${approveLink}\nAvvis (direkte): ${rejectLink}`;
+            const text = `Ny bookingforespørsel:\nDato: ${booking.date}\nTid: ${booking.time}\nType: ${booking.eventType}\nNavn: ${booking.requesterName}\nE-post: ${booking.requesterEmail}${booking.phone ? `\nTelefon: ${booking.phone}` : ''}${booking.address ? `\nAdresse: ${booking.address}` : ''}\nMelding: ${booking.message || 'Ingen melding'}\n\nÅpne i admin: ${adminLink}\nGodkjenn: ${approveLink}\nAvvis: ${rejectLink}`;
 
             await sendEmail({
                 to,

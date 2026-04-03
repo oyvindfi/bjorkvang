@@ -70,17 +70,13 @@ const parseBody = async (request) => {
 };
 
 /**
- * Resolve the base URL that should be used inside emails.
- * Defaults to the incoming request origin unless PUBLIC_FUNCTION_BASE_URL is set.
+ * Resolve the base URL for the Azure Functions API (used for approve/reject links etc.).
+ * Prefers PUBLIC_FUNCTION_BASE_URL, then falls back to the request origin.
+ * NOTE: Do NOT fall back to WEBSITE_URL here — that is the static site, not the API host.
  */
 const resolveBaseUrl = (request) => {
     if (PUBLIC_BASE_URL) {
         return PUBLIC_BASE_URL;
-    }
-
-    const websiteUrl = (process.env.WEBSITE_URL || '').replace(/\/$/, '');
-    if (websiteUrl) {
-        return websiteUrl;
     }
 
     try {
