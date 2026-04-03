@@ -46,7 +46,7 @@ app.http('signBooking', {
                     const boardTo = process.env.BOARD_TO_ADDRESS || process.env.DEFAULT_TO_ADDRESS;
                     const fromAddr = process.env.DEFAULT_FROM_ADDRESS || 'styret@xn--bjrkvang-64a.no';
                     const websiteUrl = (process.env.WEBSITE_URL || 'https://xn--bjrkvang-64a.no').replace(/\/$/, '');
-                    const contractLink = `${websiteUrl}/leieavtale.html?id=${encodeURIComponent(id)}`;
+                    const contractLink = `${websiteUrl}/leieavtale.html?id=${encodeURIComponent(id)}&mode=admin`;
                     const adminLink = `${websiteUrl}/admin#${encodeURIComponent(id)}`;
 
                     const escapeHtml = (str) => String(str).replace(/[&<>"']/g, (m) => ({
@@ -54,7 +54,10 @@ app.http('signBooking', {
                     })[m]);
 
                     const safeName = escapeHtml(updatedBooking.requesterName);
-                    const safeDate = escapeHtml(updatedBooking.date);
+                    const notifyDateObj = new Date(`${updatedBooking.date}T00:00:00`);
+                    const safeDate = escapeHtml(!isNaN(notifyDateObj)
+                        ? notifyDateObj.toLocaleDateString('nb-NO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+                        : updatedBooking.date);
                     const safeEventType = escapeHtml(updatedBooking.eventType || 'Reservasjon');
 
                     const notifyHtml = generateEmailHtml({
@@ -107,9 +110,15 @@ app.http('signBooking', {
                 })[m]);
 
                 const safeName = escHtml(updatedBooking.requesterName);
-                const safeDate = escHtml(updatedBooking.date);
                 const safeEventType = escHtml(updatedBooking.eventType || 'Reservasjon');
                 const safeSpaces = escHtml(Array.isArray(updatedBooking.spaces) ? updatedBooking.spaces.join(', ') : (updatedBooking.spaces || ''));
+
+                // Format date nicely in Norwegian
+                const dateObj = new Date(`${updatedBooking.date}T00:00:00`);
+                const formattedDate = !isNaN(dateObj)
+                    ? dateObj.toLocaleDateString('nb-NO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+                    : updatedBooking.date;
+                const safeDate = escHtml(formattedDate);
 
                 const totalNOK = updatedBooking.totalAmount || 0;
                 const depositNOK = Math.round(totalNOK * 0.5);
@@ -117,6 +126,8 @@ app.http('signBooking', {
                 const depositStr = `kr ${depositNOK.toLocaleString('nb-NO')}`;
                 const remainingStr = `kr ${remainingNOK.toLocaleString('nb-NO')}`;
                 const paymentMethod = updatedBooking.paymentMethod || 'bank';
+
+                context.info(`signBooking: both-signed deposit flow – paymentMethod=${paymentMethod}, totalNOK=${totalNOK}, depositNOK=${depositNOK}`);
 
                 // --- Auto-initiate deposit payment ---
                 let depositPaymentSection = '';
@@ -158,7 +169,7 @@ app.http('signBooking', {
 
                         context.info(`signBooking: Vipps deposit initiated, orderId=${orderId}`);
                     } catch (vippsErr) {
-                        context.error(`signBooking: Failed to initiate Vipps deposit: ${vippsErr.message}`);
+                        context.error(`signBooking: Failed to initiate Vipps deposit: ${vippsErr.message}`, { stack: vippsErr.stack });
                         // Fallback: link to complete-payment page
                         const paymentLink = `${websiteUrl}/complete-payment.html?bookingId=${encodeURIComponent(id)}`;
                         depositPaymentSection = `

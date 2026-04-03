@@ -183,20 +183,71 @@
             .btn-sign { display: none; }
             .terms-box { max-height: none; overflow: visible; border: none; padding: 0; }
 
-            /* Hide digital signing UI, show paper signature lines instead */
-            #signature-area .signature-pad-container,
-            #signature-area > p,
-            #signature-area > div,
-            #signature-area button,
-            #landlord-signature-area { display: none !important; }
+            /* Hide interactive signing UI (buttons, canvas, tabs, checkboxes, pad containers) */
+            #signature-pad-container,
+            #landlord-signature-pad-container,
+            #landlord-auth-container,
+            #payment-confirm,
+            .signature-tabs,
+            .btn-sign,
+            button,
+            #signature-area > p:not(.print-keep),
+            #signature-area > div:not(.signed-stamp):not(.print-keep) { display: none !important; }
 
-            #signature-area {
+            /* When signed: show the signed-state content */
+            #signature-area.signed,
+            #landlord-signature-area.signed {
+                display: block !important;
+                background: none !important;
+                border: none !important;
+                text-align: left !important;
+                padding: 0 !important;
+                margin-top: 30px;
+                page-break-inside: avoid;
+            }
+
+            #signature-area.signed .signed-stamp,
+            #landlord-signature-area.signed .signed-stamp {
+                display: block !important;
+                color: #166534;
+                font-weight: bold;
+                font-size: 1rem;
+                margin-bottom: 8px;
+            }
+
+            #signature-area.signed div,
+            #landlord-signature-area.signed div {
+                display: block !important;
+            }
+
+            #signature-area.signed img,
+            #landlord-signature-area.signed img {
+                max-height: 80px !important;
+                display: inline-block !important;
+            }
+
+            #signature-area.signed p,
+            #landlord-signature-area.signed p {
+                display: block !important;
+            }
+
+            /* When NOT signed: show blank signature lines */
+            #signature-area:not(.signed) {
                 background: none !important;
                 border: none !important;
                 text-align: left !important;
                 padding: 0 !important;
                 margin-top: 40px;
             }
+
+            #signature-area:not(.signed) .print-signature-block {
+                display: flex !important;
+                gap: 60px;
+                margin-top: 20px;
+            }
+
+            /* Hide landlord area when not signed and not waiting */
+            #landlord-signature-area:not(.signed) { display: none !important; }
 
             .print-signature-block {
                 display: flex !important;
@@ -386,7 +437,7 @@
                     <input type="checkbox" id="payment-confirm" style="margin-top: 4px;">
                     <span>
                         <strong>Jeg bekrefter bestillingen og godtar leievilkårene.</strong><br>
-                        <span style="font-size: 0.9rem; color: #666;">Depositum (50 % av leiesummen) faktureres etter signering. Resterende beløp faktureres etter arrangementet.</span>
+                        <span style="font-size: 0.9rem; color: #666;">Depositum (50 % av leiesummen) kreves inn etter signering. Resterende beløp faktureres etter arrangementet.</span>
                     </span>
                 </label>
             </div>

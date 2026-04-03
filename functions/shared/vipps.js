@@ -82,9 +82,14 @@ const initiatePayment = async ({ amount, phoneNumber, returnUrl, orderId, text }
     };
 
     if (phoneNumber) {
-        payload.customer = {
-            phoneNumber: phoneNumber
-        };
+        // Vipps requires format "4712345678" (country code + number, digits only)
+        const cleaned = String(phoneNumber).replace(/[\s\-\(\)]/g, '').replace(/^\+/, '');
+        const formatted = cleaned.startsWith('47') ? cleaned : `47${cleaned}`;
+        if (/^\d{10,15}$/.test(formatted)) {
+            payload.customer = {
+                phoneNumber: formatted
+            };
+        }
     }
 
     const response = await fetch(`${VIPPS_BASE_URL}/epayment/v1/payments`, {

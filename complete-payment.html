@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fullfør betaling – Bjørkvang forsamlingslokale</title>
+    <title>Betal depositum – Bjørkvang forsamlingslokale</title>
     <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="style.css">
     <script async type="text/javascript" src="https://checkout.vipps.no/checkout-button/v1/vipps-checkout-button.js"></script>
@@ -184,8 +184,8 @@
 
         <div id="payment-view" style="display: none;">
             <div class="payment-header">
-                <h1>Fullfør betaling</h1>
-                <p>Kontrakten er signert – betal for å aktivere bookingen</p>
+                <h1>Betal depositum</h1>
+                <p>Kontrakten er signert – betal depositum for å sikre bookingen</p>
             </div>
 
             <div class="booking-details">
@@ -209,8 +209,9 @@
             </div>
 
             <div class="amount-highlight">
-                <div style="font-size: 0.9rem; color: #666; margin-bottom: 5px;">Beløp å betale</div>
+                <div style="font-size: 0.9rem; color: #666; margin-bottom: 5px;">Depositum å betale (50 %)</div>
                 <div class="amount" id="payment-amount">... kr</div>
+                <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">Restbeløp faktureres etter arrangementet</div>
             </div>
 
             <div class="vipps-btn-wrap" id="vipps-btn-wrap">
@@ -239,13 +240,14 @@
         <div id="success-view" style="display: none;">
             <div class="payment-header">
                 <div class="success-icon"></div>
-                <h1>Betaling fullført!</h1>
-                <p>Din booking er nå aktiv</p>
+                <h1>Depositum betalt!</h1>
+                <p>Din booking er nå sikret</p>
             </div>
 
             <div class="booking-details">
                 <p style="text-align: center; margin: 0;">
-                    Takk for betalingen! Du vil motta en bekreftelse på e-post.
+                    Takk for betalingen! Depositum er registrert. Du mottar bekreftelse på e-post.<br>
+                    <span style="font-size: 0.9rem; color: #666;">Restbeløp faktureres etter arrangementet.</span>
                 </p>
             </div>
 
@@ -309,9 +311,10 @@
                 document.getElementById('booking-time').textContent = `${booking.time} (${booking.duration} timer)`;
                 document.getElementById('booking-spaces').textContent = Array.isArray(booking.spaces) ? booking.spaces.join(', ') : booking.spaces;
 
-                // Calculate and display amount
-                const amount = booking.paymentAmount ? booking.paymentAmount / 100 : calculateAmount(booking);
-                document.getElementById('payment-amount').textContent = amount.toLocaleString('nb-NO') + ' kr';
+                // Calculate deposit amount (50% of total)
+                const totalAmount = booking.totalAmount || (booking.paymentAmount ? booking.paymentAmount / 100 : calculateAmount(booking));
+                const depositAmount = booking.depositAmount || Math.round(totalAmount * 0.5);
+                document.getElementById('payment-amount').textContent = depositAmount.toLocaleString('nb-NO') + ' kr';
 
                 // Setup payment button
                 document.getElementById('vipps-pay-btn').addEventListener('click', () => initiatePayment(bookingId));
