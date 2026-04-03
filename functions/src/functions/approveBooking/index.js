@@ -164,6 +164,9 @@ app.http('approveBooking', {
             context.error(`approveBooking: Failed to update booking status for ID: ${id}`);
             return createJsonResponse(500, { error: 'Failed to approve booking.' }, request);
         }
+
+        // Store approval timestamp for reminder tracking
+        await updateBookingFields(id.trim(), null, { approvedAt: new Date().toISOString() });
         
         context.info(`approveBooking: Successfully approved booking ${id} for ${existingBooking.requesterEmail}`);
 

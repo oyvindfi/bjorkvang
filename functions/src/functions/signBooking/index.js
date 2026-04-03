@@ -67,11 +67,11 @@ app.http('signBooking', {
                             </table>
                             <p style="margin-top:24px;"><strong>Neste steg:</strong></p>
                             <ol style="color:#374151;">
-                                <li>Signer avtalen som utleier</li>
+                                <li>Gå til leieavtalen og signer som utleier (krever innlogging)</li>
                                 <li>Send depositumsforespørsel til leietaker</li>
                             </ol>
                             <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:20px;">
-                                <a href="${escapeHtml(contractLink)}" style="display:inline-block;padding:12px 24px;background:#1a6fa3;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">Åpne leieavtalen</a>
+                                <a href="${escapeHtml(contractLink)}" style="display:inline-block;padding:12px 24px;background:#1a6fa3;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">&#128394; Signer som utleier</a>
                                 <a href="${escapeHtml(adminLink)}" style="display:inline-block;padding:12px 24px;background:#6b7280;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">Åpne i admin</a>
                             </div>
                         `,
@@ -95,51 +95,97 @@ app.http('signBooking', {
                 }
             }
 
-            // If both have signed AND payment is not yet completed
-            if (bothSigned && updatedBooking.paymentStatus !== 'paid') {
-                context.info(`Both signatures complete for ${id}, sending payment request email`);
+            // If both have signed, send final agreement + payment request
+            if (bothSigned) {
+                context.info(`Both signatures complete for ${id}, sending final agreement email`);
+
+                const websiteUrl = (process.env.WEBSITE_URL || 'https://xn--bjrkvang-64a.no').replace(/\/$/, '');
+                const contractLink = `${websiteUrl}/leieavtale.html?id=${encodeURIComponent(id)}`;
+                const fromAddr = process.env.DEFAULT_FROM_ADDRESS || 'styret@xn--bjrkvang-64a.no';
+
+                const escHtml = (str) => String(str).replace(/[&<>"']/g, (m) => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+                })[m]);
+
+                const safeName = escHtml(updatedBooking.requesterName);
+                const safeDate = escHtml(updatedBooking.date);
+                const safeEventType = escHtml(updatedBooking.eventType || 'Reservasjon');
+                const safeSpaces = escHtml(Array.isArray(updatedBooking.spaces) ? updatedBooking.spaces.join(', ') : (updatedBooking.spaces || ''));
+
+                // Payment block (only if not already paid)
+                let paymentSection = '';
+                let paymentText = '';
+                if (updatedBooking.paymentStatus !== 'paid') {
+                    const paymentLink = `${websiteUrl}/complete-payment.html?bookingId=${encodeURIComponent(id)}`;
+                    paymentSection = `
+                        <h3 style="margin:24px 0 8px;font-size:1rem;">Neste steg: Betal depositum</h3>
+                        <p>Depositum m&aring; betales f&oslash;r arrangementsdato for at bookingen skal v&aelig;re aktiv.</p>
+                        <div style="text-align:center;margin:20px 0;">
+                            <a href="${paymentLink}" style="display:inline-block;padding:14px 36px;background:#ff5b24;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;font-size:1.05rem;">Betal depositum</a>
+                        </div>`;
+                    paymentText = `\n\nNeste steg – Betal depositum:\n${paymentLink}`;
+                }
 
                 try {
-                    // Send payment request email to tenant
-                    const paymentLink = `${process.env.WEBSITE_URL || 'https://bjørkvang.no'}/complete-payment.html?bookingId=${id}`;
-
-                    const emailHtml = generateEmailHtml({
-                        title: 'Fullfør betaling for booking',
+                    // Send to tenant
+                    const tenantHtml = generateEmailHtml({
+                        title: 'Leieavtalen er ferdig signert',
                         content: `
-                            <p>Hei ${updatedBooking.requesterName},</p>
-                            <p>Gratulerer! Leieavtalen for booking <strong>${id.replace('booking-', '').toUpperCase()}</strong> er nå signert av begge parter.</p>
-                            <p><strong>Neste steg:</strong> Fullfør betalingen for å aktivere bookingen.</p>
-                            <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
-                                <p style="margin: 0 0 10px 0;"><strong>Bookingdetaljer:</strong></p>
-                                <ul style="margin: 0; padding-left: 20px;">
-                                    <li>Dato: ${updatedBooking.date}</li>
-                                    <li>Lokaler: ${Array.isArray(updatedBooking.spaces) ? updatedBooking.spaces.join(', ') : updatedBooking.spaces}</li>
-                                    <li>Beløp: ${updatedBooking.paymentAmount ? (updatedBooking.paymentAmount / 100).toLocaleString('nb-NO') + ' kr' : 'Se faktura'}</li>
-                                </ul>
+                            <p>Hei ${safeName},</p>
+                            <p>Leieavtalen for din booking er n&aring; signert av begge parter. &#127881;</p>
+                            <table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:15px;">
+                                <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 0;color:#6b7280;">Dato</td><td style="padding:8px 0;text-align:right;font-weight:600;">${safeDate}</td></tr>
+                                <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 0;color:#6b7280;">Form&aring;l</td><td style="padding:8px 0;text-align:right;">${safeEventType}</td></tr>
+                                <tr><td style="padding:8px 0;color:#6b7280;">Lokale</td><td style="padding:8px 0;text-align:right;">${safeSpaces}</td></tr>
+                            </table>
+                            <p>Du kan n&aring; se og laste ned den ferdig signerte avtalen:</p>
+                            <div style="text-align:center;margin:20px 0;">
+                                <a href="${escHtml(contractLink)}" style="display:inline-block;padding:14px 36px;background:#1a6fa3;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;font-size:1.05rem;">&#128196; Se og last ned leieavtalen</a>
                             </div>
-                            <p style="text-align: center; margin: 30px 0;">
-                                <a href="${paymentLink}" style="display: inline-block; padding: 15px 40px; background: #ff5b24; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 1.1rem;">
-                                    <span style="background: white; color: #ff5b24; padding: 2px 8px; border-radius: 4px; margin-right: 8px; font-weight: 900; font-style: italic;">V</span>
-                                    Betal med Vipps
-                                </a>
-                            </p>
-                            <p style="font-size: 0.9rem; color: #666;">Betalingen må gjennomføres før arrangementsdato for at bookingen skal være aktiv.</p>
+                            ${paymentSection}
+                            <p style="font-size:0.9rem;color:#6b7280;margin-top:24px;">Sp&oslash;rsm&aring;l? Ta kontakt p&aring; <a href="mailto:styret@bj&oslash;rkvang.no" style="color:#1a6fa3;">styret@bj&oslash;rkvang.no</a>.</p>
                         `,
-                        previewText: 'Fullfør betaling for din booking'
+                        action: { text: 'Se og last ned leieavtalen', url: contractLink },
+                        previewText: `Leieavtalen for ${updatedBooking.date} er ferdig signert – last ned her`
                     });
 
                     await sendEmail({
                         to: updatedBooking.requesterEmail,
-                        from: process.env.DEFAULT_FROM_ADDRESS || 'styret@bjørkvang.no',
-                        subject: 'Fullfør betaling for din booking',
-                        html: emailHtml,
-                        text: `Hei ${updatedBooking.requesterName},\n\nLeieavtalen er signert! Fullfør betalingen her: ${paymentLink}`
+                        from: fromAddr,
+                        subject: `Leieavtale ferdig signert – ${updatedBooking.date}`,
+                        html: tenantHtml,
+                        text: `Hei ${updatedBooking.requesterName},\n\nLeieavtalen for din booking ${updatedBooking.date} (${updatedBooking.eventType || 'Reservasjon'}) er nå signert av begge parter.\n\nSe og last ned avtalen: ${contractLink}${paymentText}`
                     });
 
-                    context.info(`Payment request email sent to ${updatedBooking.requesterEmail}`);
+                    context.info(`Final agreement email sent to ${updatedBooking.requesterEmail}`);
+
+                    // Also notify board
+                    const boardTo = process.env.BOARD_TO_ADDRESS || process.env.DEFAULT_TO_ADDRESS;
+                    if (boardTo) {
+                        const adminLink = `${websiteUrl}/admin#${encodeURIComponent(id)}`;
+                        const boardHtml = generateEmailHtml({
+                            title: 'Leieavtale ferdig signert av begge parter',
+                            content: `
+                                <p>Leieavtalen for <strong>${safeName}</strong> (${safeDate}, ${safeEventType}) er n&aring; signert av begge parter.</p>
+                                ${updatedBooking.paymentStatus !== 'paid' ? '<p>Depositum er enn&aring; ikke betalt.</p>' : '<p style="color:#166534;"><strong>&check; Depositum er betalt.</strong></p>'}
+                                <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:20px;">
+                                    <a href="${escHtml(contractLink)}" style="display:inline-block;padding:12px 24px;background:#1a6fa3;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;">&#128196; Se leieavtalen</a>
+                                    <a href="${escHtml(adminLink)}" style="display:inline-block;padding:12px 24px;background:#6b7280;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;">&Aring;pne i admin</a>
+                                </div>
+                            `,
+                            previewText: `Leieavtalen for ${updatedBooking.date} er ferdig signert`
+                        });
+
+                        await sendEmail({
+                            to: boardTo,
+                            from: fromAddr,
+                            subject: `Leieavtale ferdig signert: ${updatedBooking.requesterName} – ${updatedBooking.date}`,
+                            html: boardHtml,
+                            text: `Leieavtalen for ${updatedBooking.requesterName} (${updatedBooking.date}) er signert av begge parter.\n\nSe avtalen: ${contractLink}\nAdmin: ${adminLink}`
+                        });
+                    }
                 } catch (emailError) {
-                    context.error(`Failed to send payment email: ${emailError.message}`);
-                    // Don't fail the request if email fails
+                    context.error(`Failed to send final agreement email: ${emailError.message}`);
                 }
             }
 
