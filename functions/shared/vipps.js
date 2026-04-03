@@ -77,7 +77,7 @@ const initiatePayment = async ({ amount, phoneNumber, returnUrl, orderId, text }
         },
         reference: orderId,
         returnUrl: returnUrl,
-        userFlow: 'NATIVE_REDIRECT',
+        userFlow: 'WEB_REDIRECT',
         paymentDescription: text
     };
 

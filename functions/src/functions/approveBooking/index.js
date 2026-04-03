@@ -245,9 +245,11 @@ app.http('approveBooking', {
                     if (vippsPaymentUrl) {
                         paymentBlock = `
                             <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px 20px;margin:16px 0;">
-                                <p style="margin:0 0 8px;font-weight:700;color:#166534;">&#128179; Betal depositum med Vipps</p>
+                                <p style="margin:0 0 8px;font-weight:700;color:#166534;">Betal depositum med Vipps</p>
                                 <p style="margin:0 0 10px;color:#166534;">Klikk på knappen under for å betale <strong>${depositStr}</strong> via Vipps. Forfaller innen 5&nbsp;dager.</p>
-                                <a href="${vippsPaymentUrl}" style="display:inline-block;background:#ff5b24;color:#fff;font-weight:700;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:1rem;">&#128179; Betal ${depositStr} med Vipps</a>
+                                <a href="${vippsPaymentUrl}" style="display:inline-block;text-decoration:none;">
+                                    <img src="https://checkout.vipps.no/v1/images/vipps/pay/rect/250/NO/vipps-pay-rect-250-NO.svg" alt="Betal med Vipps" style="height:48px;border-radius:6px;" />
+                                </a>
                                 <p style="margin:10px 0 0;font-size:0.85rem;color:#4b5563;">Restbel\u00f8p (${remainderStr}) faktureres etter arrangementet.</p>
                             </div>`;
                         paymentTextInstructions = `Betal depositum ${depositStr} med Vipps:\n${vippsPaymentUrl}`;

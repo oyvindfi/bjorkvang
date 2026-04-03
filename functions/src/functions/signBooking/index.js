@@ -121,7 +121,9 @@ app.http('signBooking', {
                         <h3 style="margin:24px 0 8px;font-size:1rem;">Neste steg: Betal depositum</h3>
                         <p>Depositum m&aring; betales f&oslash;r arrangementsdato for at bookingen skal v&aelig;re aktiv.</p>
                         <div style="text-align:center;margin:20px 0;">
-                            <a href="${paymentLink}" style="display:inline-block;padding:14px 36px;background:#ff5b24;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;font-size:1.05rem;">Betal depositum</a>
+                            <a href="${paymentLink}" style="display:inline-block;padding:0;border:none;text-decoration:none;">
+                                <img src="https://checkout.vipps.no/v1/images/vipps/pay/rect/250/NO/vipps-pay-rect-250-NO.svg" alt="Betal med Vipps" style="height:48px;border-radius:6px;" />
+                            </a>
                         </div>`;
                     paymentText = `\n\nNeste steg – Betal depositum:\n${paymentLink}`;
                 }

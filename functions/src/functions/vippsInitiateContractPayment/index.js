@@ -72,8 +72,9 @@ app.http('vippsInitiateContractPayment', {
                 return createJsonResponse(400, { error: 'Unable to determine payment amount' });
             }
 
-            // Generate order ID
-            const orderId = `contract-payment-${bookingId}-${Date.now()}`;
+            // Generate order ID (max 50 chars for Vipps)
+            const shortId = bookingId.replace('booking-', '').slice(0, 20);
+            const orderId = `cp-${shortId}-${Date.now().toString(36)}`.slice(0, 50);
             const baseUrl = resolveBaseUrl(request);
 
             // Return URL

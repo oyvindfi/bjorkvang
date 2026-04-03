@@ -105,40 +105,25 @@
 
         .vipps-button-large {
             width: 100%;
-            padding: 20px;
-            background: #ff5b24;
-            color: white;
+            padding: 0;
+            background: none;
             border: none;
-            border-radius: var(--radius-md);
-            font-size: 1.3rem;
-            font-weight: bold;
             cursor: pointer;
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
-            transition: background 0.2s;
-        }
-
-        .vipps-button-large:hover {
-            background: #e04e1d;
         }
 
         .vipps-button-large:disabled {
-            background: #ccc;
+            opacity: 0.5;
             cursor: not-allowed;
         }
 
-        .vipps-icon-large {
-            background: white;
-            color: #ff5b24;
-            padding: 4px 12px;
-            border-radius: 6px;
-            font-weight: 900;
-            font-style: italic;
-            font-size: 1.5rem;
+        .vipps-button-large img {
+            height: 56px;
+            border-radius: 8px;
         }
 
         .status-message {
@@ -241,14 +226,13 @@
             </div>
 
             <button id="vipps-pay-btn" class="vipps-button-large">
-                <span class="vipps-icon-large">V</span>
-                <span>Betal med Vipps</span>
+                <img src="https://checkout.vipps.no/v1/images/vipps/pay/rect/250/NO/vipps-pay-rect-250-NO.svg" alt="Betal med Vipps" />
             </button>
 
             <div id="status-message" class="status-message"></div>
 
             <div class="back-link">
-                <a href="leieavtale.html">← Tilbake til avtale</a>
+                <a id="back-to-contract" href="leieavtale.html">← Tilbake til avtale</a>
             </div>
         </div>
 
@@ -332,6 +316,12 @@
                 // Setup payment button
                 document.getElementById('vipps-pay-btn').addEventListener('click', () => initiatePayment(bookingId));
 
+                // Update back link to include booking ID
+                const backLink = document.getElementById('back-to-contract');
+                if (backLink) {
+                    backLink.href = `leieavtale.html?id=${encodeURIComponent(bookingId)}`;
+                }
+
                 // Show payment view
                 document.getElementById('loading-state').style.display = 'none';
                 const paymentView = document.getElementById('payment-view');
@@ -372,7 +362,7 @@
             const statusMsg = document.getElementById('status-message');
 
             btn.disabled = true;
-            btn.innerHTML = '<span class="vipps-icon-large">V</span><span>Starter Vipps...</span>';
+            btn.innerHTML = '<img src="https://checkout.vipps.no/v1/images/vipps/pay/rect/250/NO/vipps-pay-rect-250-NO.svg" alt="Starter Vipps..." style="height:56px;border-radius:8px;opacity:0.6;" />';
 
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 10000);
@@ -406,7 +396,7 @@
                 statusMsg.className = 'status-message error';
                 statusMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 btn.disabled = false;
-                btn.innerHTML = '<span class="vipps-icon-large">V</span><span>Betal med Vipps</span>';
+                btn.innerHTML = '<img src="https://checkout.vipps.no/v1/images/vipps/pay/rect/250/NO/vipps-pay-rect-250-NO.svg" alt="Betal med Vipps" style="height:56px;border-radius:8px;" />';
             }
         }
 
