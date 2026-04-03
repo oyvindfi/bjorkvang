@@ -6,6 +6,7 @@
     <title>Fullfør betaling – Bjørkvang forsamlingslokale</title>
     <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="style.css">
+    <script async type="text/javascript" src="https://checkout.vipps.no/checkout-button/v1/vipps-checkout-button.js"></script>
     <style>
         body {
             background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
@@ -103,27 +104,14 @@
             color: #000;
         }
 
-        .vipps-button-large {
-            width: 100%;
-            padding: 0;
-            background: none;
-            border: none;
-            cursor: pointer;
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .vipps-btn-wrap {
+            text-align: center;
+            margin: 10px 0;
         }
 
-        .vipps-button-large:disabled {
+        .vipps-btn-wrap[disabled] {
             opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .vipps-button-large img {
-            height: 56px;
-            border-radius: 8px;
+            pointer-events: none;
         }
 
         .status-message {
@@ -225,9 +213,21 @@
                 <div class="amount" id="payment-amount">... kr</div>
             </div>
 
-            <button id="vipps-pay-btn" class="vipps-button-large">
-                <img src="https://checkout.vipps.no/v1/images/vipps/pay/rect/250/NO/vipps-pay-rect-250-NO.svg" alt="Betal med Vipps" />
-            </button>
+            <div class="vipps-btn-wrap" id="vipps-btn-wrap">
+                <vipps-mobilepay-button
+                    id="vipps-pay-btn"
+                    type="button"
+                    brand="vipps"
+                    language="no"
+                    variant="primary"
+                    rounded="true"
+                    verb="pay"
+                    stretched="true"
+                    branded="true"
+                    loading="false"
+                    style="cursor:pointer;"
+                ></vipps-mobilepay-button>
+            </div>
 
             <div id="status-message" class="status-message"></div>
 
@@ -362,7 +362,7 @@
             const statusMsg = document.getElementById('status-message');
 
             btn.disabled = true;
-            btn.innerHTML = '<img src="https://checkout.vipps.no/v1/images/vipps/pay/rect/250/NO/vipps-pay-rect-250-NO.svg" alt="Starter Vipps..." style="height:56px;border-radius:8px;opacity:0.6;" />';
+            btn.setAttribute('loading', 'true');
 
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 10000);
@@ -396,7 +396,7 @@
                 statusMsg.className = 'status-message error';
                 statusMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 btn.disabled = false;
-                btn.innerHTML = '<img src="https://checkout.vipps.no/v1/images/vipps/pay/rect/250/NO/vipps-pay-rect-250-NO.svg" alt="Betal med Vipps" style="height:56px;border-radius:8px;" />';
+                btn.setAttribute('loading', 'false');
             }
         }
 
