@@ -39,6 +39,62 @@ app.http('signBooking', {
 
             context.info(`Signature added for booking ${id}, role: ${role}, both signed: ${bothSigned}`);
 
+            // Notify board when tenant signs
+            if ((role || 'requester') === 'requester') {
+                try {
+                    const boardTo = process.env.BOARD_TO_ADDRESS || process.env.DEFAULT_TO_ADDRESS;
+                    const fromAddr = process.env.DEFAULT_FROM_ADDRESS || 'styret@xn--bjrkvang-64a.no';
+                    const websiteUrl = (process.env.WEBSITE_URL || 'https://xn--bjrkvang-64a.no').replace(/\/$/, '');
+                    const contractLink = `${websiteUrl}/leieavtale.html?id=${encodeURIComponent(id)}`;
+                    const adminLink = `${websiteUrl}/admin#${encodeURIComponent(id)}`;
+
+                    const escapeHtml = (str) => String(str).replace(/[&<>"']/g, (m) => ({
+                        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+                    })[m]);
+
+                    const safeName = escapeHtml(updatedBooking.requesterName);
+                    const safeDate = escapeHtml(updatedBooking.date);
+                    const safeEventType = escapeHtml(updatedBooking.eventType || 'Reservasjon');
+
+                    const notifyHtml = generateEmailHtml({
+                        title: 'Leieavtale signert av leietaker',
+                        content: `
+                            <p><strong>${safeName}</strong> har signert leieavtalen for sin booking.</p>
+                            <table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:15px;">
+                                <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 0;color:#6b7280;">Dato</td><td style="padding:8px 0;text-align:right;font-weight:600;">${safeDate}</td></tr>
+                                <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 0;color:#6b7280;">Formål</td><td style="padding:8px 0;text-align:right;">${safeEventType}</td></tr>
+                                <tr><td style="padding:8px 0;color:#6b7280;">Lokale</td><td style="padding:8px 0;text-align:right;">${escapeHtml(Array.isArray(updatedBooking.spaces) ? updatedBooking.spaces.join(', ') : (updatedBooking.spaces || ''))}</td></tr>
+                            </table>
+                            <p style="margin-top:24px;"><strong>Neste steg:</strong></p>
+                            <ol style="color:#374151;">
+                                <li>Signer avtalen som utleier</li>
+                                <li>Send depositumsforespørsel til leietaker</li>
+                            </ol>
+                            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:20px;">
+                                <a href="${escapeHtml(contractLink)}" style="display:inline-block;padding:12px 24px;background:#1a6fa3;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">Åpne leieavtalen</a>
+                                <a href="${escapeHtml(adminLink)}" style="display:inline-block;padding:12px 24px;background:#6b7280;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">Åpne i admin</a>
+                            </div>
+                        `,
+                        previewText: `${updatedBooking.requesterName} har signert leieavtalen for ${updatedBooking.date}`
+                    });
+
+                    if (boardTo) {
+                        await sendEmail({
+                            to: boardTo,
+                            from: fromAddr,
+                            subject: `Leieavtale signert: ${updatedBooking.requesterName} – ${updatedBooking.date}`,
+                            html: notifyHtml,
+                            text: `${updatedBooking.requesterName} har signert leieavtalen for booking ${updatedBooking.date} (${updatedBooking.eventType || 'Reservasjon'}).\n\nÅpne leieavtalen: ${contractLink}\nÅpne i admin: ${adminLink}\n\nNeste steg: Signer som utleier og send depositumsforespørsel.`
+                        });
+                        context.info(`Board notification sent for tenant signature on ${id}`);
+                    } else {
+                        context.warn('No BOARD_TO_ADDRESS configured, skipping tenant signature notification');
+                    }
+                } catch (notifyError) {
+                    context.error(`Failed to send board notification for tenant signature: ${notifyError.message}`);
+                }
+            }
+
             // If both have signed AND payment is not yet completed
             if (bothSigned && updatedBooking.paymentStatus !== 'paid') {
                 context.info(`Both signatures complete for ${id}, sending payment request email`);
