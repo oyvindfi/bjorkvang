@@ -53,29 +53,13 @@
       }
       #date { cursor: pointer; }
 
-      /* Google Places Autocomplete (PlaceAutocompleteElement) */
-      gmp-place-autocomplete {
-        width: 100%;
-        --gmpx-color-surface: var(--surface, #fff);
-        --gmpx-color-on-surface: var(--text-primary, #1f2937);
-        --gmpx-font-family-base: inherit;
-        --gmpx-font-size-base: 0.95rem;
-      }
-      gmp-place-autocomplete input {
-        width: 100%;
-        padding: 0.65rem 0.85rem;
-        border: 1px solid #d1d5db;
+      /* Google Places Autocomplete dropdown styling */
+      .pac-container {
         border-radius: 8px;
-        font-size: 0.95rem;
+        border: 1px solid #d1d5db;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         font-family: inherit;
-        background: var(--surface, #fff);
-        color: var(--text-primary, #1f2937);
-        transition: border-color 0.2s;
-      }
-      gmp-place-autocomplete input:focus {
-        outline: none;
-        border-color: var(--brand-500, #1a6fa3);
-        box-shadow: 0 0 0 3px rgba(26, 111, 163, 0.15);
+        margin-top: 2px;
       }
 
       /* Email domain autocomplete */
@@ -719,28 +703,18 @@
             }
 
             const input = document.getElementById('address');
-            const wrap = document.getElementById('address-field-wrap');
-            if (!input || !wrap) return;
+            if (!input) return;
 
-            // Create the new PlaceAutocompleteElement
-            const placeAuto = new google.maps.places.PlaceAutocompleteElement({
-                componentRestrictions: { country: ['no'] },
+            const autocomplete = new google.maps.places.Autocomplete(input, {
+                componentRestrictions: { country: 'no' },
                 types: ['address'],
+                fields: ['formatted_address'],
             });
 
-            // Style the element to match our form inputs
-            placeAuto.style.cssText = 'width:100%;';
-
-            // Hide original input, insert autocomplete element after it
-            input.style.display = 'none';
-            input.insertAdjacentElement('afterend', placeAuto);
-
-            // When user selects a place, populate the hidden input
-            placeAuto.addEventListener('gmp-placeselect', async (e) => {
-                const place = e.place;
-                await place.fetchFields({ fields: ['formattedAddress'] });
-                if (place.formattedAddress) {
-                    input.value = place.formattedAddress;
+            autocomplete.addListener('place_changed', () => {
+                const place = autocomplete.getPlace();
+                if (place.formatted_address) {
+                    input.value = place.formatted_address;
                 }
             });
         }
