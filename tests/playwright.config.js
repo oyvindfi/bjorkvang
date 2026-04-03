@@ -5,7 +5,10 @@ module.exports = defineConfig({
   testDir: './e2e',
   timeout: 30_000,
   retries: process.env.CI ? 2 : 1,
-  reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
+  reporter: [
+    ['list'],
+    ['html', { open: 'never', outputFolder: path.resolve(__dirname, '..', 'test') }],
+  ],
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
