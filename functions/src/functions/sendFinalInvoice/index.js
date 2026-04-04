@@ -73,7 +73,8 @@ app.http('sendFinalInvoice', {
         const depositNOK = booking.depositAmount || 0;
         const totalNOK = booking.totalAmount || depositNOK * 2;
         const extrasTotal = extraItems.reduce((sum, item) => sum + item.amountNOK, 0);
-        const remainingNOK = (totalNOK - depositNOK) + extrasTotal;
+        const grandTotalNOK = totalNOK + extrasTotal;
+        const remainingNOK = grandTotalNOK - depositNOK;
         const paymentMethod = booking.paymentMethod || 'bank';
         const bankAccount = process.env.BANK_ACCOUNT || '1822.40.12345';
         const websiteUrl = process.env.WEBSITE_URL || 'https://bjørkvang.no';
@@ -134,6 +135,10 @@ app.http('sendFinalInvoice', {
                     <td style="padding:8px 0;text-align:right;">Beløp</td>
                 </tr>
                 ${itemRowsHtml}
+                <tr style="border-top:2px solid #e5e7eb;">
+                    <td style="padding:10px 0;font-weight:600;">Totalt for leieforholdet</td>
+                    <td style="padding:10px 0;text-align:right;font-weight:600;">kr ${grandTotalNOK.toLocaleString('nb-NO')}</td>
+                </tr>
                 <tr>
                     <td style="padding:14px 0 0;font-weight:bold;font-size:18px;">Gjenstående å betale</td>
                     <td style="padding:14px 0 0;text-align:right;font-weight:bold;font-size:18px;">kr ${remainingNOK.toLocaleString('nb-NO')}</td>
@@ -177,6 +182,7 @@ app.http('sendFinalInvoice', {
             `Arrangement: ${booking.eventType || ''}  |  Dato: ${booking.date || ''}`,
             '',
             itemRowsText,
+            `Totalt for leieforholdet: kr ${grandTotalNOK.toLocaleString('nb-NO')}`,
             `Gjenstående å betale: kr ${remainingNOK.toLocaleString('nb-NO')}`,
             '',
             `Betalingsfrist: ${dueDateStr}`,
@@ -209,7 +215,7 @@ app.http('sendFinalInvoice', {
                 ${paymentInfoHtml}
                 ${infoNote}
                 <p>Med vennlig hilsen,<br>Styret ved Bjørkvang</p>`,
-            ...(vippsUrl ? { action: { text: '💳 Betal restbeløp med Vipps', url: vippsUrl } } : {})
+            ...(vippsUrl ? { action: { text: 'Betal kr ' + remainingNOK.toLocaleString('nb-NO') + ' med Vipps', url: vippsUrl, color: '#ff5b24', rounded: true } } : {})
         });
 
         try {

@@ -196,6 +196,7 @@
         line-height: 1.5;
       }
     </style>
+    <script async type="text/javascript" src="https://checkout.vipps.no/on-site-messaging/v1/vipps-osm.js"></script>
 </head>
 <body>
     <a class="skip-link" href="#main-content">Hopp til hovedinnhold</a>
@@ -334,7 +335,7 @@
                             </div>
                             <div class="form-field">
                                 <label for="phone">Telefon *</label>
-                                <input type="tel" id="phone" name="phone" autocomplete="tel" placeholder="+47 000 00 000" required>
+                                <input type="tel" id="phone" name="phone" autocomplete="tel" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" placeholder="99999888" required>
                             </div>
                             <div class="form-field" id="address-field-wrap">
                                 <label for="address">Adresse</label>
@@ -488,8 +489,9 @@
                                     <input type="radio" name="paymentMethod" value="bank">
                                     <span><strong>Bankinnbetaling</strong> – du mottar kontonummer og betalingsinformasjon for depositum (50 %) etter godkjenning</span>
                                 </label>
-                            </div>
-                        </div>
+                            </div>                            <div style="margin-top: 12px; text-align: center;">
+                                <vipps-mobilepay-badge brand="vipps" language="no" variant="purple"></vipps-mobilepay-badge>
+                            </div>                        </div>
                     </fieldset>
 
                     <div class="form-actions">

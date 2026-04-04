@@ -920,7 +920,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const name = (formValues.name || '').trim();
       const email = (formValues.email || '').trim();
-      const phone = (formValues.phone || '').trim();
+      const phone = (formValues.phone || '').trim().replace(/[\s\-]/g, '').replace(/^(?:\+?47|0047)/, '');
       const address = (formValues.address || '').trim();
       const dateValue = formValues.date || '';
       const timeValue = formValues.time || '';

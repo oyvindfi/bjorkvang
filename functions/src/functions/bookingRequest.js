@@ -182,7 +182,7 @@ app.http('bookingRequest', {
                 endTime: endTime ? String(endTime).trim() : null,
                 requesterName: trimmedName,
                 requesterEmail: trimmedEmail,
-                phone: phone ? String(phone).trim() : null,
+                phone: phone ? String(phone).trim().replace(/[\s\-]/g, '').replace(/^(?:\+?47|0047)/, '') : null,
                 address: address ? String(address).trim() : null,
                 message: trimmedMessage,
                 eventType: trimmedEventType,
