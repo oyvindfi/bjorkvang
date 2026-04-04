@@ -17,12 +17,13 @@ const generateEmailHtml = ({ title, content, action, previewText }) => {
     const textColor = '#1f2937';
     const mutedColor = '#6b7280';
 
+    const buttonColor = (action && action.color) || primaryColor;
     const buttonHtml = action 
         ? `
         <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin-top: 24px; margin-bottom: 24px;">
             <tr>
-                <td align="center" bgcolor="${primaryColor}" style="border-radius: 8px;">
-                    <a href="${action.url}" target="_blank" style="font-family: sans-serif; font-size: 16px; font-weight: bold; color: #ffffff; text-decoration: none; display: inline-block; padding: 14px 28px; border: 1px solid ${primaryColor}; border-radius: 8px;">
+                <td align="center" bgcolor="${buttonColor}" style="border-radius: 8px;">
+                    <a href="${action.url}" target="_blank" style="font-family: sans-serif; font-size: 16px; font-weight: bold; color: #ffffff; text-decoration: none; display: inline-block; padding: 14px 28px; border: 1px solid ${buttonColor}; border-radius: 8px;">
                         ${action.text}
                     </a>
                 </td>

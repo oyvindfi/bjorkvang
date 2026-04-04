@@ -183,20 +183,21 @@
             .btn-sign { display: none; }
             .terms-box { max-height: none; overflow: visible; border: none; padding: 0; }
 
-            /* Hide interactive signing UI (buttons, canvas, tabs, checkboxes, pad containers) */
-            #signature-pad-container,
+            /* Hide interactive signing UI (only when NOT yet signed) */
+            #signature-area:not(.signed) #signature-pad-container,
+            #signature-area:not(.signed) .signature-tabs,
+            #signature-area:not(.signed) > h3,
+            #signature-area:not(.signed) > p,
             #landlord-signature-pad-container,
             #landlord-auth-container,
-            #payment-confirm,
-            .signature-tabs,
             .btn-sign,
-            button,
-            #signature-area > p:not(.print-keep),
-            #signature-area > div:not(.signed-stamp):not(.print-keep) { display: none !important; }
+            button { display: none !important; }
 
-            /* When signed: show the signed-state content */
-            #signature-area.signed,
-            #landlord-signature-area.signed {
+            /* Hide the checkbox row */
+            #payment-confirm { display: none !important; }
+
+            /* --- Signed state: show signatures --- */
+            #signature-area.signed {
                 display: block !important;
                 background: none !important;
                 border: none !important;
@@ -206,32 +207,33 @@
                 page-break-inside: avoid;
             }
 
-            #signature-area.signed .signed-stamp,
-            #landlord-signature-area.signed .signed-stamp {
+            #signature-area.signed * {
+                display: revert !important;
+            }
+
+            #signature-area.signed button {
+                display: none !important;
+            }
+
+            #landlord-signature-area.signed {
                 display: block !important;
-                color: #166534;
-                font-weight: bold;
-                font-size: 1rem;
-                margin-bottom: 8px;
+                background: none !important;
+                border: none !important;
+                text-align: left !important;
+                padding: 0 !important;
+                margin-top: 20px;
+                page-break-inside: avoid;
             }
 
-            #signature-area.signed div,
-            #landlord-signature-area.signed div {
-                display: block !important;
+            #landlord-signature-area.signed * {
+                display: revert !important;
             }
 
-            #signature-area.signed img,
-            #landlord-signature-area.signed img {
-                max-height: 80px !important;
-                display: inline-block !important;
+            #landlord-signature-area.signed button {
+                display: none !important;
             }
 
-            #signature-area.signed p,
-            #landlord-signature-area.signed p {
-                display: block !important;
-            }
-
-            /* When NOT signed: show blank signature lines */
+            /* --- Unsigned fallback: blank signature lines --- */
             #signature-area:not(.signed) {
                 background: none !important;
                 border: none !important;
@@ -246,7 +248,7 @@
                 margin-top: 20px;
             }
 
-            /* Hide landlord area when not signed and not waiting */
+            /* Hide landlord area when not signed */
             #landlord-signature-area:not(.signed) { display: none !important; }
 
             .print-signature-block {

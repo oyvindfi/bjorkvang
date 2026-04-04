@@ -161,7 +161,7 @@ app.http('sendDepositRequest', {
                     <p>Har du spørsmål, ta kontakt med oss på
                     <a href="mailto:styret@bjørkvang.no">styret@bjørkvang.no</a>.</p>
                     <p>Med vennlig hilsen,<br>Styret ved Bjørkvang</p>`,
-                action: { text: '💳 Betal depositum med Vipps', url: vippsUrl }
+                action: { text: '<img src="https://vipps.no/wp-content/uploads/2024/05/vipps-rgb-white-small.png" alt="Vipps" style="height:20px;vertical-align:middle;margin-right:8px;">Betal kr ' + depositNOK.toLocaleString('nb-NO') + ' med Vipps', url: vippsUrl, color: '#ff5b24' }
             });
         } else {
             // Bank transfer

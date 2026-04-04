@@ -163,7 +163,9 @@ app.http('signBooking', {
                             <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px 20px;margin:16px 0;">
                                 <p style="margin:0 0 8px;font-weight:700;color:#166534;">Betal ${depositStr} med Vipps</p>
                                 <p style="margin:0 0 10px;color:#4b5563;font-size:0.9rem;">Restbeløp (${remainingStr}) faktureres etter arrangementet.</p>
-                                <a href="${vippsResp.redirectUrl}" style="display:inline-block;padding:12px 24px;background:#ff5b24;color:#fff;font-weight:700;border-radius:6px;text-decoration:none;font-size:1rem;">Betal ${depositStr} med Vipps</a>
+                                <a href="${vippsResp.redirectUrl}" style="display:inline-block;padding:12px 24px;background:#ff5b24;color:#fff;font-weight:700;border-radius:6px;text-decoration:none;font-size:1rem;">
+                                    <img src="https://vipps.no/wp-content/uploads/2024/05/vipps-rgb-white-small.png" alt="Vipps" style="height:20px;vertical-align:middle;margin-right:8px;">Betal ${depositStr} med Vipps
+                                </a>
                             </div>`;
                         depositPaymentText = `\n\nNeste steg – Betal depositum (${depositStr}) med Vipps:\n${vippsResp.redirectUrl}`;
 
@@ -175,10 +177,16 @@ app.http('signBooking', {
                         depositPaymentSection = `
                             <h3 style="margin:24px 0 8px;font-size:1rem;">Neste steg: Betal depositum</h3>
                             <p>Vi kunne ikke opprette Vipps-betaling automatisk. Klikk lenken under for å betale depositum.</p>
-                            <div style="text-align:center;margin:20px 0;">
-                                <a href="${paymentLink}" style="display:inline-block;padding:14px 36px;background:#ff5b24;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;font-size:1.05rem;">Betal depositum</a>
+                            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px 20px;margin:16px 0;">
+                                <p style="margin:0 0 8px;font-weight:700;color:#166534;">Depositum: ${depositStr}</p>
+                                <p style="margin:0 0 10px;color:#4b5563;font-size:0.9rem;">Restbeløp (${remainingStr}) faktureres etter arrangementet.</p>
+                                <div style="text-align:center;margin:10px 0;">
+                                    <a href="${paymentLink}" style="display:inline-block;padding:14px 36px;background:#ff5b24;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;font-size:1.05rem;">
+                                        <img src="https://vipps.no/wp-content/uploads/2024/05/vipps-rgb-white-small.png" alt="Vipps" style="height:20px;vertical-align:middle;margin-right:8px;">Betal ${depositStr} med Vipps
+                                    </a>
+                                </div>
                             </div>`;
-                        depositPaymentText = `\n\nBetal depositum: ${paymentLink}`;
+                        depositPaymentText = `\n\nBetal depositum (${depositStr}): ${paymentLink}`;
                     }
                 } else if (paymentMethod === 'bank' && depositNOK > 0) {
                     // Bank transfer
