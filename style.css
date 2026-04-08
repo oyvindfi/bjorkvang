@@ -1866,6 +1866,7 @@ label {
     background: rgba(255, 255, 255, 0.7);
     overflow: hidden;
     max-width: 100%;
+    min-inline-size: 0;
 }
 
 .form-fieldset legend {
@@ -2487,7 +2488,8 @@ button[type="submit"] {
     }
 
     form {
-        padding: 1.25rem;
+        padding: 1rem 0.75rem;
+        overflow: hidden;
     }
 
     .form-actions {
@@ -2501,17 +2503,21 @@ button[type="submit"] {
     }
 
     .option-grid {
-        flex-wrap: wrap;
-        gap: 0.4rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
     }
 
     .option-pill {
         background: transparent;
-        padding: 0.3rem 0.1rem;
+        padding: 0.5rem 0;
         border-radius: 0;
-        width: auto;
-        word-break: break-word;
         font-size: 0.88rem;
+        border-bottom: 1px solid rgba(14, 82, 133, 0.08);
+    }
+
+    .option-pill:last-child {
+        border-bottom: none;
     }
 
     .option-pill:hover,
@@ -2522,13 +2528,14 @@ button[type="submit"] {
 
     .option-pill span {
         white-space: normal;
-        line-height: 1.4;
+        line-height: 1.35;
         font-size: 0.88rem;
     }
 
     .form-fieldset {
         padding: 1rem 0.75rem;
         margin-inline: 0;
+        min-inline-size: 0;
     }
 
     .member-nudge {
