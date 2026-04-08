@@ -1826,7 +1826,6 @@ form {
     margin-bottom: 3rem;
     max-width: 100%;
     box-sizing: border-box;
-    overflow-x: hidden;
 }
 
 label {
@@ -2492,6 +2491,10 @@ button[type="submit"] {
         padding: 1rem 0.75rem;
     }
 
+    form > * {
+        min-width: 0;
+    }
+
     .form-actions {
         flex-direction: column;
         align-items: stretch;
@@ -2508,6 +2511,12 @@ button[type="submit"] {
     .form-fieldset {
         padding: 1rem 0.75rem;
         min-inline-size: 0;
+        min-width: 0;
+    }
+
+    .form-fieldset > * {
+        min-width: 0;
+        max-width: 100%;
     }
 
     .option-pill {
