@@ -56,8 +56,6 @@ body {
         radial-gradient(circle at bottom right, rgba(20, 100, 160, 0.05), transparent 55%),
         #faf8f5;
     -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
-    max-width: 100vw;
 }
 
 main {
@@ -1274,7 +1272,6 @@ button {
     box-shadow: var(--shadow-card);
     overflow: hidden;
     display: grid;
-    grid-template-rows: auto 1fr;
     transition: transform var(--transition), box-shadow var(--transition);
 }
 
@@ -1319,24 +1316,30 @@ button {
     position: relative;
 }
 
+.space-card img {
+    border-radius: 0;
+    box-shadow: none;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    aspect-ratio: 4 / 3;
+}
+
 .space-card__body {
-    padding: 0.85rem 1.1rem 1rem;
+    padding: 1.25rem 1.5rem 1.5rem;
     display: grid;
-    gap: 0.3rem;
-    align-content: start;
+    gap: 0.5rem;
 }
 
 .space-card h3 {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     color: var(--brand-600);
 }
 
 .space-card p {
     margin: 0;
     color: var(--text-secondary);
-    font-size: 0.88rem;
-    line-height: 1.45;
 }
 
 .space-card .card-link {
@@ -1734,8 +1737,6 @@ button {
     background: var(--surface);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-card);
-    overflow: hidden;
-    max-width: 100%;
 }
 
 #calendar .fc-daygrid-day {
@@ -1823,8 +1824,6 @@ form {
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-card);
     margin-bottom: 3rem;
-    max-width: 100%;
-    overflow: hidden;
 }
 
 label {
@@ -1835,7 +1834,7 @@ label {
 .form-grid {
     display: grid;
     gap: 1.25rem;
-    grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .form-field {
@@ -1860,13 +1859,10 @@ label {
 .form-fieldset {
     border: 1px solid rgba(14, 82, 133, 0.14);
     border-radius: var(--radius-md);
-    padding: 1.25rem clamp(0.75rem, 2vw, 1.5rem);
+    padding: 1.25rem clamp(1rem, 2vw, 1.5rem);
     display: grid;
     gap: 1rem;
     background: rgba(255, 255, 255, 0.7);
-    overflow: hidden;
-    max-width: 100%;
-    min-inline-size: 0;
 }
 
 .form-fieldset legend {
@@ -1897,7 +1893,6 @@ label {
     font-weight: 600;
     cursor: pointer;
     transition: background var(--transition), box-shadow var(--transition);
-    max-width: 100%;
 }
 
 .option-pill input {
@@ -1989,8 +1984,6 @@ select {
     background: rgba(255, 255, 255, 0.95);
     color: var(--text-primary);
     transition: border-color var(--transition), box-shadow var(--transition);
-    width: 100%;
-    max-width: 100%;
 }
 
 input:focus-visible,
@@ -2488,63 +2481,12 @@ button[type="submit"] {
     }
 
     form {
-        padding: 1rem 0.75rem;
-        overflow: hidden;
+        padding: 1.25rem;
     }
 
     .form-actions {
         flex-direction: column;
         align-items: stretch;
-    }
-
-    .form-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-
-    .option-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 0;
-    }
-
-    .option-pill {
-        background: transparent;
-        padding: 0.5rem 0;
-        border-radius: 0;
-        font-size: 0.88rem;
-        border-bottom: 1px solid rgba(14, 82, 133, 0.08);
-    }
-
-    .option-pill:last-child {
-        border-bottom: none;
-    }
-
-    .option-pill:hover,
-    .option-pill:focus-within {
-        background: transparent;
-        box-shadow: none;
-    }
-
-    .option-pill span {
-        white-space: normal;
-        line-height: 1.35;
-        font-size: 0.88rem;
-    }
-
-    .form-fieldset {
-        padding: 1rem 0.75rem;
-        margin-inline: 0;
-        min-inline-size: 0;
-    }
-
-    .member-nudge {
-        flex-direction: column;
-        gap: 0.35rem;
-    }
-
-    .payment-info {
-        overflow: hidden;
     }
 
     .reservation-item {
@@ -2644,7 +2586,6 @@ button[type="submit"] {
 
     .form-grid {
         grid-template-columns: 1fr;
-        gap: 1rem;
     }
 
     .info-card,
@@ -2660,23 +2601,6 @@ button[type="submit"] {
     .callout,
     .membership-card {
         padding: 1.25rem 1.35rem;
-    }
-
-    #calendar {
-        padding: 0.35rem;
-    }
-
-    #calendar .fc-toolbar-title {
-        font-size: 1.1rem;
-    }
-
-    #calendar .fc-button-primary {
-        padding: 0.35rem 0.6rem;
-        font-size: 0.85rem;
-    }
-
-    form {
-        padding: 1rem 0.85rem;
     }
 
     .footer-grid {
@@ -3042,16 +2966,6 @@ textarea:focus {
     select,
     textarea {
         font-size: 16px;
-    }
-
-    /* Ensure select dropdowns are full width on mobile */
-    select {
-        -webkit-appearance: none;
-        appearance: none;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23555' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 0.75rem center;
-        padding-right: 2.5rem;
     }
 }
 
