@@ -2493,6 +2493,24 @@ button[type="submit"] {
         padding: 1rem 1.1rem;
     }
 
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-fieldset {
+        padding: 1rem 0.75rem;
+        min-inline-size: 0;
+    }
+
+    .option-pill {
+        max-width: 100%;
+    }
+
+    .option-pill span {
+        white-space: normal;
+        line-height: 1.35;
+    }
+
     .footer-grid {
         text-align: center;
     }
