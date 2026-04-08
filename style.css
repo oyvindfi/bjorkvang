@@ -1824,6 +1824,9 @@ form {
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-card);
     margin-bottom: 3rem;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 label {
@@ -1863,6 +1866,11 @@ label {
     display: grid;
     gap: 1rem;
     background: rgba(255, 255, 255, 0.7);
+    min-inline-size: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .form-fieldset legend {
@@ -2481,7 +2489,7 @@ button[type="submit"] {
     }
 
     form {
-        padding: 1.25rem;
+        padding: 1rem 0.75rem;
     }
 
     .form-actions {
@@ -2509,6 +2517,51 @@ button[type="submit"] {
     .option-pill span {
         white-space: normal;
         line-height: 1.35;
+    }
+
+    /* ---- Payment section mobile fixes ---- */
+    .payment-info {
+        overflow-wrap: break-word;
+        word-break: break-word;
+    }
+
+    .payment-info > * {
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .payment-info .option-grid {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .payment-info .option-pill {
+        border-radius: var(--radius-sm, 10px);
+        max-width: 100%;
+    }
+
+    .payment-info .option-pill span {
+        white-space: normal;
+        line-height: 1.35;
+        overflow-wrap: break-word;
+        word-break: break-word;
+    }
+
+    .payment-info .price-display {
+        font-size: 1.05rem;
+        padding: 0.75rem 0.5rem;
+        white-space: normal;
+        overflow-wrap: break-word;
+    }
+
+    .payment-info p {
+        overflow-wrap: break-word;
+        word-break: break-word;
+    }
+
+    vipps-mobilepay-badge {
+        max-width: 100%;
+        overflow: hidden;
     }
 
     .footer-grid {
@@ -2691,6 +2744,7 @@ button[type="submit"] {
 .payment-info {
     display: grid;
     gap: 1rem;
+    max-width: 100%;
 }
 
 .price-display {
@@ -2698,6 +2752,7 @@ button[type="submit"] {
     color: var(--brand-600);
     margin: 0;
     padding: 1rem;
+    box-sizing: border-box;
     background: var(--brand-50);
     border-radius: var(--radius-sm);
     text-align: center;
