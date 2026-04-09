@@ -966,6 +966,14 @@ button {
     scroll-margin-top: 5rem;
 }
 
+#booking-form {
+    display: grid;
+    gap: 1.5rem;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
 .booking-form-section {
     background: linear-gradient(180deg, rgba(14, 82, 133, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
 }
@@ -1842,6 +1850,7 @@ label {
 .form-field {
     display: grid;
     gap: 0.5rem;
+    min-width: 0;
 }
 
 .form-help {
@@ -1985,12 +1994,19 @@ button[type="submit"] {
 input,
 textarea,
 select {
+    width: 100%;
+    box-sizing: border-box;
     padding: 0.75rem 0.95rem;
     border-radius: var(--radius-sm);
     border: 1px solid rgba(31, 45, 42, 0.12);
     background: rgba(255, 255, 255, 0.95);
     color: var(--text-primary);
     transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+    width: auto;
 }
 
 input:focus-visible,
