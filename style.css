@@ -2561,8 +2561,10 @@ button[type="submit"] {
     }
 
     .payment-info .option-pill {
+        width: 100%;
+        display: flex;
         border-radius: var(--radius-sm, 10px);
-        max-width: 100%;
+        text-align: left;
     }
 
     .payment-info .option-pill span {
@@ -2577,6 +2579,7 @@ button[type="submit"] {
         padding: 0.75rem 0.5rem;
         white-space: normal;
         overflow-wrap: break-word;
+        text-align: center;
     }
 
     .payment-info p {
@@ -2766,6 +2769,18 @@ button[type="submit"] {
 }
 
 /* Booking payment section */
+.payment-notice {
+    font-size: 0.85rem;
+    color: #555;
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin: 8px 0 12px;
+    word-break: break-word;
+    text-align: left;
+}
+
 .payment-info {
     display: grid;
     gap: 1rem;
