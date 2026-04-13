@@ -274,6 +274,18 @@
         <p class="footer-meta">&copy; 2025 Bjørkvang forsamlingslokale og Helgøens Vel.</p>
     </footer>
 
+    <!-- Lightbox overlay -->
+    <div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Bildevisning" hidden>
+        <button class="lightbox__close" id="lightbox-close" aria-label="Lukk bildevisning">✕</button>
+        <button class="lightbox__prev" id="lightbox-prev" aria-label="Forrige bilde">‹</button>
+        <div class="lightbox__content">
+            <img id="lightbox-img" src="" alt="">
+            <p class="lightbox__caption" id="lightbox-caption"></p>
+            <p class="lightbox__counter" id="lightbox-counter"></p>
+        </div>
+        <button class="lightbox__next" id="lightbox-next" aria-label="Neste bilde">›</button>
+    </div>
+
     <script src="app.js"></script>
     <script>
         function changeImage(direction, gallery) {
@@ -311,6 +323,68 @@
             images[index].classList.add('active');
             dots[index].classList.add('active');
         }
+
+        // ---- Lightbox ----
+        (function () {
+            const lb = document.getElementById('lightbox');
+            const lbImg = document.getElementById('lightbox-img');
+            const lbCaption = document.getElementById('lightbox-caption');
+            const lbCounter = document.getElementById('lightbox-counter');
+
+            let lbImages = [];
+            let lbIndex = 0;
+
+            function updateLightbox() {
+                const img = lbImages[lbIndex];
+                lbImg.src = img.src;
+                lbImg.alt = img.alt;
+                lbCaption.textContent = img.alt || '';
+                lbCounter.textContent = lbImages.length > 1 ? (lbIndex + 1) + ' / ' + lbImages.length : '';
+                document.getElementById('lightbox-prev').hidden = lbImages.length <= 1;
+                document.getElementById('lightbox-next').hidden = lbImages.length <= 1;
+            }
+
+            window.openLightbox = function (imgEl) {
+                const gallery = imgEl.closest('.image-gallery');
+                lbImages = Array.from(gallery ? gallery.querySelectorAll('.gallery-image') : [imgEl]);
+                lbIndex = lbImages.indexOf(imgEl);
+                if (lbIndex === -1) lbIndex = 0;
+                updateLightbox();
+                lb.hidden = false;
+                document.body.style.overflow = 'hidden';
+                document.getElementById('lightbox-close').focus();
+            };
+
+            function closeLightbox() {
+                lb.hidden = true;
+                document.body.style.overflow = '';
+            }
+
+            function lightboxNav(dir) {
+                lbIndex = (lbIndex + dir + lbImages.length) % lbImages.length;
+                updateLightbox();
+            }
+
+            document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
+            document.getElementById('lightbox-prev').addEventListener('click', function () { lightboxNav(-1); });
+            document.getElementById('lightbox-next').addEventListener('click', function () { lightboxNav(1); });
+
+            lb.addEventListener('click', function (e) {
+                if (e.target === lb) closeLightbox();
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (lb.hidden) return;
+                if (e.key === 'Escape') closeLightbox();
+                if (e.key === 'ArrowLeft')  lightboxNav(-1);
+                if (e.key === 'ArrowRight') lightboxNav(1);
+            });
+
+            // Wire up all gallery images
+            document.querySelectorAll('.gallery-image').forEach(function (img) {
+                img.addEventListener('click', function () { window.openLightbox(img); });
+            });
+        })();
     </script>
 </body>
 </html>
