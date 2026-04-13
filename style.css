@@ -1935,6 +1935,91 @@ label {
     color: white;
 }
 
+/* Wedding package weekend summary card */
+.wedding-weekend-card {
+    background: linear-gradient(135deg, #fdf8f0 0%, #fff9f3 100%);
+    border: 1.5px solid rgba(217, 119, 6, 0.28);
+    border-radius: var(--radius-md);
+    padding: 1.1rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.wedding-weekend-card__body {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.875rem;
+}
+
+.wedding-weekend-card__icon {
+    font-size: 1.75rem;
+    line-height: 1;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+}
+
+.wedding-weekend-card__info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.wedding-weekend-card__label {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent-500);
+}
+
+.wedding-weekend-card__dates {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.45;
+}
+
+.wedding-weekend-card__change-btn {
+    margin: 0.35rem 0 0;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--brand-500);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color var(--transition);
+}
+
+.wedding-weekend-card__change-btn:hover {
+    color: var(--brand-600);
+}
+
+.wedding-date-picker-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(217, 119, 6, 0.18);
+}
+
+.wedding-date-picker-wrap label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.wedding-date-picker-wrap input[type="date"] {
+    width: auto;
+    max-width: 220px;
+}
+
 /* Member cross-sell nudge in booking form */
 .member-nudge {
     display: flex;

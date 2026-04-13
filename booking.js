@@ -30,6 +30,12 @@ document.addEventListener('DOMContentLoaded', function () {
   const durationFieldEl = document.getElementById('duration-field');
   const endDateFieldEl = document.getElementById('end-date-field');
   const endTimeFieldEl = document.getElementById('end-time-field');
+  const normalDatetimeFieldsEl = document.getElementById('normal-datetime-fields');
+  const weddingCardEl = document.getElementById('wedding-weekend-card');
+  const weddingWeekendTextEl = document.getElementById('wedding-weekend-text');
+  const weddingChangeBtnEl = document.getElementById('wedding-change-btn');
+  const weddingDatePickerWrapEl = document.getElementById('wedding-date-picker-wrap');
+  const weddingDatePickerEl = document.getElementById('wedding-date-picker');
   const eventTypeSelect = document.getElementById('event-type');
   const calculatedPriceEl = document.getElementById('calculated-price');
   const attendeesInput = document.getElementById('attendees');
@@ -737,7 +743,10 @@ document.addEventListener('DOMContentLoaded', function () {
           return;
         }
 
-        if (datepicker) {
+        const isWeddingActive = !!form?.querySelector('input[name="spaces"][value="Bryllupspakke"]:checked');
+        if (isWeddingActive) {
+          applyWeddingDates(new Date(info.dateStr + 'T00:00:00'));
+        } else if (datepicker) {
           datepicker.setDate(info.dateStr, true);
         } else if (dateInput) {
           dateInput.value = info.dateStr;
@@ -756,23 +765,20 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       },
       select: function (selectionInfo) {
-        const selectedDate = selectionInfo.startStr.slice(0, 10);
-        if (datepicker) {
-          datepicker.setDate(selectedDate, true);
-        } else if (dateInput) {
-          dateInput.value = selectedDate;
-        }
-        if (timeInput && !selectionInfo.allDay) {
-          timeInput.value = selectionInfo.startStr.slice(11, 16);
-        }
-        if (selectionInfo.end) {
-          const isWeddingSelected = !!form?.querySelector('input[name="spaces"][value="Bryllupspakke"]:checked');
-          if (isWeddingSelected && endDateInputEl) {
-            endDateInputEl.value = selectionInfo.endStr.slice(0, 10);
-            if (endTimeInputEl && !selectionInfo.allDay) {
-              endTimeInputEl.value = selectionInfo.endStr.slice(11, 16);
-            }
-          } else if (durationInputEl) {
+        const isWeddingSelected = !!form?.querySelector('input[name="spaces"][value="Bryllupspakke"]:checked');
+        if (isWeddingSelected) {
+          applyWeddingDates(selectionInfo.start);
+        } else {
+          const selectedDate = selectionInfo.startStr.slice(0, 10);
+          if (datepicker) {
+            datepicker.setDate(selectedDate, true);
+          } else if (dateInput) {
+            dateInput.value = selectedDate;
+          }
+          if (timeInput && !selectionInfo.allDay) {
+            timeInput.value = selectionInfo.startStr.slice(11, 16);
+          }
+          if (selectionInfo.end && durationInputEl) {
             const diff = (selectionInfo.end.getTime() - selectionInfo.start.getTime()) / (60 * 60 * 1000);
             if (!Number.isNaN(diff) && diff >= 1) {
               durationInputEl.value = String(Math.min(72, Math.round(diff)));
@@ -1111,62 +1117,117 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // --- Handle Bryllupspakke auto-fill ---
-  const getNextThursday = () => {
-    const date = new Date();
-    date.setHours(0, 0, 0, 0);
-    const day = date.getDay(); // 0=Sun, 1=Mon, ..., 4=Thu
-    const daysUntil = ((4 - day + 7) % 7) || 7; // always at least 1 day ahead
-    date.setDate(date.getDate() + daysUntil);
-    return date;
+  const toDateStr = (d) => d.toISOString().slice(0, 10);
+
+  // Given any reference date, return the Thursday of that weekend block:
+  // Thu/Fri/Sat → same week's Thursday; Sun/Mon/Tue/Wed → upcoming Thursday.
+  const getThursdayFrom = (referenceDate) => {
+    const d = new Date(referenceDate);
+    d.setHours(0, 0, 0, 0);
+    const day = d.getDay();
+    let offset;
+    if (day === 4)      offset = 0;
+    else if (day === 5) offset = -1;
+    else if (day === 6) offset = -2;
+    else                offset = (4 - day + 7) % 7;
+    d.setDate(d.getDate() + offset);
+    return d;
   };
 
-  const toDateStr = (d) => d.toISOString().slice(0, 10);
+  // Update the wedding card text with the current Thu–Sun dates.
+  const updateWeddingCard = () => {
+    if (!weddingWeekendTextEl || !dateInput?.value || !endDateInputEl?.value) return;
+    const thuDate = new Date(dateInput.value + 'T00:00:00');
+    const sunDate = new Date(endDateInputEl.value + 'T00:00:00');
+    const fmt = (d) => d.toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'long' });
+    weddingWeekendTextEl.textContent =
+      `${fmt(thuDate)} kl. 16:00 – ${fmt(sunDate)} kl. 11:00`;
+  };
+
+  // Fill all start/end fields and refresh the card.
+  const applyWeddingDates = (referenceDate) => {
+    const thursday = getThursdayFrom(referenceDate);
+    const sunday = new Date(thursday);
+    sunday.setDate(thursday.getDate() + 3);
+
+    if (datepicker) {
+      datepicker.setDate(toDateStr(thursday), true);
+    } else if (dateInput) {
+      dateInput.value = toDateStr(thursday);
+    }
+    if (timeInput) timeInput.value = '16:00';
+    if (endDateInputEl) endDateInputEl.value = toDateStr(sunday);
+    if (endTimeInputEl) endTimeInputEl.value = '11:00';
+
+    updateWeddingCard();
+    // Collapse the inline picker after a selection
+    if (weddingDatePickerWrapEl) weddingDatePickerWrapEl.hidden = true;
+  };
+
+  const showWeddingCard = () => {
+    if (normalDatetimeFieldsEl) normalDatetimeFieldsEl.hidden = true;
+    if (weddingCardEl) weddingCardEl.hidden = false;
+    // Underlying inputs still submit their values; exempt from HTML5 validation
+    if (dateInput) dateInput.required = false;
+    if (timeInput) timeInput.required = false;
+    if (durationInputEl) durationInputEl.required = false;
+    if (endDateInputEl) endDateInputEl.required = false;
+    if (endTimeInputEl) endTimeInputEl.required = false;
+  };
+
+  const hideWeddingCard = () => {
+    if (normalDatetimeFieldsEl) normalDatetimeFieldsEl.hidden = false;
+    if (weddingCardEl) weddingCardEl.hidden = true;
+    if (weddingDatePickerWrapEl) weddingDatePickerWrapEl.hidden = true;
+    // Restore required on the normal fields
+    if (dateInput) dateInput.required = true;
+    if (timeInput) timeInput.required = true;
+    if (durationFieldEl) durationFieldEl.hidden = false;
+    if (endDateFieldEl) endDateFieldEl.hidden = true;
+    if (endTimeFieldEl) endTimeFieldEl.hidden = true;
+    if (durationInputEl) durationInputEl.required = true;
+    if (endDateInputEl) endDateInputEl.required = false;
+    if (endTimeInputEl) endTimeInputEl.required = false;
+  };
 
   const weddingSpacesCheckboxes = document.querySelectorAll('input[name="spaces"]');
   weddingSpacesCheckboxes.forEach(checkbox => {
     checkbox.addEventListener('change', (e) => {
       if (e.target.value === 'Bryllupspakke') {
         if (e.target.checked) {
-        const thursday = getNextThursday();
-        const sunday = new Date(thursday);
-        sunday.setDate(thursday.getDate() + 3);
-
-        // Auto-fill start: next Thursday 18:00
-        if (datepicker) {
-          datepicker.setDate(toDateStr(thursday), true);
-        } else if (dateInput) {
-          dateInput.value = toDateStr(thursday);
-        }
-        if (timeInput) timeInput.value = '18:00';
-
-        // Auto-fill end: Sunday 16:00
-        if (endDateInputEl) endDateInputEl.value = toDateStr(sunday);
-        if (endTimeInputEl) endTimeInputEl.value = '16:00';
-
-        // Show end-date/time fields, hide duration
-        if (durationFieldEl) durationFieldEl.hidden = true;
-        if (endDateFieldEl) endDateFieldEl.hidden = false;
-        if (endTimeFieldEl) endTimeFieldEl.hidden = false;
-        if (durationInputEl) durationInputEl.required = false;
-        if (endDateInputEl) endDateInputEl.required = true;
-        if (endTimeInputEl) endTimeInputEl.required = true;
-
-        // Auto-select event type
-        if (eventTypeSelect) eventTypeSelect.value = 'Bryllup';
-
-        showStatus('Bryllupspakke valgt. Datoer satt til torsdag–søndag (kan justeres).', 'info');
+          const currentVal = dateInput?.value;
+          const reference = currentVal ? new Date(currentVal + 'T00:00:00') : new Date();
+          applyWeddingDates(reference);
+          showWeddingCard();
+          if (eventTypeSelect) eventTypeSelect.value = 'Bryllup';
+          showStatus('Bryllupspakke valgt – klikk «Endre helg» for å velge en annen uke.', 'info');
         } else {
-          // Restore duration field when unchecked
-          if (durationFieldEl) durationFieldEl.hidden = false;
-          if (endDateFieldEl) endDateFieldEl.hidden = true;
-          if (endTimeFieldEl) endTimeFieldEl.hidden = true;
-          if (durationInputEl) durationInputEl.required = true;
-          if (endDateInputEl) endDateInputEl.required = false;
-          if (endTimeInputEl) endTimeInputEl.required = false;
+          hideWeddingCard();
         }
       }
     });
   });
+
+  // Toggle the inline date picker
+  if (weddingChangeBtnEl) {
+    weddingChangeBtnEl.addEventListener('click', () => {
+      if (weddingDatePickerWrapEl) {
+        weddingDatePickerWrapEl.hidden = !weddingDatePickerWrapEl.hidden;
+        if (!weddingDatePickerWrapEl.hidden && weddingDatePickerEl) {
+          weddingDatePickerEl.focus();
+        }
+      }
+    });
+  }
+
+  // Picking any date snaps to the correct Thu–Sun block
+  if (weddingDatePickerEl) {
+    weddingDatePickerEl.addEventListener('change', () => {
+      if (weddingDatePickerEl.value) {
+        applyWeddingDates(new Date(weddingDatePickerEl.value + 'T00:00:00'));
+      }
+    });
+  }
   // ----------------------------------------
 
   // Resets the confirmation receipt and shows the form again

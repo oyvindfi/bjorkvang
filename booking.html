@@ -368,7 +368,25 @@
 
                     <fieldset class="form-fieldset">
                         <legend>Når og hva?</legend>
-                        <div class="form-grid">
+
+                        <!-- Wedding weekend summary card – shown when Bryllupspakke is selected -->
+                        <div id="wedding-weekend-card" class="wedding-weekend-card" hidden>
+                            <div class="wedding-weekend-card__body">
+                                <span class="wedding-weekend-card__icon" aria-hidden="true">🎊</span>
+                                <div class="wedding-weekend-card__info">
+                                    <p class="wedding-weekend-card__label">Bryllupshelg reservert</p>
+                                    <p id="wedding-weekend-text" class="wedding-weekend-card__dates">—</p>
+                                    <button type="button" id="wedding-change-btn" class="wedding-weekend-card__change-btn">Endre helg →</button>
+                                </div>
+                            </div>
+                            <div id="wedding-date-picker-wrap" class="wedding-date-picker-wrap" hidden>
+                                <label for="wedding-date-picker">Velg en dato i ønsket uke – helgen justeres automatisk til tor–søn</label>
+                                <input type="date" id="wedding-date-picker">
+                            </div>
+                        </div>
+
+                        <!-- Normal date/time fields – hidden when Bryllupspakke is active -->
+                        <div id="normal-datetime-fields" class="form-grid">
                             <div class="form-field">
                                 <label for="date">Dato *</label>
                                 <input type="date" id="date" name="date" required>

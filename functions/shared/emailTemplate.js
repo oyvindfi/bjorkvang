@@ -39,8 +39,11 @@ const generateEmailHtml = ({ title, content, action, previewText }) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
     <title>${title}</title>
     <style>
+        :root { color-scheme: light dark; }
         body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: ${backgroundColor}; color: ${textColor}; line-height: 1.6; }
         .container { max-width: 600px; margin: 0 auto; background-color: ${containerColor}; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.10); }
         .header { background-color: ${primaryColor}; padding: 0; text-align: center; }
@@ -60,6 +63,18 @@ const generateEmailHtml = ({ title, content, action, previewText }) => {
             .content { padding: 24px 16px; }
             .info-list li { flex-direction: column; align-items: flex-start; }
             .info-value { text-align: left; margin-top: 4px; }
+        }
+        @media (prefers-color-scheme: dark) {
+            body { background-color: #1a1a1a !important; }
+            .container { background-color: #242424 !important; box-shadow: 0 4px 16px rgba(0,0,0,0.40) !important; }
+            .content { color: #e8e8e8 !important; }
+            .content h2 { color: #f0f0f0 !important; }
+            .footer { background-color: #1e1e1e !important; border-top-color: #333 !important; color: #c0c0c0 !important; }
+            .footer a { color: #7bbfe8 !important; }
+            .footer p { color: #c0c0c0 !important; }
+            .info-list li { border-bottom-color: #333 !important; }
+            .info-label { color: #a0a0a0 !important; }
+            .info-value { color: #e8e8e8 !important; }
         }
     </style>
 </head>
@@ -82,8 +97,8 @@ const generateEmailHtml = ({ title, content, action, previewText }) => {
                 ${buttonHtml}
             </div>
             <div class="footer">
-                <p style="margin: 0 0 4px;">Dette er en automatisk melding fra Helgøens Vel.</p>
-                <p style="margin: 0 0 4px;">Org.nr: 995 519 240 &nbsp;|&nbsp; <a href="mailto:styret@bj%C3%B8rkvang.no">styret@bjørkvang.no</a> &nbsp;|&nbsp; <a href="https://xn--bjrkvang-64a.no">bjørkvang.no</a></p>
+                <p style="margin: 0 0 4px; color: #6b7280;">Dette er en automatisk melding fra Helgøens Vel.</p>
+                <p style="margin: 0 0 4px; color: #6b7280;">Org.nr: 995 519 240 &nbsp;|&nbsp; <a href="mailto:styret@bj%C3%B8rkvang.no" style="color: #1a6fa3;">styret@bjørkvang.no</a> &nbsp;|&nbsp; <a href="https://xn--bjrkvang-64a.no" style="color: #1a6fa3;">bjørkvang.no</a></p>
             </div>
         </div>
     </div>
