@@ -1117,7 +1117,12 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // --- Handle Bryllupspakke auto-fill ---
-  const toDateStr = (d) => d.toISOString().slice(0, 10);
+  const toDateStr = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
 
   // Given any reference date, return the Thursday of that weekend block:
   // Thu/Fri/Sat → same week's Thursday; Sun/Mon/Tue/Wed → upcoming Thursday.
