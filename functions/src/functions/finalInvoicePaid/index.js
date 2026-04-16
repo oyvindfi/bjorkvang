@@ -74,7 +74,7 @@ app.http('finalInvoicePaid', {
                             <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 0;color:#6b7280;">Kvitteringsdato</td><td style="padding:8px 0;text-align:right;">${paidAt}</td></tr>
                             <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 0;color:#6b7280;">Arrangement</td><td style="padding:8px 0;text-align:right;">${eventDate}</td></tr>
                             ${totalNOK ? `<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 0;color:#6b7280;">Total leiesum</td><td style="padding:8px 0;text-align:right;">kr\u00a0${totalNOK.toLocaleString('nb-NO')}</td></tr>` : ''}
-                            ${depositNOK ? `<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 0;color:#6b7280;">Depositum (betalt)</td><td style="padding:8px 0;text-align:right;">kr\u00a0${depositNOK.toLocaleString('nb-NO')}</td></tr>` : ''}
+                            ${depositNOK ? `<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 0;color:#6b7280;">Forhåndsbetaling (mottatt)</td><td style="padding:8px 0;text-align:right;">kr\u00a0${depositNOK.toLocaleString('nb-NO')}</td></tr>` : ''}
                             <tr><td style="padding:8px 0;color:#6b7280;">Sluttoppgjør</td><td style="padding:8px 0;text-align:right;font-weight:700;color:#166534;">${invoiceStr}</td></tr>
                         </table>
                         <p style="color:#4b5563;">Vi håper arrangementet var vellykket, og ønsker deg velkommen tilbake!</p>

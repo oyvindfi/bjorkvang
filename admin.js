@@ -187,6 +187,8 @@ async function loadDashboard() {
         }
 
         renderDashboard(bookings);
+        _allBookings = bookings;
+        renderVaskDashboard(bookings);
     } catch (error) {
         const msg = error.name === 'AbortError'
             ? 'Forespørselen tok for lang tid (>20s) — sannsynligvis timeout mot Cosmos DB. Sjekk Azure Portal.'
@@ -195,6 +197,43 @@ async function loadDashboard() {
         document.getElementById('pending-list').innerHTML = `<p style="color:#ef4444;">⚠ Feil: ${msg}</p>`;
         alert('Kunne ikke laste bookinger: ' + msg);
     }
+}
+
+let _allBookings = [];
+
+function applyFilters() {
+    const query = (document.getElementById('filter-query')?.value || '').toLowerCase().trim();
+    const dateFrom = document.getElementById('filter-date-from')?.value || null;
+    const dateTo = document.getElementById('filter-date-to')?.value || null;
+
+    let filtered = _allBookings;
+    if (query) {
+        filtered = filtered.filter(b =>
+            (b.requesterName || '').toLowerCase().includes(query) ||
+            (b.requesterEmail || '').toLowerCase().includes(query)
+        );
+    }
+    if (dateFrom) filtered = filtered.filter(b => b.date >= dateFrom);
+    if (dateTo) filtered = filtered.filter(b => b.date <= dateTo);
+
+    const countEl = document.getElementById('filter-count');
+    if (countEl) {
+        const active = query || dateFrom || dateTo;
+        countEl.textContent = active ? `${filtered.length} av ${_allBookings.length} bookinger` : '';
+    }
+
+    renderDashboard(filtered);
+}
+
+function clearFilters() {
+    const q = document.getElementById('filter-query');
+    const df = document.getElementById('filter-date-from');
+    const dt = document.getElementById('filter-date-to');
+    if (q) q.value = '';
+    if (df) df.value = '';
+    if (dt) dt.value = '';
+    document.getElementById('filter-count').textContent = '';
+    renderDashboard(_allBookings);
 }
 
 function renderDashboard(bookings) {
@@ -300,13 +339,13 @@ function createBookingCard(booking) {
     if (booking.status === 'approved') {
         // Compact badges for card header
         if (!depositRequested) {
-            paymentBadges += `<span style="background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-size:0.8rem;margin-left:5px;">💰 Depositum ikke sendt</span>`;
+            paymentBadges += `<span style="background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-size:0.8rem;margin-left:5px;">💰 Forhåndsbetaling ikke sendt</span>`;
         } else if (depositRequested && !depositPaid) {
             const sentDate = booking.depositRequestedAt ? new Date(booking.depositRequestedAt).toLocaleDateString('nb-NO') : '';
             const method = depositViaVipps ? 'Vipps' : 'bank';
-            paymentBadges += `<span style="background:#e0f2fe;color:#075985;padding:2px 7px;border-radius:4px;font-size:0.8rem;margin-left:5px;">⏳ Venter depositum (${method})</span>`;
+            paymentBadges += `<span style="background:#e0f2fe;color:#075985;padding:2px 7px;border-radius:4px;font-size:0.8rem;margin-left:5px;">⏳ Venter forhåndsbetaling (${method})</span>`;
         } else if (depositPaid && !finalInvoiceSent) {
-            paymentBadges += `<span style="background:#d1fae5;color:#065f46;padding:2px 7px;border-radius:4px;font-size:0.8rem;margin-left:5px;">✅ Depositum OK</span>`;
+            paymentBadges += `<span style="background:#d1fae5;color:#065f46;padding:2px 7px;border-radius:4px;font-size:0.8rem;margin-left:5px;">✅ Forhåndsbetaling OK</span>`;
         } else if (finalInvoiceSent && !finalInvoicePaid) {
             paymentBadges += `<span style="background:#d1fae5;color:#065f46;padding:2px 7px;border-radius:4px;font-size:0.8rem;margin-left:5px;">✅ Dep.</span>`;
             paymentBadges += `<span style="background:#e0f2fe;color:#075985;padding:2px 7px;border-radius:4px;font-size:0.8rem;margin-left:3px;">⏳ Venter sluttoppgjør</span>`;
@@ -321,17 +360,17 @@ function createBookingCard(booking) {
         if (depositRequested) {
             const sentDate = booking.depositRequestedAt ? new Date(booking.depositRequestedAt).toLocaleString('nb-NO') : '';
             const method = depositViaVipps ? 'Vipps' : 'Bank';
-            timelineSteps.push({ icon: '✅', text: `Depositumforespørsel sendt (${method})`, date: sentDate, color: '#059669' });
+            timelineSteps.push({ icon: '✅', text: `Forhåndsbetalingsforespørsel sendt (${method})`, date: sentDate, color: '#059669' });
         } else {
-            timelineSteps.push({ icon: '⏳', text: 'Depositumforespørsel ikke sendt', date: '', color: '#92400e' });
+            timelineSteps.push({ icon: '⏳', text: 'Forhåndsbetalingsforespørsel ikke sendt', date: '', color: '#92400e' });
         }
 
         // Step 2: Deposit paid
         if (depositPaid) {
             const paidDate = booking.depositPaidAt ? new Date(booking.depositPaidAt).toLocaleString('nb-NO') : '';
-            timelineSteps.push({ icon: '✅', text: `Depositum betalt${depositNOK ? ' – kr ' + depositNOK.toLocaleString('nb-NO') : ''}`, date: paidDate, color: '#059669' });
+            timelineSteps.push({ icon: '✅', text: `Forhåndsbetaling mottatt${depositNOK ? ' – kr ' + depositNOK.toLocaleString('nb-NO') : ''}`, date: paidDate, color: '#059669' });
         } else if (depositRequested) {
-            timelineSteps.push({ icon: '⏳', text: `Venter på depositum${depositNOK ? ' – kr ' + depositNOK.toLocaleString('nb-NO') : ''}`, date: '', color: '#075985' });
+            timelineSteps.push({ icon: '⏳', text: `Venter på forhåndsbetaling${depositNOK ? ' – kr ' + depositNOK.toLocaleString('nb-NO') : ''}`, date: '', color: '#075985' });
         }
 
         // Step 3: Final invoice
@@ -388,10 +427,10 @@ function createBookingCard(booking) {
 
         // Deposit flow
         if (!depositRequested) {
-            approvedActions += `<button onclick="sendDepositRequest('${booking.id}')" class="btn-sm" style="background:#0ea5e9;">💸 Send depositumforespørsel</button>`;
+            approvedActions += `<button onclick="sendDepositRequest('${booking.id}')" class="btn-sm" style="background:#0ea5e9;">💸 Send forhåndsbetalingsforespørsel</button>`;
         } else if (depositRequested && !depositPaid) {
             if (paymentMethod === 'bank') {
-                approvedActions += `<button onclick="markDepositPaid('${booking.id}')" class="btn-sm" style="background:#0ea5e9;">💰 Depositum mottatt (bank)</button>`;
+                approvedActions += `<button onclick="markDepositPaid('${booking.id}')" class="btn-sm" style="background:#0ea5e9;">💰 Forhåndsbetaling mottatt (bank)</button>`;
             }
             if (paymentMethod === 'vipps') {
                 if (booking.depositVippsOrderId) {
@@ -431,7 +470,7 @@ function createBookingCard(booking) {
             ${services ? `<div class="booking-meta"><strong>Tillegg:</strong> ${services}</div>` : ''}
             ${booking.attendees ? `<div class="booking-meta"><strong>Antall:</strong> ${booking.attendees}</div>` : ''}
             <div class="booking-meta"><strong>Betalingsmetode:</strong> ${paymentMethod === 'vipps' ? 'Vipps' : 'Bank'}</div>
-            ${totalNOK ? `<div class="booking-meta"><strong>Estimert total:</strong> kr ${totalNOK.toLocaleString('nb-NO')} &nbsp;|&nbsp; <strong>Depositum (50%):</strong> kr ${depositNOK.toLocaleString('nb-NO')} &nbsp;|&nbsp; <strong>Restbeløp:</strong> kr ${(totalNOK - depositNOK).toLocaleString('nb-NO')}</div>` : ''}
+            ${totalNOK ? `<div class="booking-meta"><strong>Estimert total:</strong> kr ${totalNOK.toLocaleString('nb-NO')} &nbsp;|&nbsp; <strong>Forhåndsbetaling (50%):</strong> kr ${depositNOK.toLocaleString('nb-NO')} &nbsp;|&nbsp; <strong>Restbeløp:</strong> kr ${(totalNOK - depositNOK).toLocaleString('nb-NO')}</div>` : ''}
             ${booking.cateringContact ? `<div class="booking-meta" style="margin-top:5px;"><span style="background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-size:0.8rem;">🍽 Catering: Ønsker kontakt fra Næs Mat og Event</span></div>` : ''}
             ${booking.message ? `<div class="booking-meta" style="margin-top:5px;font-style:italic;">"${booking.message}"</div>` : ''}
             <div class="booking-meta" style="margin-top:5px;font-size:0.8rem;color:#999;">
@@ -440,8 +479,10 @@ function createBookingCard(booking) {
             </div>
             ${isRequesterSigned ? `<div class="booking-meta" style="color:#1e40af;font-size:0.8rem;">Leietaker signerte: ${new Date(contract.signedAt).toLocaleString('nb-NO')}</div>` : ''}
             ${isLandlordSigned ? `<div class="booking-meta" style="color:#059669;font-size:0.8rem;">Utleier signerte: ${new Date(contract.landlordSignedAt).toLocaleString('nb-NO')}</div>` : ''}
-            ${booking.depositRequestedAt ? `<div class="booking-meta" style="color:#075985;font-size:0.8rem;">💸 Depositumforespørsel sendt: ${new Date(booking.depositRequestedAt).toLocaleString('nb-NO')}</div>` : ''}
-            ${booking.depositPaidAt ? `<div class="booking-meta" style="color:#059669;font-size:0.8rem;">✅ Depositum betalt: ${new Date(booking.depositPaidAt).toLocaleString('nb-NO')}</div>` : ''}
+            ${booking.depositRequestedAt ? `<div class="booking-meta" style="color:#075985;font-size:0.8rem;">💸 Forhåndsbetalingsforespørsel sendt: ${new Date(booking.depositRequestedAt).toLocaleString('nb-NO')}</div>` : ''}
+            ${booking.depositRequestedAt && !booking.depositPaidAt && (Date.now() - new Date(booking.depositRequestedAt).getTime()) > 5 * 24 * 60 * 60 * 1000
+                ? `<div class="booking-meta" style="color:#b91c1c;font-size:0.8rem;font-weight:600;">⚠️ Forfalt – forhåndsbetalingsforespørsel sendt for mer enn 5 dager siden</div>` : ''}
+            ${booking.depositPaidAt ? `<div class="booking-meta" style="color:#059669;font-size:0.8rem;">✅ Forhåndsbetaling mottatt: ${new Date(booking.depositPaidAt).toLocaleString('nb-NO')}</div>` : ''}
             ${booking.finalInvoiceSentAt ? `<div class="booking-meta" style="color:#059669;font-size:0.8rem;">📧 Sluttfaktura sendt: ${new Date(booking.finalInvoiceSentAt).toLocaleString('nb-NO')}</div>` : booking.invoiceSentAt ? `<div class="booking-meta" style="color:#059669;font-size:0.8rem;">📧 Sluttfaktura sendt: ${new Date(booking.invoiceSentAt).toLocaleString('nb-NO')}</div>` : ''}
             ${booking.finalInvoicePaidAt ? `<div class="booking-meta" style="color:#059669;font-size:0.8rem;">✅ Sluttfaktura betalt: ${new Date(booking.finalInvoicePaidAt).toLocaleString('nb-NO')}</div>` : ''}
             ${paymentTimeline}
@@ -453,9 +494,51 @@ function createBookingCard(booking) {
                 <button onclick="rejectBooking('${booking.id}')" class="btn-sm btn-reject">Avvis</button>
             ` : ''}
             ${approvedActions}
+            <button onclick="exportBookingCSV('${booking.id}')" class="btn-sm" style="background:#6b7280;" title="Last ned leiedetaljer som CSV">⬇ Eksporter</button>
         </div>
     `;
     return div;
+}
+
+function exportBookingCSV(id) {
+    const booking = _allBookings.find(b => b.id === id);
+    if (!booking) { alert('Fant ikke booking.'); return; }
+
+    const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const totalNOK = booking.totalAmount || 0;
+    const depositNOK = Math.round(totalNOK * 0.5);
+    const fields = [
+        ['Booking-ID', booking.id],
+        ['Navn', booking.requesterName],
+        ['E-post', booking.requesterEmail],
+        ['Telefon', booking.phone || ''],
+        ['Dato', booking.date],
+        ['Tidspunkt', booking.time || ''],
+        ['Varighet (timer)', booking.duration || ''],
+        ['Formål', booking.eventType || ''],
+        ['Lokale', Array.isArray(booking.spaces) ? booking.spaces.join('; ') : (booking.spaces || '')],
+        ['Tillegg', Array.isArray(booking.services) ? booking.services.join('; ') : (booking.services || '')],
+        ['Antall gjester', booking.attendees || ''],
+        ['Betalingsmetode', booking.paymentMethod || ''],
+        ['Estimert total (kr)', totalNOK],
+        ['Forhåndsbetaling 50% (kr)', depositNOK],
+        ['Restbeløp (kr)', totalNOK - depositNOK],
+        ['Status', booking.status || ''],
+        ['Forhåndsbetaling sendt', booking.depositRequestedAt || ''],
+        ['Forhåndsbetaling mottatt', booking.depositPaidAt || ''],
+        ['Sluttfaktura sendt', booking.finalInvoiceSentAt || ''],
+        ['Sluttfaktura betalt', booking.finalInvoicePaidAt || ''],
+        ['Melding', booking.message || ''],
+    ];
+
+    const csv = 'sep=;\n' + fields.map(([k, v]) => `${esc(k)};${esc(v)}`).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `booking-${booking.date}-${(booking.requesterName || 'ukjent').replace(/\s+/g, '-')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
 }
 
 function openContract(id) {
@@ -499,14 +582,14 @@ async function sendReminder(id) {
 }
 
 async function markDepositPaid(id) {
-    if (!confirm('Bekreft at depositum er mottatt for denne bookingen?')) return;
+    if (!confirm('Bekreft at forhåndsbetalingen er mottatt for denne bookingen?')) return;
     try {
         const response = await fetch(`${API_BASE_URL}/booking/deposit-paid?id=${id}`, {
             method: 'POST',
             headers: { 'Accept': 'application/json' }
         });
         if (response.ok) {
-            alert('Depositum markert som betalt!');
+            alert('Forhåndsbetaling markert som mottatt!');
             loadDashboard();
         } else {
             alert('Noe gikk galt. Prøv igjen.');
@@ -518,7 +601,7 @@ async function markDepositPaid(id) {
 }
 
 async function sendDepositRequest(id) {
-    if (!confirm('Send depositumforespørsel til leietaker?')) return;
+    if (!confirm('Send forhåndsbetalingsforespørsel til leietaker?')) return;
     try {
         const res = await fetch(`${API_BASE_URL}/booking/send-deposit`, {
             method: 'POST',
@@ -528,10 +611,10 @@ async function sendDepositRequest(id) {
         const data = await res.json().catch(() => ({}));
         if (res.ok) {
             const method = data.paymentMethod === 'vipps' ? 'Vipps-lenke' : 'bankdetaljer';
-            alert(`Depositumforespørsel sendt til ${data.sentTo} (${method}, kr ${(data.depositAmount || 0).toLocaleString('nb-NO')})!`);
+            alert(`Forhåndsbetalingsforespørsel sendt til ${data.sentTo} (${method}, kr ${(data.depositAmount || 0).toLocaleString('nb-NO')})!`);
             loadDashboard();
         } else {
-            alert(`Feil: ${data.error || 'Kunne ikke sende depositumforespørsel.'}`);
+            alert(`Feil: ${data.error || 'Kunne ikke sende forhåndsbetalingsforespørsel.'}`);
         }
     } catch (err) {
         console.error(err);
@@ -578,7 +661,7 @@ function injectFinalInvoiceModal() {
                 </tr>
                 <tr id="fi-extra-rows"></tr>
                 <tr>
-                    <td style="padding:6px 0;color:#059669;">Depositum allerede betalt (trekkes fra)</td>
+                    <td style="padding:6px 0;color:#059669;">Forhåndsbetaling allerede mottatt (trekkes fra)</td>
                     <td id="fi-deposit" style="text-align:right;color:#059669;">–</td>
                 </tr>
                 <tr style="border-top:2px solid #e5e7eb;">
@@ -788,11 +871,11 @@ function renderVippsDashboard(bookings) {
         <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:1rem;">
             <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:12px 20px;min-width:130px;text-align:center;">
                 <div style="font-size:1.6rem;font-weight:bold;color:#0369a1;">${stats.depositsSent}</div>
-                <div style="font-size:0.8rem;color:#6b7280;">Depositum sendt</div>
+                <div style="font-size:0.8rem;color:#6b7280;">Forhåndsbetaling sendt</div>
             </div>
             <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 20px;min-width:130px;text-align:center;">
                 <div style="font-size:1.6rem;font-weight:bold;color:#15803d;">${stats.depositsPaid}</div>
-                <div style="font-size:0.8rem;color:#6b7280;">Depositum betalt</div>
+                <div style="font-size:0.8rem;color:#6b7280;">Forhåndsbetaling mottatt</div>
             </div>
             <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:12px 20px;min-width:130px;text-align:center;">
                 <div style="font-size:1.6rem;font-weight:bold;color:#0369a1;">${stats.invoicesSent}</div>
@@ -812,7 +895,7 @@ function renderVippsDashboard(bookings) {
                             <th style="padding:6px;">Navn</th>
                             <th style="padding:6px;">Dato</th>
                             <th style="padding:6px;">Arrangement</th>
-                            <th style="padding:6px;">Depositum</th>
+                            <th style="padding:6px;">Forhåndsbetaling</th>
                             <th style="padding:6px;">Sluttfaktura</th>
                         </tr>
                     </thead>
@@ -820,6 +903,74 @@ function renderVippsDashboard(bookings) {
                 </table>
                </div>`
         }`;
+}
+
+function toggleVaskDashboard() {
+    const section = document.getElementById('vask-dashboard-section');
+    const toggle = document.getElementById('vask-dashboard-toggle');
+    if (!section) return;
+    const isHidden = section.classList.toggle('hidden');
+    if (toggle) toggle.textContent = isHidden ? '▼' : '▲';
+}
+
+function renderVaskDashboard(bookings) {
+    const panel = document.getElementById('vask-dashboard-panel');
+    if (!panel) return;
+
+    const vaskBookings = bookings.filter(b =>
+        Array.isArray(b.services) && b.services.includes('Vask')
+    );
+
+    if (vaskBookings.length === 0) {
+        panel.innerHTML = '<p style="color:#9ca3af;font-size:0.9rem;">Ingen bookinger med vask ennå.</p>';
+        return;
+    }
+
+    // Group by month
+    const byMonth = {};
+    vaskBookings.forEach(b => {
+        const key = b.date ? b.date.slice(0, 7) : 'Ukjent';
+        if (!byMonth[key]) byMonth[key] = [];
+        byMonth[key].push(b);
+    });
+
+    const rows = Object.keys(byMonth).sort().map(month => {
+        const count = byMonth[month].length;
+        const total = count * 1000;
+        const label = byMonth[month][0].date
+            ? new Date(month + '-01').toLocaleDateString('nb-NO', { month: 'long', year: 'numeric' })
+            : month;
+        return `<tr style="border-bottom:1px solid #f3f4f6;">
+            <td style="padding:6px;">${label}</td>
+            <td style="padding:6px;text-align:center;">${count}</td>
+            <td style="padding:6px;text-align:right;">kr ${total.toLocaleString('nb-NO')}</td>
+        </tr>`;
+    }).join('');
+
+    const totalCount = vaskBookings.length;
+    const totalNOK = totalCount * 1000;
+
+    panel.innerHTML = `
+        <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.9rem;max-width:500px;">
+                <thead>
+                    <tr style="text-align:left;border-bottom:2px solid #e5e7eb;color:#6b7280;font-weight:600;">
+                        <th style="padding:6px;">Måned</th>
+                        <th style="padding:6px;text-align:center;">Antall</th>
+                        <th style="padding:6px;text-align:right;">Vaskinntekt (est.)</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+                <tfoot>
+                    <tr style="border-top:2px solid #e5e7eb;font-weight:700;">
+                        <td style="padding:8px 6px;">Totalt</td>
+                        <td style="padding:8px 6px;text-align:center;">${totalCount}</td>
+                        <td style="padding:8px 6px;text-align:right;">kr ${totalNOK.toLocaleString('nb-NO')}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <p style="font-size:0.8rem;color:#6b7280;margin-top:8px;">* Beløp er estimert (1&nbsp;000 kr/arrangement). Faktisk pris settes i sluttfaktura.</p>`;
 }
 
 async function sendInvoice(id) {

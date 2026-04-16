@@ -48,16 +48,21 @@ document.addEventListener('DOMContentLoaded', function () {
     'Salen': 3000,
     'Hele lokalet': 4000,
     'Bryllupspakke': 6000,
-    'Små møter': 30 // per person
+    'Små møter': 30, // per person
+    'Vask': 1000 // estimert
   };
+
+  const SERVICE_PRICING = ['Vask'];
 
   const MEMBER_DISCOUNT = 500;
   const MEMBER_ELIGIBLE_SPACES = ['Hele lokalet', 'Bryllupspakke'];
 
-  // Calculate total price based on selected spaces, attendees and member discount
+  // Calculate total price based on selected spaces, services, attendees and member discount
   const calculatePrice = () => {
     const spacesCheckboxes = form.querySelectorAll('input[name="spaces"]:checked');
     const selectedSpaces = Array.from(spacesCheckboxes).map(cb => cb.value);
+    const servicesCheckboxes = form.querySelectorAll('input[name="services"]:checked');
+    const selectedServices = Array.from(servicesCheckboxes).map(cb => cb.value);
     const attendees = parseInt(attendeesInput?.value) || 10;
 
     let total = 0;
@@ -66,6 +71,13 @@ document.addEventListener('DOMContentLoaded', function () {
         total += PRICING[space] * attendees;
       } else if (PRICING[space]) {
         total += PRICING[space];
+      }
+    });
+
+    // Add priced services (e.g. Vask)
+    selectedServices.forEach(service => {
+      if (SERVICE_PRICING.includes(service) && PRICING[service]) {
+        total += PRICING[service];
       }
     });
 
@@ -161,6 +173,11 @@ document.addEventListener('DOMContentLoaded', function () {
     if (memberCheckbox) {
       memberCheckbox.addEventListener('change', updatePriceDisplay);
     }
+
+    const servicesCheckboxes = form.querySelectorAll('input[name="services"]');
+    servicesCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', updatePriceDisplay);
+    });
 
     if (attendeesInput) {
       attendeesInput.addEventListener('input', updatePriceDisplay);

@@ -40,8 +40,8 @@ app.http('signBooking', {
 
             context.info(`Signature added for booking ${id}, role: ${role}, both signed: ${bothSigned}`);
 
-            // Notify board when tenant signs
-            if ((role || 'requester') === 'requester') {
+            // Notify board when tenant signs (only if landlord hasn't already signed first)
+            if ((role || 'requester') === 'requester' && !bothSigned) {
                 try {
                     const boardTo = process.env.BOARD_TO_ADDRESS || process.env.DEFAULT_TO_ADDRESS;
                     const fromAddr = process.env.DEFAULT_FROM_ADDRESS || 'styret@xn--bjrkvang-64a.no';
@@ -70,7 +70,7 @@ app.http('signBooking', {
                                 <tr><td style="padding:8px 0;color:#6b7280;">Lokale</td><td style="padding:8px 0;text-align:right;">${escapeHtml(Array.isArray(updatedBooking.spaces) ? updatedBooking.spaces.join(', ') : (updatedBooking.spaces || ''))}</td></tr>
                             </table>
                             <p style="margin-top:24px;"><strong>Neste steg:</strong></p>
-                            <p style="color:#374151;">Gå til leieavtalen og signer som utleier. Depositumsforespørsel sendes automatisk til leietaker når begge har signert.</p>
+                            <p style="color:#374151;">Gå til leieavtalen og signer som utleier. Forhåndsbetalingsforespørsel sendes automatisk til leietaker når begge har signert.</p>
                             <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:20px;">
                                 <a href="${escapeHtml(contractLink)}" style="display:inline-block;padding:12px 24px;background:#1a6fa3;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">&#128394; Signer som utleier</a>
                                 <a href="${escapeHtml(adminLink)}" style="display:inline-block;padding:12px 24px;background:#6b7280;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">Åpne i admin</a>
@@ -85,7 +85,7 @@ app.http('signBooking', {
                             from: fromAddr,
                             subject: `Leieavtale signert: ${updatedBooking.requesterName} – ${updatedBooking.date}`,
                             html: notifyHtml,
-                            text: `${updatedBooking.requesterName} har signert leieavtalen for booking ${updatedBooking.date} (${updatedBooking.eventType || 'Reservasjon'}).\n\nÅpne leieavtalen: ${contractLink}\nÅpne i admin: ${adminLink}\n\nNeste steg: Signer som utleier. Depositumsforespørsel sendes automatisk når begge har signert.`
+                            text: `${updatedBooking.requesterName} har signert leieavtalen for booking ${updatedBooking.date} (${updatedBooking.eventType || 'Reservasjon'}).\n\nÅpne leieavtalen: ${contractLink}\nÅpne i admin: ${adminLink}\n\nNeste steg: Signer som utleier. Forhåndsbetalingsforespørsel sendes automatisk når begge har signert.`
                         });
                         context.info(`Board notification sent for tenant signature on ${id}`);
                     } else {
@@ -144,7 +144,7 @@ app.http('signBooking', {
                             amount: depositNOK * 100,
                             orderId,
                             returnUrl,
-                            text: `Depositum – Bjørkvang (${updatedBooking.eventType || 'leie'})`,
+                            text: `Forhåndsbetaling – Bjørkvang (${updatedBooking.eventType || 'leie'})`,
                             phoneNumber: updatedBooking.phone || undefined
                         });
 
@@ -158,8 +158,8 @@ app.http('signBooking', {
                         });
 
                         depositPaymentSection = `
-                            <h3 style="margin:24px 0 8px;font-size:1rem;">Neste steg: Betal depositum</h3>
-                            <p>Depositum må betales innen 5 dager for at bookingen skal være aktiv.</p>
+                            <h3 style="margin:24px 0 8px;font-size:1rem;">Neste steg: Betal forhåndsbetaling</h3>
+                            <p>Forhåndsbetalingen må betales innen 5 dager for at bookingen skal være aktiv.</p>
                             <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px 20px;margin:16px 0;">
                                 <p style="margin:0 0 8px;font-weight:700;color:#166534;">Betal ${depositStr} med Vipps</p>
                                 <p style="margin:0 0 10px;color:#4b5563;font-size:0.9rem;">Restbeløp (${remainingStr}) faktureres etter arrangementet.</p>
@@ -167,7 +167,7 @@ app.http('signBooking', {
                                     Betal ${depositStr} med Vipps
                                 </a>
                             </div>`;
-                        depositPaymentText = `\n\nNeste steg – Betal depositum (${depositStr}) med Vipps:\n${vippsResp.redirectUrl}`;
+                        depositPaymentText = `\n\nNeste steg – Betal forhåndsbetaling (${depositStr}) med Vipps:\n${vippsResp.redirectUrl}`;
 
                         context.info(`signBooking: Vipps deposit initiated, orderId=${orderId}`);
                     } catch (vippsErr) {
@@ -175,10 +175,10 @@ app.http('signBooking', {
                         // Fallback: link to complete-payment page
                         const paymentLink = `${websiteUrl}/complete-payment.html?bookingId=${encodeURIComponent(id)}`;
                         depositPaymentSection = `
-                            <h3 style="margin:24px 0 8px;font-size:1rem;">Neste steg: Betal depositum</h3>
-                            <p>Vi kunne ikke opprette Vipps-betaling automatisk. Klikk lenken under for å betale depositum.</p>
+                            <h3 style="margin:24px 0 8px;font-size:1rem;">Neste steg: Betal forhåndsbetaling</h3>
+                            <p>Vi kunne ikke opprette Vipps-betaling automatisk. Klikk lenken under for å betale forhåndsbetalingen.</p>
                             <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px 20px;margin:16px 0;">
-                                <p style="margin:0 0 8px;font-weight:700;color:#166534;">Depositum: ${depositStr}</p>
+                                <p style="margin:0 0 8px;font-weight:700;color:#166534;">Forhåndsbetaling: ${depositStr}</p>
                                 <p style="margin:0 0 10px;color:#4b5563;font-size:0.9rem;">Restbeløp (${remainingStr}) faktureres etter arrangementet.</p>
                                 <div style="text-align:center;margin:10px 0;">
                                     <a href="${paymentLink}" style="display:inline-block;padding:14px 36px;background:#ff5b24;color:#fff;text-decoration:none;border-radius:999px;font-weight:bold;font-size:1.05rem;">
@@ -186,7 +186,7 @@ app.http('signBooking', {
                                     </a>
                                 </div>
                             </div>`;
-                        depositPaymentText = `\n\nBetal depositum (${depositStr}): ${paymentLink}`;
+                        depositPaymentText = `\n\nBetal forhåndsbetaling (${depositStr}): ${paymentLink}`;
                     }
                 } else if (paymentMethod === 'bank' && depositNOK > 0) {
                     // Bank transfer
@@ -197,7 +197,7 @@ app.http('signBooking', {
                     });
 
                     depositPaymentSection = `
-                        <h3 style="margin:24px 0 8px;font-size:1rem;">Neste steg: Betal depositum via bank</h3>
+                        <h3 style="margin:24px 0 8px;font-size:1rem;">Neste steg: Betal forhåndsbetaling via bank</h3>
                         <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px 20px;margin:16px 0;">
                             <p style="margin:0 0 8px;font-weight:700;color:#166534;">Betal ${depositStr} via bankoverføring</p>
                             <p style="margin:4px 0;">🏦 <strong>Kontonummer:</strong> ${escHtml(bankAccount)}</p>
@@ -205,7 +205,7 @@ app.http('signBooking', {
                             <p style="margin:4px 0;">📅 <strong>Betalingsfrist:</strong> 5 dager</p>
                             <p style="margin:10px 0 0;font-size:0.85rem;color:#4b5563;">Restbeløp (${remainingStr}) faktureres etter arrangementet.</p>
                         </div>`;
-                    depositPaymentText = `\n\nBetal depositum ${depositStr} til kontonummer ${bankAccount}. Merk betalingen med: ${id}. Frist: 5 dager.`;
+                    depositPaymentText = `\n\nBetal forhåndsbetaling ${depositStr} til kontonummer ${bankAccount}. Merk betalingen med: ${id}. Frist: 5 dager.`;
 
                     context.info(`signBooking: Bank deposit request sent for ${id}`);
                 }
@@ -248,8 +248,8 @@ app.http('signBooking', {
                     if (boardTo) {
                         const adminLink = `${websiteUrl}/admin#${encodeURIComponent(id)}`;
                         const depositStatus = depositNOK > 0
-                            ? `<p>Depositumsforespørsel (${depositStr}, ${paymentMethod === 'vipps' ? 'Vipps' : 'bank'}) er sendt til leietaker.</p>`
-                            : '<p style="color:#166534;"><strong>&check; Ingen depositum kreves.</strong></p>';
+                            ? `<p>Forhåndsbetalingsforespørsel (${depositStr}, ${paymentMethod === 'vipps' ? 'Vipps' : 'bank'}) er sendt til leietaker.</p>`
+                            : '<p style="color:#166534;"><strong>&check; Ingen forhåndsbetaling kreves.</strong></p>';
 
                         const boardHtml = generateEmailHtml({
                             title: 'Leieavtale ferdig signert av begge parter',
@@ -269,7 +269,7 @@ app.http('signBooking', {
                             from: fromAddr,
                             subject: `Leieavtale ferdig signert: ${updatedBooking.requesterName} – ${updatedBooking.date}`,
                             html: boardHtml,
-                            text: `Leieavtalen for ${updatedBooking.requesterName} (${updatedBooking.date}) er signert av begge parter.\nDepositumsforespørsel sendt (${paymentMethod}).\n\nSe avtalen: ${contractLink}\nAdmin: ${adminLink}`
+                                text: `${updatedBooking.requesterName} (${updatedBooking.date}) er signert av begge parter.\nForhåndsbetalingsforespørsel sendt (${paymentMethod}).\n\nSe avtalen: ${contractLink}\nAdmin: ${adminLink}`
                         });
                     }
                 } catch (emailError) {

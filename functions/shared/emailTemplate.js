@@ -92,7 +92,7 @@ const generateEmailHtml = ({ title, content, action, previewText }) => {
                 </div>
             </div>
             <div class="content">
-                <h2 style="margin-top: 0; font-size: 20px; color: ${textColor};">${title}</h2>
+                <h2 style="margin-top: 0; font-size: 20px;">${title}</h2>
                 ${content}
                 ${buttonHtml}
             </div>
