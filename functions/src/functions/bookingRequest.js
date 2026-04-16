@@ -20,7 +20,7 @@ app.http('bookingRequest', {
         }
 
         const body = await parseBody(request);
-        const { date, time, requesterName, requesterEmail, message, duration, eventType, spaces, services, attendees, paymentOrderId, paymentStatus, isMember, paymentMethod, totalAmount, cateringContact, endDate, endTime, phone, address } = body;
+        const { date, time, requesterName, requesterEmail, message, duration, eventType, spaces, services, attendees, paymentOrderId, paymentStatus, isMember, paymentMethod, totalAmount, cateringContact, endDate, endTime, phone, address, source } = body;
 
         // Validate required fields
         if (!date || !time || !requesterName || !requesterEmail) {
@@ -337,6 +337,8 @@ app.http('bookingRequest', {
 
             const text = `Ny bookingforespørsel:\nDato: ${booking.date}\nTid: ${booking.time}\nType: ${booking.eventType}\nNavn: ${booking.requesterName}\nE-post: ${booking.requesterEmail}${booking.phone ? `\nTelefon: ${booking.phone}` : ''}${booking.address ? `\nAdresse: ${booking.address}` : ''}\nMelding: ${booking.message || 'Ingen melding'}\n\nÅpne i admin: ${adminLink}\nGodkjenn: ${approveLink}\nAvvis: ${rejectLink}`;
 
+            // Skip all emails for admin-seed bookings to avoid notification spam
+            if (source !== 'admin-seed') {
             await sendEmail({
                 to,
                 from,
@@ -401,6 +403,9 @@ app.http('bookingRequest', {
                     stack: error.stack,
                     bookingId: booking.id
                 });
+            }
+            } else {
+                context.info('bookingRequest: Skipping emails for admin-seed booking');
             }
 
             context.info(`bookingRequest: Successfully processed booking ${booking.id}`);

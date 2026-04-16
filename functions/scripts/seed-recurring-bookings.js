@@ -180,17 +180,38 @@ if (DRY_RUN) {
         let ok = 0, fail = 0;
         for (const b of bookings) {
             try {
+                // Step 1: Create booking (will be 'pending' from the API)
                 const res = await fetch(`${API_BASE}/booking`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                     body: JSON.stringify(b),
                 });
-                if (res.ok) {
+                if (!res.ok) {
+                    const err = await res.text();
+                    console.warn(`\nFEIL oppretting ${b.date}: ${res.status} – ${err.slice(0, 120)}`);
+                    fail++;
+                    continue;
+                }
+                const created = await res.json();
+                const bookingId = created.id || created.booking?.id;
+                if (!bookingId) {
+                    console.warn(`\nFEIL ${b.date}: Ingen ID i svar – ${JSON.stringify(created).slice(0, 120)}`);
+                    fail++;
+                    continue;
+                }
+
+                // Step 2: Immediately approve so it shows as 'Reservert' in calendar
+                const approveRes = await fetch(`${API_BASE}/booking/approve?id=${encodeURIComponent(bookingId)}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ message: '' }),
+                });
+                if (approveRes.ok) {
                     ok++;
                     process.stdout.write('.');
                 } else {
-                    const err = await res.text();
-                    console.warn(`\nFEIL ${b.date}: ${res.status} – ${err.slice(0, 120)}`);
+                    const err = await approveRes.text();
+                    console.warn(`\nFEIL godkjenning ${b.date} (id=${bookingId}): ${approveRes.status} – ${err.slice(0, 120)}`);
                     fail++;
                 }
             } catch (e) {
