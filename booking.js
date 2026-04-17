@@ -441,7 +441,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const status = computeSuggestedStatus(spaces, duration, normaliseStatus(extended.status, ''));
     
     // Add visual indicator for pending events in the title
-    let title = eventType || 'Reservert';
+    let title = event.title || eventType || 'Reservert';
     if (status === 'pending') {
         title = `${title} (Venter)`;
     }
