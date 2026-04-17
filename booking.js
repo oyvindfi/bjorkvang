@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const calendarEl = document.getElementById('calendar');
   const form = document.getElementById('booking-form');
   const statusEl = document.getElementById('booking-status');
+  const calendarDateStatusEl = document.getElementById('calendar-date-status');
   const reservationListEl = document.getElementById('reservation-list');
   const reservationEmptyState = document.getElementById('reservation-empty');
   const dateInput = document.getElementById('date');
@@ -808,6 +809,7 @@ document.addEventListener('DOMContentLoaded', function () {
         listMonth: { buttonText: 'Liste' }
       },
       locale: 'nb',
+      firstDay: 1,
       selectable: true,
       selectMirror: true,
       dayMaxEvents: true,
@@ -837,7 +839,15 @@ document.addEventListener('DOMContentLoaded', function () {
         const clickedCell = calendarEl.querySelector(`.fc-daygrid-day[data-date="${info.dateStr}"]`);
         const isBlocked = clickedCell && clickedCell.classList.contains('is-blocked');
 
+        const showInlineStatus = (msg, type) => {
+          if (!calendarDateStatusEl) return;
+          calendarDateStatusEl.textContent = msg;
+          calendarDateStatusEl.className = `calendar-date-status calendar-date-status--${type}`;
+          calendarDateStatusEl.hidden = false;
+        };
+
         if (isBlocked) {
+          showInlineStatus('Denne datoen er allerede reservert. Velg en annen ledig dato.', 'error');
           showStatus('Denne datoen er allerede reservert. Velg en annen ledig dato.', 'error');
           return;
         }
@@ -852,12 +862,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const isPending = clickedCell && clickedCell.classList.contains('is-pending');
-        if (statusEl) {
-          if (isPending) {
-            showStatus('Det finnes en forespørsel på denne datoen som ikke er godkjent ennå. Du kan fortsatt sende din forespørsel.', 'info');
-          } else {
-            showStatus('Datoen er lagt inn i skjemaet. Fullfør feltene under for å sende forespørselen.', 'info');
-          }
+        if (isPending) {
+          showInlineStatus('Det finnes en forespørsel på denne datoen som ikke er godkjent ennå. Du kan fortsatt sende inn din forespørsel.', 'pending');
+          showStatus('Det finnes en forespørsel på denne datoen som ikke er godkjent ennå. Du kan fortsatt sende din forespørsel.', 'info');
+        } else {
+          showInlineStatus('Datoen er ledig! Fyll ut skjemaet nedenfor for å sende forespørsel.', 'available');
+          showStatus('Datoen er lagt inn i skjemaet. Fullfør feltene under for å sende forespørselen.', 'info');
         }
         if (form) {
           form.scrollIntoView({ behavior: 'smooth', block: 'start' });
