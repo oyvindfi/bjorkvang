@@ -551,6 +551,88 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     ];
 
+    // ── Gjentakende bookinger 2026 ──────────────────────────────────────────
+    const _fmtDt = (d, time) => {
+      const y = d.getFullYear();
+      const mo = String(d.getMonth() + 1).padStart(2, '0');
+      const da = String(d.getDate()).padStart(2, '0');
+      return `${y}-${mo}-${da}T${time}`;
+    };
+    const _weekdayDates = (start, end, wd) => {
+      const dates = [], d = new Date(start);
+      while (d.getDay() !== wd) d.setDate(d.getDate() + 1);
+      while (d <= end) { dates.push(new Date(d)); d.setDate(d.getDate() + 7); }
+      return dates;
+    };
+    const _nthWeekday = (year, month, wd, n) => {
+      const d = new Date(year, month, 1); let cnt = 0;
+      while (d.getMonth() === month) {
+        if (d.getDay() === wd) { cnt++; if (cnt === n) return new Date(d); }
+        d.setDate(d.getDate() + 1);
+      }
+      return null;
+    };
+
+    // 1. Helger opptatt (lør + søn) 18. april – 31. oktober 2026
+    const _helgerStart = new Date(2026, 3, 18);
+    const _helgerEnd   = new Date(2026, 9, 31);
+    [..._weekdayDates(_helgerStart, _helgerEnd, 6),
+     ..._weekdayDates(_helgerStart, _helgerEnd, 0)].forEach(d => {
+      seedEvents.push({
+        title: 'Helg – opptatt',
+        start: _fmtDt(d, '10:00:00'),
+        end:   _fmtDt(d, '22:00:00'),
+        extendedProps: {
+          eventType: 'Annet',
+          message: 'Helgen er opptatt',
+          spaces: ['Hele lokalet'],
+          services: [],
+          duration: 12,
+          status: 'confirmed',
+          createdAt: '2026-01-01T00:00:00.000Z'
+        }
+      });
+    });
+
+    // 2. Pensjonistforeningen – 2. onsdag i måneden (unntatt juli og august)
+    [[2026,3],[2026,4],[2026,5],[2026,8],[2026,9],[2026,10],[2026,11]].forEach(([y,m]) => {
+      const d = _nthWeekday(y, m, 3, 2); // 3 = onsdag, 2 = andre onsdag
+      if (d) seedEvents.push({
+        title: 'Pensjonistforeningen',
+        start: _fmtDt(d, '17:00:00'),
+        end:   _fmtDt(d, '20:00:00'),
+        extendedProps: {
+          eventType: 'Møte eller kurs',
+          message: 'Fast booking – Pensjonistforeningen (2. onsdag i måneden)',
+          spaces: ['Hele lokalet'],
+          services: [],
+          duration: 3,
+          status: 'confirmed',
+          createdAt: '2026-01-01T00:00:00.000Z'
+        }
+      });
+    });
+
+    // 3. Lions – 3. mandag per måned (unntatt juli og august)
+    [[2026,3],[2026,4],[2026,5],[2026,8],[2026,9],[2026,10],[2026,11]].forEach(([y,m]) => {
+      const d = _nthWeekday(y, m, 1, 3);
+      if (d) seedEvents.push({
+        title: 'Lions',
+        start: _fmtDt(d, '19:00:00'),
+        end:   _fmtDt(d, '22:00:00'),
+        extendedProps: {
+          eventType: 'Møte eller kurs',
+          message: 'Fast booking – Lions (3. mandag per måned)',
+          spaces: ['Hele lokalet'],
+          services: [],
+          duration: 3,
+          status: 'confirmed',
+          createdAt: '2026-01-01T00:00:00.000Z'
+        }
+      });
+    });
+    // ── Slutt gjentakende bookinger ─────────────────────────────────────────
+
     const existingKeys = new Set(
       eventList.map((event) => {
         const startIso = new Date(event.start).toISOString();
