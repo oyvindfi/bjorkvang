@@ -1803,6 +1803,19 @@ button {
     padding: 0.2rem 0.45rem;
     font-weight: 600;
     letter-spacing: 0.01em;
+    overflow: hidden;
+}
+
+#calendar .fc-event .fc-event-title,
+#calendar .fc-event .fc-event-time {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+#calendar .fc-daygrid-event-harness {
+    overflow: hidden;
 }
 
 #calendar .fc-event.fc-event--pending {
