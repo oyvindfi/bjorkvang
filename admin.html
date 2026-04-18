@@ -119,6 +119,110 @@
         }
         .stat-number { font-size: 2rem; font-weight: bold; color: #2c3e50; }
         .stat-label { color: #666; }
+
+        /* ── Filter panel ───────────────────────────────────────────── */
+        .filter-panel { padding: 16px !important; }
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .filter-row:last-child { margin-bottom: 0; }
+        .filter-search-wrap { position: relative; display: flex; align-items: center; }
+        .filter-search-icon {
+            position: absolute;
+            left: 9px;
+            font-size: 0.85rem;
+            pointer-events: none;
+            color: #9ca3af;
+        }
+        .filter-input {
+            padding: 7px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            background: #fff;
+            color: #111827;
+        }
+        .filter-input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        .filter-search { padding-left: 32px; width: 240px; }
+        .filter-input-clear {
+            position: absolute;
+            right: 8px;
+            background: none;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            font-size: 0.85rem;
+            padding: 0;
+            line-height: 1;
+        }
+        .filter-input-clear:hover { color: #4b5563; }
+        .filter-quick-periods { display: flex; gap: 6px; flex-wrap: wrap; }
+        .filter-period-btn {
+            padding: 5px 13px;
+            border: 1px solid #d1d5db;
+            border-radius: 20px;
+            background: #f9fafb;
+            font-size: 0.82rem;
+            cursor: pointer;
+            color: #374151;
+            transition: background 0.12s, border-color 0.12s;
+            white-space: nowrap;
+        }
+        .filter-period-btn:hover { background: #e5e7eb; }
+        .filter-period-btn.active { background: #2563eb; color: #fff; border-color: #2563eb; font-weight: 600; }
+        .filter-date-row {
+            padding: 10px 14px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            gap: 16px;
+        }
+        .filter-field { display: flex; flex-direction: column; gap: 3px; }
+        .filter-label { font-size: 0.78rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.03em; }
+        .filter-chips-row { flex-wrap: wrap; gap: 12px; }
+        .filter-chip-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .filter-chip-group-label { font-size: 0.8rem; font-weight: 600; color: #6b7280; white-space: nowrap; }
+        .filter-chip {
+            padding: 4px 11px;
+            border: 1px solid #d1d5db;
+            border-radius: 20px;
+            background: #f9fafb;
+            font-size: 0.82rem;
+            cursor: pointer;
+            color: #374151;
+            transition: background 0.12s, border-color 0.12s;
+            white-space: nowrap;
+        }
+        .filter-chip:hover { background: #e5e7eb; }
+        .filter-chip.active { background: #1e3a8a; color: #fff; border-color: #1e3a8a; font-weight: 600; }
+        .filter-select { padding: 5px 8px; height: 32px; font-size: 0.85rem; }
+        .filter-count-badge {
+            font-size: 0.83rem;
+            color: #374151;
+            font-weight: 600;
+            background: #f3f4f6;
+            padding: 3px 11px;
+            border-radius: 20px;
+            border: 1px solid #e5e7eb;
+            white-space: nowrap;
+        }
+        .filter-count-badge:empty { display: none; }
+        .filter-clear-btn {
+            padding: 5px 12px;
+            background: #6b7280;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.12s;
+        }
+        .filter-clear-btn:hover { background: #4b5563; }
     </style>
 </head>
 <body>
@@ -225,22 +329,61 @@
             </div>
         </div>
 
-        <div class="dashboard-section" style="padding:12px 16px;">
-            <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;">
-                <div>
-                    <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;">Søk navn / e-post</label>
-                    <input type="text" id="filter-query" placeholder="Navn eller e-post..." style="padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.9rem;width:220px;" oninput="applyFilters()">
+        <div class="dashboard-section filter-panel">
+            <!-- Rad 1: Søkefelt + hurtigperioder -->
+            <div class="filter-row">
+                <div class="filter-search-wrap">
+                    <span class="filter-search-icon">🔍</span>
+                    <input type="text" id="filter-query" class="filter-input filter-search"
+                           placeholder="Søk navn eller e-post…" oninput="applyFilters()">
+                    <button id="filter-clear-search" class="filter-input-clear hidden"
+                            onclick="clearSearchField()" title="Tøm søk">✕</button>
                 </div>
-                <div>
-                    <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;">Fra dato</label>
-                    <input type="date" id="filter-date-from" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.9rem;" onchange="applyFilters()">
+                <div class="filter-quick-periods">
+                    <button class="filter-period-btn active" data-period="all"   onclick="setQuickPeriod('all')">Alle</button>
+                    <button class="filter-period-btn"        data-period="today" onclick="setQuickPeriod('today')">I dag</button>
+                    <button class="filter-period-btn"        data-period="week"  onclick="setQuickPeriod('week')">Denne uken</button>
+                    <button class="filter-period-btn"        data-period="month" onclick="setQuickPeriod('month')">Denne måneden</button>
+                    <button class="filter-period-btn"        data-period="custom" onclick="setQuickPeriod('custom')">Egendefinert ▾</button>
                 </div>
-                <div>
-                    <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;">Til dato</label>
-                    <input type="date" id="filter-date-to" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.9rem;" onchange="applyFilters()">
+            </div>
+
+            <!-- Rad 2: Datovelger (vises kun ved "Egendefinert") -->
+            <div id="filter-date-row" class="filter-row filter-date-row hidden">
+                <div class="filter-field">
+                    <label class="filter-label" for="filter-date-from">Fra dato</label>
+                    <input type="date" id="filter-date-from" class="filter-input" onchange="applyFilters()">
                 </div>
-                <button onclick="clearFilters()" style="padding:7px 14px;background:#6b7280;color:#fff;border:none;border-radius:6px;font-size:0.85rem;cursor:pointer;">Nullstill</button>
-                <span id="filter-count" style="font-size:0.85rem;color:#6b7280;align-self:center;"></span>
+                <div class="filter-field">
+                    <label class="filter-label" for="filter-date-to">Til dato</label>
+                    <input type="date" id="filter-date-to" class="filter-input" onchange="applyFilters()">
+                </div>
+            </div>
+
+            <!-- Rad 3: Status-chips + Lokale + teller -->
+            <div class="filter-row filter-chips-row">
+                <div class="filter-chip-group">
+                    <span class="filter-chip-group-label">Status:</span>
+                    <button class="filter-chip active" data-status="all"      onclick="setStatusFilter('all')">Alle</button>
+                    <button class="filter-chip"        data-status="pending"  onclick="setStatusFilter('pending')">⏳ Venter</button>
+                    <button class="filter-chip"        data-status="approved" onclick="setStatusFilter('approved')">✅ Godkjent</button>
+                    <button class="filter-chip"        data-status="rejected" onclick="setStatusFilter('rejected')">✕ Avvist</button>
+                </div>
+                <div class="filter-chip-group">
+                    <span class="filter-chip-group-label">Lokale:</span>
+                    <select id="filter-space" class="filter-input filter-select" onchange="applyFilters()">
+                        <option value="">Alle lokaler</option>
+                        <option value="Peisestue">Peisestue</option>
+                        <option value="Salen">Salen</option>
+                        <option value="Hele lokalet">Hele lokalet</option>
+                        <option value="Bryllupspakke">Bryllupspakke</option>
+                        <option value="Små møter">Lite møte/minnestund</option>
+                    </select>
+                </div>
+                <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+                    <span id="filter-count" class="filter-count-badge"></span>
+                    <button onclick="clearFilters()" id="clear-all-filters-btn" class="filter-clear-btn hidden">Nullstill ✕</button>
+                </div>
             </div>
         </div>
 

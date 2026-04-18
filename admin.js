@@ -186,8 +186,8 @@ async function loadDashboard() {
             console.warn('Vipps status check failed (non-fatal):', vippsErr);
         }
 
-        renderDashboard(bookings);
         _allBookings = bookings;
+        applyFilters();
         renderVaskDashboard(bookings);
     } catch (error) {
         const msg = error.name === 'AbortError'
@@ -200,11 +200,75 @@ async function loadDashboard() {
 }
 
 let _allBookings = [];
+let _activeStatusFilter = 'all';
+let _activePeriod = 'all';
+
+function setStatusFilter(status) {
+    _activeStatusFilter = status;
+    document.querySelectorAll('.filter-chip[data-status]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.status === status);
+    });
+    applyFilters();
+}
+
+function setQuickPeriod(period) {
+    _activePeriod = period;
+    document.querySelectorAll('.filter-period-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.period === period);
+    });
+    const dateRow = document.getElementById('filter-date-row');
+    if (period === 'custom') {
+        dateRow.classList.remove('hidden');
+    } else {
+        dateRow.classList.add('hidden');
+        const df = document.getElementById('filter-date-from');
+        const dt = document.getElementById('filter-date-to');
+        if (df) df.value = '';
+        if (dt) dt.value = '';
+    }
+    applyFilters();
+}
+
+function clearSearchField() {
+    const q = document.getElementById('filter-query');
+    if (q) q.value = '';
+    const clearBtn = document.getElementById('filter-clear-search');
+    if (clearBtn) clearBtn.classList.add('hidden');
+    applyFilters();
+}
 
 function applyFilters() {
     const query = (document.getElementById('filter-query')?.value || '').toLowerCase().trim();
-    const dateFrom = document.getElementById('filter-date-from')?.value || null;
-    const dateTo = document.getElementById('filter-date-to')?.value || null;
+    const space = document.getElementById('filter-space')?.value || '';
+
+    // Show/hide inline clear button on search field
+    const clearSearchBtn = document.getElementById('filter-clear-search');
+    if (clearSearchBtn) clearSearchBtn.classList.toggle('hidden', !query);
+
+    // Compute date range from quick period or custom inputs
+    let effectiveDateFrom = null;
+    let effectiveDateTo = null;
+    const now = new Date();
+    if (_activePeriod === 'today') {
+        const today = now.toISOString().slice(0, 10);
+        effectiveDateFrom = today;
+        effectiveDateTo = today;
+    } else if (_activePeriod === 'week') {
+        const dayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1;
+        const monday = new Date(now);
+        monday.setDate(now.getDate() - dayOfWeek);
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        effectiveDateFrom = monday.toISOString().slice(0, 10);
+        effectiveDateTo = sunday.toISOString().slice(0, 10);
+    } else if (_activePeriod === 'month') {
+        effectiveDateFrom = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        effectiveDateTo = lastDay.toISOString().slice(0, 10);
+    } else if (_activePeriod === 'custom') {
+        effectiveDateFrom = document.getElementById('filter-date-from')?.value || null;
+        effectiveDateTo = document.getElementById('filter-date-to')?.value || null;
+    }
 
     let filtered = _allBookings;
     if (query) {
@@ -213,26 +277,60 @@ function applyFilters() {
             (b.requesterEmail || '').toLowerCase().includes(query)
         );
     }
-    if (dateFrom) filtered = filtered.filter(b => b.date >= dateFrom);
-    if (dateTo) filtered = filtered.filter(b => b.date <= dateTo);
+    if (effectiveDateFrom) filtered = filtered.filter(b => b.date >= effectiveDateFrom);
+    if (effectiveDateTo)   filtered = filtered.filter(b => b.date <= effectiveDateTo);
+    if (_activeStatusFilter !== 'all') {
+        filtered = filtered.filter(b => b.status === _activeStatusFilter);
+    }
+    if (space) {
+        filtered = filtered.filter(b => {
+            const spaces = Array.isArray(b.spaces) ? b.spaces : [b.spaces];
+            return spaces.some(s => s && s.includes(space));
+        });
+    }
+
+    const isFiltered = query || effectiveDateFrom || effectiveDateTo ||
+                       _activeStatusFilter !== 'all' || space;
 
     const countEl = document.getElementById('filter-count');
     if (countEl) {
-        const active = query || dateFrom || dateTo;
-        countEl.textContent = active ? `${filtered.length} av ${_allBookings.length} bookinger` : '';
+        countEl.textContent = isFiltered
+            ? `${filtered.length} av ${_allBookings.length} bookinger`
+            : (_allBookings.length ? `${_allBookings.length} bookinger` : '');
     }
+
+    const clearBtn = document.getElementById('clear-all-filters-btn');
+    if (clearBtn) clearBtn.classList.toggle('hidden', !isFiltered);
 
     renderDashboard(filtered);
 }
 
 function clearFilters() {
-    const q = document.getElementById('filter-query');
+    const q  = document.getElementById('filter-query');
     const df = document.getElementById('filter-date-from');
     const dt = document.getElementById('filter-date-to');
-    if (q) q.value = '';
+    const sp = document.getElementById('filter-space');
+    if (q)  q.value  = '';
     if (df) df.value = '';
     if (dt) dt.value = '';
-    document.getElementById('filter-count').textContent = '';
+    if (sp) sp.value = '';
+
+    _activeStatusFilter = 'all';
+    _activePeriod = 'all';
+
+    document.querySelectorAll('.filter-chip[data-status]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.status === 'all');
+    });
+    document.querySelectorAll('.filter-period-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.period === 'all');
+    });
+    document.getElementById('filter-date-row')?.classList.add('hidden');
+    document.getElementById('filter-clear-search')?.classList.add('hidden');
+    document.getElementById('clear-all-filters-btn')?.classList.add('hidden');
+
+    const countEl = document.getElementById('filter-count');
+    if (countEl) countEl.textContent = _allBookings.length ? `${_allBookings.length} bookinger` : '';
+
     renderDashboard(_allBookings);
 }
 
