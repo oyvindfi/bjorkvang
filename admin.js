@@ -118,6 +118,7 @@ async function checkLogin() {
             document.getElementById('login-overlay').classList.add('hidden');
             document.getElementById('dashboard').classList.remove('hidden');
             sessionStorage.setItem('admin_auth', 'true');
+            initFilterPanel();
             loadDashboard();
         } else {
             if (response.status === 404) {
@@ -146,6 +147,7 @@ function logout() {
 if (sessionStorage.getItem('admin_auth') === 'true') {
     document.getElementById('login-overlay').classList.add('hidden');
     document.getElementById('dashboard').classList.remove('hidden');
+    initFilterPanel();
     loadDashboard();
 }
 
@@ -203,6 +205,88 @@ let _allBookings = [];
 let _activeStatusFilter = 'all';
 let _activePeriod = 'all';
 let _activeSpaceFilter = '';
+
+// ── Filter panel wiring ─────────────────────────────────────────────────────
+// All events are bound here via addEventListener (no inline onclick in HTML).
+function initFilterPanel() {
+    // Search input
+    const queryInput = document.getElementById('filter-query');
+    const clearSearchBtn = document.getElementById('filter-clear-search');
+    if (queryInput) {
+        queryInput.addEventListener('input', () => {
+            if (clearSearchBtn) clearSearchBtn.classList.toggle('hidden', !queryInput.value);
+            applyFilters();
+        });
+    }
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', () => {
+            if (queryInput) queryInput.value = '';
+            clearSearchBtn.classList.add('hidden');
+            applyFilters();
+        });
+    }
+
+    // Date inputs
+    const dateFrom = document.getElementById('filter-date-from');
+    const dateTo   = document.getElementById('filter-date-to');
+    if (dateFrom) dateFrom.addEventListener('change', applyFilters);
+    if (dateTo)   dateTo.addEventListener('change',   applyFilters);
+
+    // Period buttons
+    const periodsWrap = document.getElementById('filter-quick-periods');
+    if (periodsWrap) {
+        periodsWrap.addEventListener('click', (e) => {
+            const btn = e.target.closest('.filter-period-btn');
+            if (!btn) return;
+            const period = btn.dataset.period;
+            _activePeriod = period;
+            periodsWrap.querySelectorAll('.filter-period-btn').forEach(b =>
+                b.classList.toggle('active', b === btn)
+            );
+            const dateRow = document.getElementById('filter-date-row');
+            if (period === 'custom') {
+                dateRow.classList.remove('hidden');
+            } else {
+                dateRow.classList.add('hidden');
+                if (dateFrom) dateFrom.value = '';
+                if (dateTo)   dateTo.value   = '';
+            }
+            applyFilters();
+        });
+    }
+
+    // Status chips
+    const statusWrap = document.getElementById('filter-status-chips');
+    if (statusWrap) {
+        statusWrap.addEventListener('click', (e) => {
+            const btn = e.target.closest('.filter-chip');
+            if (!btn) return;
+            _activeStatusFilter = btn.dataset.status;
+            statusWrap.querySelectorAll('.filter-chip').forEach(b =>
+                b.classList.toggle('active', b === btn)
+            );
+            applyFilters();
+        });
+    }
+
+    // Space chips
+    const spaceWrap = document.getElementById('filter-space-chips');
+    if (spaceWrap) {
+        spaceWrap.addEventListener('click', (e) => {
+            const btn = e.target.closest('.filter-chip');
+            if (!btn) return;
+            _activeSpaceFilter = btn.dataset.space;
+            spaceWrap.querySelectorAll('.filter-chip').forEach(b =>
+                b.classList.toggle('active', b === btn)
+            );
+            applyFilters();
+        });
+    }
+
+    // Clear all button
+    const clearAllBtn = document.getElementById('clear-all-filters-btn');
+    if (clearAllBtn) clearAllBtn.addEventListener('click', clearFilters);
+}
 
 function setSpaceFilter(space) {
     _activeSpaceFilter = space;
