@@ -202,6 +202,15 @@ async function loadDashboard() {
 let _allBookings = [];
 let _activeStatusFilter = 'all';
 let _activePeriod = 'all';
+let _activeSpaceFilter = '';
+
+function setSpaceFilter(space) {
+    _activeSpaceFilter = space;
+    document.querySelectorAll('.filter-chip[data-space]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.space === space);
+    });
+    applyFilters();
+}
 
 function setStatusFilter(status) {
     _activeStatusFilter = status;
@@ -239,7 +248,6 @@ function clearSearchField() {
 
 function applyFilters() {
     const query = (document.getElementById('filter-query')?.value || '').toLowerCase().trim();
-    const space = document.getElementById('filter-space')?.value || '';
 
     // Show/hide inline clear button on search field
     const clearSearchBtn = document.getElementById('filter-clear-search');
@@ -282,15 +290,15 @@ function applyFilters() {
     if (_activeStatusFilter !== 'all') {
         filtered = filtered.filter(b => b.status === _activeStatusFilter);
     }
-    if (space) {
+    if (_activeSpaceFilter) {
         filtered = filtered.filter(b => {
             const spaces = Array.isArray(b.spaces) ? b.spaces : [b.spaces];
-            return spaces.some(s => s && s.includes(space));
+            return spaces.some(s => s && s.includes(_activeSpaceFilter));
         });
     }
 
     const isFiltered = query || effectiveDateFrom || effectiveDateTo ||
-                       _activeStatusFilter !== 'all' || space;
+                       _activeStatusFilter !== 'all' || _activeSpaceFilter;
 
     const countEl = document.getElementById('filter-count');
     if (countEl) {
@@ -309,17 +317,19 @@ function clearFilters() {
     const q  = document.getElementById('filter-query');
     const df = document.getElementById('filter-date-from');
     const dt = document.getElementById('filter-date-to');
-    const sp = document.getElementById('filter-space');
     if (q)  q.value  = '';
     if (df) df.value = '';
     if (dt) dt.value = '';
-    if (sp) sp.value = '';
 
     _activeStatusFilter = 'all';
     _activePeriod = 'all';
+    _activeSpaceFilter = '';
 
     document.querySelectorAll('.filter-chip[data-status]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.status === 'all');
+    });
+    document.querySelectorAll('.filter-chip[data-space]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.space === '');
     });
     document.querySelectorAll('.filter-period-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.period === 'all');
