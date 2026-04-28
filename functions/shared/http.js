@@ -1,4 +1,5 @@
 const ALLOWED_ORIGINS = [
+    'https://bjorkvang.org',
     'https://xn--bjrkvang-64a.no',
     'https://bjorkvang.no',
     'http://localhost:7071',

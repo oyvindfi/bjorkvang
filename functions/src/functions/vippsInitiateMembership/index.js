@@ -15,7 +15,7 @@ app.http('vippsInitiateMembership', {
             const amount = 25000; // 250 kr i øre
             // Vipps Recurring API krever HTTPS-URLer.
             // Bruk den konfigurerte SITE_BASE_URL eller fall tilbake til produksjonsdomenet.
-            const siteBase = process.env.SITE_BASE_URL || 'https://bjorkvang.no';
+            const siteBase = process.env.SITE_BASE_URL || 'https://bjorkvang.org';
 
             // agreementId genereres av Vipps; vi sender den via redirect-parameteren
             // slik at frontend kan sjekke status etter godkjenning

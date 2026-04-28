@@ -78,7 +78,7 @@ app.http('finalInvoicePaid', {
                             <tr><td style="padding:8px 0;color:#6b7280;">Sluttoppgjør</td><td style="padding:8px 0;text-align:right;font-weight:700;color:#166534;">${invoiceStr}</td></tr>
                         </table>
                         <p style="color:#4b5563;">Vi håper arrangementet var vellykket, og ønsker deg velkommen tilbake!</p>
-                        <p style="font-size:0.9em;color:#6b7280;">Spørsmål? Ta kontakt på <a href="mailto:styret@bjørkvang.no" style="color:#1a823b;">styret@bjørkvang.no</a>.</p>
+                        <p style="font-size:0.9em;color:#6b7280;">Spørsmål? Ta kontakt på <a href="mailto:styret@bjorkvang.org" style="color:#1a823b;">styret@bjorkvang.org</a>.</p>
                     `
                 });
                 await sendEmail({

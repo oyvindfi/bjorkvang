@@ -213,13 +213,13 @@ app.http('bookingRequest', {
                 email: booking.requesterEmail
             });
             
-            const websiteUrl = (process.env.WEBSITE_URL || 'https://xn--bjrkvang-64a.no').replace(/\/$/, '');
+            const websiteUrl = (process.env.WEBSITE_URL || 'https://bjorkvang.org').replace(/\/$/, '');
             const adminLink = `${websiteUrl}/admin#${encodeURIComponent(booking.id)}`;
             const approveLink = `${resolveBaseUrl(request)}/api/booking/approve?id=${encodeURIComponent(booking.id)}`;
             const rejectLink = `${resolveBaseUrl(request)}/api/booking/reject?id=${encodeURIComponent(booking.id)}`;
 
             const to = process.env.BOARD_TO_ADDRESS || process.env.DEFAULT_TO_ADDRESS || 'skype.oyvind@hotmail.com';
-            let from = process.env.DEFAULT_FROM_ADDRESS || 'styret@bjørkvang.no';
+            let from = process.env.DEFAULT_FROM_ADDRESS || 'styret@bjorkvang.org';
 
             if (!to || !from) {
                 context.error('bookingRequest: Missing email configuration', { 
@@ -376,17 +376,17 @@ app.http('bookingRequest', {
                 ${customerCateringNote}
                 ${booking.message ? `<div style="background-color: #f9fafb; padding: 16px; border-radius: 6px; margin-top: 16px;"><strong>Din melding:</strong><br>${safeMessage}</div>` : ''}
                 ${nextStepsText}
-                <p style="margin-top: 16px; font-size: 0.9em; color: #6b7280;">Spørsmål? Ta kontakt på <a href="mailto:styret@bjørkvang.no" style="color:#1a6fa3;">styret@bjørkvang.no</a> eller ring oss på <a href="tel:+4748060273" style="color:#1a6fa3;">+47 480 60 273</a>.</p>
+                <p style="margin-top: 16px; font-size: 0.9em; color: #6b7280;">Spørsmål? Ta kontakt på <a href="mailto:styret@bjorkvang.org" style="color:#1a6fa3;">styret@bjorkvang.org</a> eller ring oss på <a href="tel:+4748060273" style="color:#1a6fa3;">+47 480 60 273</a>.</p>
             `;
 
             const confirmationHtml = generateEmailHtml({
                 title: 'Forespørsel mottatt ✅',
                 content: confirmationHtmlContent,
-                action: { text: 'Se kalender og tilgjengelighet', url: 'https://bjørkvang.no/booking' },
+                action: { text: 'Se kalender og tilgjengelighet', url: 'https://bjorkvang.org/booking' },
                 previewText: `Forespørselen din for ${formattedStartDate} er mottatt – vi behandler den snarest.`
             });
 
-            const confirmationText = `Hei ${booking.requesterName},\n\nTakk for din forespørsel om å booke Bjørkvang forsamlingslokale.\n\nOppsummering:\n- Dato: ${booking.date}\n- Fra: kl. ${booking.time}\n- Til: ${formattedEnd}\n- Formål: ${booking.eventType}\n- Lokale: ${booking.spaces.join(', ')}\n- Antall gjester: ${booking.attendees || 'Ikke oppgitt'}${totalNOK ? `\n- Estimert leiesum: kr ${totalNOK.toLocaleString('nb-NO')}\n- Depositum (50 %): kr ${depositNOK.toLocaleString('nb-NO')}` : ''}${booking.cateringContact ? '\n- Catering: Du har bedt om å bli kontaktet av Næs Mat og Event' : ''}\n\nStyret vil behandle forespørselen og ta kontakt innen 2\u20133 virkedager.\n\nVennlig hilsen\nHelgøens Vel\nstyret@bjørkvang.no | +47 480 60 273`;
+            const confirmationText = `Hei ${booking.requesterName},\n\nTakk for din forespørsel om å booke Bjørkvang forsamlingslokale.\n\nOppsummering:\n- Dato: ${booking.date}\n- Fra: kl. ${booking.time}\n- Til: ${formattedEnd}\n- Formål: ${booking.eventType}\n- Lokale: ${booking.spaces.join(', ')}\n- Antall gjester: ${booking.attendees || 'Ikke oppgitt'}${totalNOK ? `\n- Estimert leiesum: kr ${totalNOK.toLocaleString('nb-NO')}\n- Depositum (50 %): kr ${depositNOK.toLocaleString('nb-NO')}` : ''}${booking.cateringContact ? '\n- Catering: Du har bedt om å bli kontaktet av Næs Mat og Event' : ''}\n\nStyret vil behandle forespørselen og ta kontakt innen 2\u20133 virkedager.\n\nVennlig hilsen\nHelgøens Vel\nstyret@bjorkvang.org | +47 480 60 273`;
 
             try {
                 await sendEmail({

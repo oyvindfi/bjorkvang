@@ -87,7 +87,7 @@ app.http('vippsCheckStatus', {
 
                                     await sendEmail({
                                         to: booking.requesterEmail,
-                                        from: process.env.DEFAULT_FROM_ADDRESS || 'styret@bjørkvang.no',
+                                        from: process.env.DEFAULT_FROM_ADDRESS || 'styret@bjorkvang.org',
                                         subject: 'Betaling bekreftet – Booking aktiv',
                                         html: emailHtml,
                                         text: `Hei ${booking.requesterName},\n\nTakk for betalingen! Din booking for ${booking.date} er nå aktiv.`

@@ -72,7 +72,7 @@ app.http('sendDepositRequest', {
         const remainingNOK = totalNOK - depositNOK;
         const paymentMethod = booking.paymentMethod || 'bank';
         const bankAccount = process.env.BANK_ACCOUNT || '1822.40.12345';
-        const websiteUrl = process.env.WEBSITE_URL || 'https://bjørkvang.no';
+        const websiteUrl = process.env.WEBSITE_URL || 'https://bjorkvang.org';
         const spaces = Array.isArray(booking.spaces) ? booking.spaces.join(', ') : (booking.spaces || '');
         const now = new Date().toISOString();
 
@@ -159,7 +159,7 @@ app.http('sendDepositRequest', {
                     <strong>50&nbsp;% depositum</strong> innen 5 dager.</p>
                     ${summaryTable}
                     <p>Har du spørsmål, ta kontakt med oss på
-                    <a href="mailto:styret@bjørkvang.no">styret@bjørkvang.no</a>.</p>
+                    <a href="mailto:styret@bjorkvang.org">styret@bjorkvang.org</a>.</p>
                     <p>Med vennlig hilsen,<br>Styret ved Bjørkvang</p>`,
                 action: { text: 'Betal kr ' + depositNOK.toLocaleString('nb-NO') + ' med Vipps', url: vippsUrl, color: '#ff5b24', rounded: true }
             });
@@ -203,7 +203,7 @@ app.http('sendDepositRequest', {
                         <p style="margin:4px 0;">📅 <strong>Betalingsfrist:</strong> 5 dager</p>
                     </div>
                     <p>Har du spørsmål, ta kontakt med oss på
-                    <a href="mailto:styret@bjørkvang.no">styret@bjørkvang.no</a>.</p>
+                    <a href="mailto:styret@bjorkvang.org">styret@bjorkvang.org</a>.</p>
                     <p>Med vennlig hilsen,<br>Styret ved Bjørkvang</p>`
             });
         }

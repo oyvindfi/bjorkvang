@@ -77,7 +77,7 @@ app.http('sendFinalInvoice', {
         const remainingNOK = grandTotalNOK - depositNOK;
         const paymentMethod = booking.paymentMethod || 'bank';
         const bankAccount = process.env.BANK_ACCOUNT || '1822.40.12345';
-        const websiteUrl = process.env.WEBSITE_URL || 'https://bjørkvang.no';
+        const websiteUrl = process.env.WEBSITE_URL || 'https://bjorkvang.org';
         const spaces = Array.isArray(booking.spaces) ? booking.spaces.join(', ') : (booking.spaces || '');
         const services = Array.isArray(booking.services) ? booking.services.join(', ') : (booking.services || '');
 
@@ -148,7 +148,7 @@ app.http('sendFinalInvoice', {
         const infoNote = `<p style="font-size:0.88rem;color:#6b7280;margin-top:8px;">
             Depositum (kr ${depositNOK.toLocaleString('nb-NO')}) er allerede betalt og er trukket fra totalbeløpet.
             Depositumet refunderes ikke. Har du spørsmål? Ta kontakt på
-            <a href="mailto:styret@bjørkvang.no">styret@bjørkvang.no</a>.
+            <a href="mailto:styret@bjorkvang.org">styret@bjorkvang.org</a>.
             </p>`;
 
         if (paymentMethod === 'vipps' && remainingNOK > 0) {

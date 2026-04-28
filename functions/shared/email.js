@@ -49,21 +49,24 @@ const sendEmail = async (options) => {
                 body: JSON.stringify(payload)
             });
 
-            if (!response.ok) {
-                // If 4xx error (client error), do not retry
+            const data = await response.json();
+
+            if (!response.ok || data.success === false) {
+                const err = data?.error;
+                const code = err?.code || response.status;
+                const message = err?.message || response.statusText;
+                const errorMsg = `[${code}] ${message}`;
+
+                // Don't retry 4xx (client errors)
                 if (response.status >= 400 && response.status < 500) {
-                    const errorText = await response.text();
-                    throw new Error(`Plunk API error (Client): ${response.status} ${response.statusText} - ${errorText}`);
+                    throw new Error(`Plunk API error (Client): ${errorMsg}`);
                 }
-                
-                // If 5xx error (server error), throw to trigger retry
-                const errorText = await response.text();
-                throw new Error(`Plunk API error (Server): ${response.status} ${response.statusText} - ${errorText}`);
+
+                throw new Error(`Plunk API error (Server): ${errorMsg}`);
             }
 
-            const data = await response.json();
-            // Plunk usually returns { success: true, id: "..." }
-            const messageId = data.id || data.messageId; 
+            // next-api /v1/send returns { success: true, data: { contact, event, timestamp } }
+            const messageId = data?.data?.event || data?.data?.contact;
 
             return {
                 messageId,

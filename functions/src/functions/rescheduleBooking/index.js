@@ -86,7 +86,7 @@ app.http('rescheduleBooking', {
             })[m]);
 
             const safeName = escapeHtml(booking.requesterName);
-            const websiteUrl = process.env.WEBSITE_URL || 'https://bjørkvang.no';
+            const websiteUrl = process.env.WEBSITE_URL || 'https://bjorkvang.org';
             const contractLink = `${websiteUrl}/leieavtale.html?id=${booking.id}`;
 
             const htmlContent = `
@@ -103,7 +103,7 @@ app.http('rescheduleBooking', {
                     </tr>
                 </table>
                 <p>Alle andre detaljer ved din booking forblir uendret. Merk at ombooking kun er tillatt én gang per bestilling i henhold til våre vilkår.</p>
-                <p>Har du spørsmål, ta gjerne kontakt med oss på <a href="tel:+4748060273">+47 480 60 273</a> eller <a href="mailto:styret@bjørkvang.no">styret@bjørkvang.no</a>.</p>
+                <p>Har du spørsmål, ta gjerne kontakt med oss på <a href="tel:+4748060273">+47 480 60 273</a> eller <a href="mailto:styret@bjorkvang.org">styret@bjorkvang.org</a>.</p>
                 <p>Med vennlig hilsen,<br><strong>Helgøens Vel</strong></p>
             `;
 

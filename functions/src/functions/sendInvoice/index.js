@@ -110,7 +110,7 @@ app.http('sendInvoice', {
                 <p style="margin:8px 0 0; font-size:13px; color:#6b7280;">Merk betalingen med bestillingsnummer: <strong>${escapeHtml(id)}</strong></p>
             </div>
 
-            <p>Har du spørsmål, ta kontakt med oss på styret@bjørkvang.no.</p>
+            <p>Har du spørsmål, ta kontakt med oss på styret@bjorkvang.org.</p>
             <p>Med vennlig hilsen,<br>Styret ved Bjørkvang</p>
         `;
 

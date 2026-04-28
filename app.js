@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn('Could not decode URI:', e);
         }
         // Then explicitly replace the Punycode domain if present
-        return url.replace('xn--bjrkvang-64a.no', 'bjørkvang.no');
+        return url.replace('xn--bjrkvang-64a.no', 'bjorkvang.org');
     };
 
     copyButtons.forEach(btn => {

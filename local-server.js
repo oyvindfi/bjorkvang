@@ -164,7 +164,7 @@ async function handleApi(pathname, body, req) {
     // POST /api/vipps/membership/create  →  Løpende avtale (Recurring API)
     if (pathname === '/api/vipps/membership/create') {
         // Vipps Recurring API krever HTTPS-URLer – bruk produksjonsdomenet for redirects
-        const siteBase = 'https://bjorkvang.no';
+        const siteBase = 'https://bjorkvang.org';
         const merchantRedirectUrl = `${siteBase}/medlemskap?status=success`;
         const merchantAgreementUrl = `${siteBase}/medlemskap#administrer`;
         const result = await vippsCreateRecurringAgreement({

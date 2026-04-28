@@ -27,7 +27,7 @@ app.http('sendReminder', {
             // Or maybe just a general follow-up
             
             // Generate contract link - use WEBSITE_URL environment variable
-            const websiteUrl = process.env.WEBSITE_URL || 'https://bjørkvang.no';
+            const websiteUrl = process.env.WEBSITE_URL || 'https://bjorkvang.org';
             const contractLink = `${websiteUrl}/leieavtale.html?id=${booking.id}`;
 
             const escapeHtml = (str) => String(str).replace(/[&<>"']/g, (m) => ({

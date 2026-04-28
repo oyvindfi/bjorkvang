@@ -85,7 +85,7 @@ const generateEmailHtml = ({ title, content, action, previewText }) => {
     <div style="padding: 24px 12px;">
         <div class="container">
             <div class="header">
-                <img class="header-hero" src="https://xn--bjrkvang-64a.no/images/bjorkvang-sommer.png" alt="Bjørkvang forsamlingslokale" width="600">
+                <img class="header-hero" src="https://bjorkvang.org/images/bjorkvang-sommer.png" alt="Bjørkvang forsamlingslokale" width="600">
                 <div class="header-inner">
                     <h1>Bjørkvang forsamlingslokale</h1>
                     <p class="header-sub">Helgøens Vel &mdash; Helgøyvegen 219, Nes på Hedmarken</p>
@@ -98,7 +98,7 @@ const generateEmailHtml = ({ title, content, action, previewText }) => {
             </div>
             <div class="footer">
                 <p style="margin: 0 0 4px; color: #6b7280;">Dette er en automatisk melding fra Helgøens Vel.</p>
-                <p style="margin: 0 0 4px; color: #6b7280;">Org.nr: 995 519 240 &nbsp;|&nbsp; <a href="mailto:styret@bj%C3%B8rkvang.no" style="color: #1a6fa3;">styret@bjørkvang.no</a> &nbsp;|&nbsp; <a href="https://xn--bjrkvang-64a.no" style="color: #1a6fa3;">bjørkvang.no</a></p>
+                <p style="margin: 0 0 4px; color: #6b7280;">Org.nr: 995 519 240 &nbsp;|&nbsp; <a href="mailto:styret@bjorkvang.org" style="color: #1a6fa3;">styret@bjorkvang.org</a> &nbsp;|&nbsp; <a href="https://bjorkvang.org" style="color: #1a6fa3;">bjorkvang.org</a></p>
             </div>
         </div>
     </div>

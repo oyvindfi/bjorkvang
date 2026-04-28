@@ -63,8 +63,8 @@ app.timer('signingReminder', {
         context.info(`signingReminder: ${tenantNeedsReminder.length} tenant reminder(s), ${landlordNeedsReminder.length} landlord reminder(s)`);
 
         const boardTo = process.env.BOARD_TO_ADDRESS || process.env.DEFAULT_TO_ADDRESS;
-        const from = process.env.DEFAULT_FROM_ADDRESS || 'styret@xn--bjrkvang-64a.no';
-        const websiteUrl = (process.env.WEBSITE_URL || 'https://xn--bjrkvang-64a.no').replace(/\/$/, '');
+        const from = process.env.DEFAULT_FROM_ADDRESS || 'styret@bjorkvang.org';
+        const websiteUrl = (process.env.WEBSITE_URL || 'https://bjorkvang.org').replace(/\/$/, '');
 
         const escapeHtml = (str) => String(str).replace(/[&<>"']/g, (m) => ({
             '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
