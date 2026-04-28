@@ -167,6 +167,9 @@ document.addEventListener('DOMContentLoaded', function () {
         enforceSpaceMutualExclusion(checkbox);
         toggleMemberDiscount();
         updatePriceDisplay();
+        // If Bryllupspakke was deselected (directly or via mutex), hide the card
+        const bryllupStillChecked = !!form.querySelector('input[name="spaces"][value="Bryllupspakke"]:checked');
+        if (!bryllupStillChecked) hideWeddingCard();
       });
     });
 
@@ -885,7 +888,8 @@ document.addEventListener('DOMContentLoaded', function () {
             dateInput.value = selectedDate;
           }
           if (timeInput && !selectionInfo.allDay) {
-            timeInput.value = selectionInfo.startStr.slice(11, 16);
+            // Snap to full hour (CET: startStr is local time from FullCalendar)
+            timeInput.value = selectionInfo.startStr.slice(11, 13) + ':00';
           }
           if (selectionInfo.end && durationInputEl) {
             const diff = (selectionInfo.end.getTime() - selectionInfo.start.getTime()) / (60 * 60 * 1000);
@@ -1322,20 +1326,38 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // Toggle the inline date picker
+  // Wedding date change – use flatpickr for a smooth picker experience
+  let weddingFlatpickr = null;
+  if (weddingDatePickerEl && typeof flatpickr !== 'undefined') {
+    weddingFlatpickr = flatpickr(weddingDatePickerEl, {
+      locale: 'no',
+      dateFormat: 'Y-m-d',
+      minDate: 'today',
+      disableMobile: false,
+      nextArrow: '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
+      prevArrow: '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
+      onChange: (selectedDates) => {
+        if (selectedDates.length) {
+          applyWeddingDates(selectedDates[0]);
+        }
+      },
+    });
+  }
+
   if (weddingChangeBtnEl) {
     weddingChangeBtnEl.addEventListener('click', () => {
-      if (weddingDatePickerWrapEl) {
+      if (weddingFlatpickr) {
+        weddingFlatpickr.open();
+      } else if (weddingDatePickerWrapEl) {
+        // Fallback: show native input
         weddingDatePickerWrapEl.hidden = !weddingDatePickerWrapEl.hidden;
-        if (!weddingDatePickerWrapEl.hidden && weddingDatePickerEl) {
-          weddingDatePickerEl.focus();
-        }
+        if (!weddingDatePickerWrapEl.hidden && weddingDatePickerEl) weddingDatePickerEl.focus();
       }
     });
   }
 
-  // Picking any date snaps to the correct Thu–Sun block
-  if (weddingDatePickerEl) {
+  // Fallback change handler for native input (when flatpickr not available)
+  if (weddingDatePickerEl && !weddingFlatpickr) {
     weddingDatePickerEl.addEventListener('change', () => {
       if (weddingDatePickerEl.value) {
         applyWeddingDates(new Date(weddingDatePickerEl.value + 'T00:00:00'));
