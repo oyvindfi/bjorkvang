@@ -44,7 +44,7 @@ app.http('signBooking', {
             if ((role || 'requester') === 'requester' && !bothSigned) {
                 try {
                     const boardTo = process.env.BOARD_TO_ADDRESS || process.env.DEFAULT_TO_ADDRESS;
-                    const fromAddr = process.env.DEFAULT_FROM_ADDRESS || 'styret@bjorkvang.org';
+                    const fromAddr = process.env.DEFAULT_FROM_ADDRESS || 'Bjorkvang <styret@bjorkvang.org>';
                     const websiteUrl = (process.env.WEBSITE_URL || 'https://bjorkvang.org').replace(/\/$/, '');
                     const contractLink = `${websiteUrl}/leieavtale.html?id=${encodeURIComponent(id)}&mode=admin`;
                     const adminLink = `${websiteUrl}/admin#${encodeURIComponent(id)}`;
@@ -102,7 +102,7 @@ app.http('signBooking', {
 
                 const websiteUrl = (process.env.WEBSITE_URL || 'https://bjorkvang.org').replace(/\/$/, '');
                 const contractLink = `${websiteUrl}/leieavtale.html?id=${encodeURIComponent(id)}`;
-                const fromAddr = process.env.DEFAULT_FROM_ADDRESS || 'styret@bjorkvang.org';
+                const fromAddr = process.env.DEFAULT_FROM_ADDRESS || 'Bjorkvang <styret@bjorkvang.org>';
                 const bankAccount = process.env.BANK_ACCOUNT || '1822.40.12345';
 
                 const escHtml = (str) => String(str).replace(/[&<>"']/g, (m) => ({

@@ -219,7 +219,7 @@ app.http('bookingRequest', {
             const rejectLink = `${resolveBaseUrl(request)}/api/booking/reject?id=${encodeURIComponent(booking.id)}`;
 
             const to = process.env.BOARD_TO_ADDRESS || process.env.DEFAULT_TO_ADDRESS || 'skype.oyvind@hotmail.com';
-            let from = process.env.DEFAULT_FROM_ADDRESS || 'styret@bjorkvang.org';
+            let from = process.env.DEFAULT_FROM_ADDRESS || 'Bjorkvang <styret@bjorkvang.org>';
 
             if (!to || !from) {
                 context.error('bookingRequest: Missing email configuration', { 

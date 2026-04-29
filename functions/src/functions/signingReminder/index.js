@@ -63,7 +63,7 @@ app.timer('signingReminder', {
         context.info(`signingReminder: ${tenantNeedsReminder.length} tenant reminder(s), ${landlordNeedsReminder.length} landlord reminder(s)`);
 
         const boardTo = process.env.BOARD_TO_ADDRESS || process.env.DEFAULT_TO_ADDRESS;
-        const from = process.env.DEFAULT_FROM_ADDRESS || 'styret@bjorkvang.org';
+        const from = process.env.DEFAULT_FROM_ADDRESS || 'Bjorkvang <styret@bjorkvang.org>';
         const websiteUrl = (process.env.WEBSITE_URL || 'https://bjorkvang.org').replace(/\/$/, '');
 
         const escapeHtml = (str) => String(str).replace(/[&<>"']/g, (m) => ({
