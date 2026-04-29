@@ -1,14 +1,3 @@
 {
-  "routes": [
-    {
-      "route": "/*",
-      "redirect": "https://xn--bjrkvang-64a.no/{*}",
-      "statusCode": 301,
-      "conditions": {
-        "requestHeaders": {
-          "host": ["bjorkvang.org", "www.bjorkvang.org"]
-        }
-      }
-    }
-  ]
+  "routes": []
 }
