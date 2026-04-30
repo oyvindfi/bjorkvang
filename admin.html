@@ -257,6 +257,114 @@
             .filter-chip { padding: 8px 14px; font-size: 0.85rem; }
             .filter-section { flex: 1 1 100%; }
         }
+
+        /* ── Guide accordion (details/summary) ─────────────────────── */
+        .guide-item {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .guide-item summary {
+            padding: 13px 16px;
+            cursor: pointer;
+            font-size: 0.97rem;
+            font-weight: 600;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            background: #f9fafb;
+            user-select: none;
+            min-height: 48px;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            color: #1f2937;
+        }
+        .guide-item summary::-webkit-details-marker { display: none; }
+        .guide-item summary::after {
+            content: '▼';
+            margin-left: auto;
+            font-size: 0.7rem;
+            color: #9ca3af;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+            padding-left: 8px;
+        }
+        .guide-item[open] > summary::after { transform: rotate(-180deg); }
+        .guide-item[open] > summary { background: #eff6ff; color: #1d4ed8; border-bottom: 1px solid #dbeafe; }
+        .guide-item ol {
+            margin: 0;
+            padding: 12px 16px 14px 36px;
+            line-height: 1.8;
+            font-size: 0.92rem;
+            color: #374151;
+        }
+        .guide-item li { margin-bottom: 3px; }
+
+        /* ── Mobile-first improvements ──────────────────────────────── */
+        @media (max-width: 768px) {
+            .admin-container { padding: 12px; }
+
+            #admin-header {
+                position: sticky;
+                top: 0;
+                z-index: 100;
+                background: white;
+                padding: 10px 16px;
+                margin: -12px -12px 16px;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+                border-radius: 0 0 8px 8px;
+            }
+            #admin-header h1 { font-size: 1.15rem; }
+
+            .stats-grid { gap: 10px; margin-bottom: 16px; }
+            .stat-card { padding: 12px 6px; }
+            .stat-number { font-size: 1.6rem; }
+            .stat-label { font-size: 0.78rem; }
+
+            .dashboard-section { padding: 14px; margin-bottom: 12px; }
+            .dashboard-section > h2 { font-size: 1rem; line-height: 1.4; }
+
+            /* Booking cards — stack vertically */
+            .booking-card { flex-direction: column; gap: 0; }
+            .booking-details { width: 100%; }
+            .booking-actions {
+                width: 100%;
+                flex-wrap: wrap;
+                gap: 8px;
+                padding-top: 12px;
+                border-top: 1px solid #f3f4f6;
+                margin-top: 10px;
+            }
+            .booking-actions .btn-sm {
+                flex: 1 1 auto;
+                min-height: 44px;
+                text-align: center;
+                padding: 10px 10px;
+                font-size: 0.88rem;
+                line-height: 1.25;
+            }
+
+            /* Manual booking form — single column */
+            .manual-booking-form { grid-template-columns: 1fr; }
+
+            /* Login screen */
+            .login-box {
+                width: calc(100% - 48px);
+                padding: 1.5rem;
+            }
+            .login-box input[type="password"] {
+                font-size: 1rem;
+                padding: 12px;
+                min-height: 44px;
+                box-sizing: border-box;
+                width: 100%;
+            }
+            .login-box .btn {
+                min-height: 44px;
+                font-size: 1rem;
+                padding: 10px 24px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -271,7 +379,7 @@
     </div>
 
     <div id="dashboard" class="admin-container hidden">
-        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <header id="admin-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
             <h1>Bjørkvang Admin</h1>
             <button onclick="logout()" class="btn-sm" style="background: #666;">Logg ut</button>
         </header>
@@ -295,105 +403,105 @@
             <h2 style="cursor:pointer;" onclick="toggleHelp()">📖 Brukerveiledning <span id="help-toggle-icon">▼</span></h2>
             <div id="help-panel" class="hidden" style="padding-top:12px;">
 
-                <div style="display:grid; gap:20px;">
+                <div style="display:grid; gap:10px;">
 
-                    <div>
-                        <h3 style="margin:0 0 8px;">📥 Nye bookingforespørsler</h3>
-                        <ol style="margin:0; padding-left:20px; line-height:1.7;">
+                    <details class="guide-item">
+                        <summary>📥 Nye bookingforespørsler</summary>
+                        <ol>
                             <li>Nye forespørsler vises øverst under <strong>«Venter på godkjenning»</strong>.</li>
                             <li>Les gjennom informasjonen om arrangementet.</li>
                             <li>Klikk <strong>«Godkjenn»</strong> for å godkjenne – leietaker mottar automatisk e-post med kontrakt.</li>
                             <li>Klikk <strong>«Avvis»</strong> dersom dere ikke kan ta imot bookingen – leietaker får beskjed pr. e-post.</li>
                         </ol>
-                    </div>
+                    </details>
 
-                    <div>
-                        <h3 style="margin:0 0 8px;">✅ Kontrakt</h3>
-                        <ol style="margin:0; padding-left:20px; line-height:1.7;">
+                    <details class="guide-item">
+                        <summary>✅ Kontrakt</summary>
+                        <ol>
                             <li>Etter godkjenning vises bookingen under <strong>«Kommende godkjente bookinger»</strong>.</li>
                             <li>Klikk <strong>«Åpne/signer kontrakt»</strong> på bookingkortet.</li>
                             <li>Les gjennom kontrakten og klikk <strong>«Signer som utleier»</strong>.</li>
                             <li>Leietaker får automatisk varsel om å signere. Systemet sender påminnelse hvis de ikke har signert innen 24 timer.</li>
                             <li>Du kan skrive ut en kopi med <strong>«Skriv ut kontrakt»</strong>.</li>
                         </ol>
-                    </div>
+                    </details>
 
-                    <div>
-                        <h3 style="margin:0 0 8px;">💰 Depositum</h3>
-                        <ol style="margin:0; padding-left:20px; line-height:1.7;">
-                            <li>Etter at kontrakten er signert, klikk <strong>«Send depositumforespørsel»</strong> på bookingkortet.</li>
+                    <details class="guide-item">
+                        <summary>💰 Forhåndsbetaling (depositum)</summary>
+                        <ol>
+                            <li>Etter at kontrakten er signert, klikk <strong>«Send forhåndsbetalingsforespørsel»</strong> på bookingkortet.</li>
                             <li>Leietaker mottar betalingslink (Vipps eller bankoverføring avhengig av hva de valgte).</li>
                             <li>Betalingen oppdateres automatisk dersom leietaker betaler via Vipps. Sjekk med <strong>«Sjekk Vipps-status»</strong> ved behov.</li>
-                            <li>Har dere mottatt bankoverføring manuelt? Klikk <strong>«Marker depositum betalt»</strong>.</li>
+                            <li>Har dere mottatt bankoverføring manuelt? Klikk <strong>«Forhåndsbetaling mottatt (bank)»</strong>.</li>
                         </ol>
-                    </div>
+                    </details>
 
-                    <div>
-                        <h3 style="margin:0 0 8px;">🧾 Sluttfaktura</h3>
-                        <ol style="margin:0; padding-left:20px; line-height:1.7;">
+                    <details class="guide-item">
+                        <summary>🧾 Sluttfaktura</summary>
+                        <ol>
                             <li>Etter arrangementet, klikk <strong>«Send sluttfaktura»</strong> på bookingkortet.</li>
                             <li>Legg eventuelt til ekstra linjer (f.eks. ekstra rengjøring) i dialogvinduet som åpnes.</li>
                             <li>Klikk <strong>«Send faktura»</strong> – leietaker mottar fakturaen pr. e-post.</li>
-                            <li>Betalingen oppdateres automatisk ved Vipps. Klikk <strong>«Marker sluttfaktura betalt»</strong> ved bankoverføring.</li>
+                            <li>Betalingen oppdateres automatisk ved Vipps. Klikk <strong>«Sluttfaktura betalt»</strong> ved bankoverføring.</li>
                         </ol>
-                    </div>
+                    </details>
 
-                    <div>
-                        <h3 style="margin:0 0 8px;">📝 Manuell booking</h3>
-                        <ol style="margin:0; padding-left:20px; line-height:1.7;">
+                    <details class="guide-item">
+                        <summary>📝 Manuell booking (telefon/e-post)</summary>
+                        <ol>
                             <li>Har noen ringt eller sendt e-post? Klikk <strong>«🗓 Registrer manuell booking»</strong> øverst på siden.</li>
                             <li>Fyll inn kundens opplysninger og velg lokale, dato og tidspunkt.</li>
                             <li>Klikk <strong>«Opprett og godkjenn booking»</strong> – bookingen registreres og godkjennes direkte.</li>
                         </ol>
-                    </div>
+                    </details>
 
-                    <div>
-                        <h3 style="margin:0 0 8px;">🔄 Omplanlegging</h3>
-                        <ol style="margin:0; padding-left:20px; line-height:1.7;">
-                            <li>Klikk <strong>«Omplanlegg»</strong> på en godkjent booking.</li>
+                    <details class="guide-item">
+                        <summary>🔄 Omplanlegging av dato</summary>
+                        <ol>
+                            <li>Klikk <strong>«📅 Endre dato»</strong> på en godkjent booking.</li>
                             <li>Velg ny dato og nytt starttidspunkt i dialogvinduet.</li>
-                            <li>Klikk <strong>«Bekreft omplanlegging»</strong> – leietaker varsles automatisk.</li>
+                            <li>Klikk <strong>«Bekreft flytt»</strong> – leietaker varsles automatisk.</li>
                             <li><strong>Merk:</strong> En booking kan kun omplanlegges én gang (jf. vilkår §5).</li>
                         </ol>
-                    </div>
+                    </details>
 
-                    <div>
-                        <h3 style="margin:0 0 8px;">🔔 Påminnelser</h3>
-                        <ol style="margin:0; padding-left:20px; line-height:1.7;">
-                            <li>Klikk <strong>«Send påminnelse»</strong> på en booking.</li>
+                    <details class="guide-item">
+                        <summary>🔔 Påminnelser</summary>
+                        <ol>
+                            <li>Klikk <strong>«Påminnelse»</strong> på en booking.</li>
                             <li>Skriv eventuelt en kommentar som skal med i e-posten.</li>
-                            <li>Klikk <strong>«Send»</strong> – leietaker mottar e-post med påminnelse.</li>
+                            <li>Leietaker mottar e-post med påminnelse.</li>
                         </ol>
-                    </div>
+                    </details>
 
-                    <div>
-                        <h3 style="margin:0 0 8px;">🔍 Søk og filter</h3>
-                        <ol style="margin:0; padding-left:20px; line-height:1.7;">
+                    <details class="guide-item">
+                        <summary>🔍 Søk og filter</summary>
+                        <ol>
                             <li>Bruk søkefeltet øverst i filterpanelet til å søke etter navn eller e-post.</li>
                             <li>Velg tidsperiode med knappene <strong>«I dag / Denne uken / Denne måneden»</strong>, eller sett egne datoer.</li>
                             <li>Filtrer på status med knappene <strong>«Venter / Godkjent / Avvist»</strong>.</li>
                             <li>Filtrer på lokale med lokalebryterne under statusfiltrene.</li>
-                            <li>Klikk <strong>«Nullstill filter»</strong> for å fjerne alle filter.</li>
+                            <li>Klikk <strong>«Nullstill ✕»</strong> for å fjerne alle filter.</li>
                         </ol>
-                    </div>
+                    </details>
 
-                    <div>
-                        <h3 style="margin:0 0 8px;">💳 Vipps-status</h3>
-                        <ol style="margin:0; padding-left:20px; line-height:1.7;">
+                    <details class="guide-item">
+                        <summary>💳 Vipps-status</summary>
+                        <ol>
                             <li>Statusen oppdateres automatisk når siden lastes inn.</li>
-                            <li>Klikk <strong>«Sjekk Vipps-status»</strong> på en enkelt booking for å hente siste status fra Vipps.</li>
+                            <li>Klikk <strong>«🔍 Sjekk Vipps-status»</strong> på en enkelt booking for å hente siste status fra Vipps.</li>
                             <li>Se en samlet oversikt under seksjonen <strong>«💳 Vipps betalingsoversikt»</strong> lengre ned på siden.</li>
                         </ol>
-                    </div>
+                    </details>
 
-                    <div>
-                        <h3 style="margin:0 0 8px;">🧹 Vask</h3>
-                        <ol style="margin:0; padding-left:20px; line-height:1.7;">
+                    <details class="guide-item">
+                        <summary>🧹 Vaskoversikt</summary>
+                        <ol>
                             <li>Klikk <strong>«🧹 Vaskoversikt»</strong> lengre ned på siden for å se alle bookinger som inkluderer vask.</li>
                             <li>Oversikten viser dato, leietaker og vaskeestimatet (ca. 1 000 kr per arrangement).</li>
                             <li>Bruk oversikten til å koordinere vaskeoppdrag med frivillige eller vaske-ansvarlig.</li>
                         </ol>
-                    </div>
+                    </details>
 
                 </div>
             </div>
@@ -417,7 +525,26 @@
                             <input type="date" id="mb-date" required>
                         </label>
                         <label>Starttidspunkt *
-                            <input type="time" id="mb-time" required value="12:00">
+                            <select id="mb-time" required>
+                                <option value="06:00">06:00</option>
+                                <option value="07:00">07:00</option>
+                                <option value="08:00">08:00</option>
+                                <option value="09:00">09:00</option>
+                                <option value="10:00">10:00</option>
+                                <option value="11:00">11:00</option>
+                                <option value="12:00" selected>12:00</option>
+                                <option value="13:00">13:00</option>
+                                <option value="14:00">14:00</option>
+                                <option value="15:00">15:00</option>
+                                <option value="16:00">16:00</option>
+                                <option value="17:00">17:00</option>
+                                <option value="18:00">18:00</option>
+                                <option value="19:00">19:00</option>
+                                <option value="20:00">20:00</option>
+                                <option value="21:00">21:00</option>
+                                <option value="22:00">22:00</option>
+                                <option value="23:00">23:00</option>
+                            </select>
                         </label>
                         <label>Varighet (timer) *
                             <input type="number" id="mb-duration" required min="1" max="72" value="4">
