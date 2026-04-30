@@ -292,6 +292,114 @@
         </div>
 
         <div class="dashboard-section">
+            <h2 style="cursor:pointer;" onclick="toggleHelp()">📖 Brukerveiledning <span id="help-toggle-icon">▼</span></h2>
+            <div id="help-panel" class="hidden" style="padding-top:12px;">
+
+                <div style="display:grid; gap:20px;">
+
+                    <div>
+                        <h3 style="margin:0 0 8px;">📥 Nye bookingforespørsler</h3>
+                        <ol style="margin:0; padding-left:20px; line-height:1.7;">
+                            <li>Nye forespørsler vises øverst under <strong>«Venter på godkjenning»</strong>.</li>
+                            <li>Les gjennom informasjonen om arrangementet.</li>
+                            <li>Klikk <strong>«Godkjenn»</strong> for å godkjenne – leietaker mottar automatisk e-post med kontrakt.</li>
+                            <li>Klikk <strong>«Avvis»</strong> dersom dere ikke kan ta imot bookingen – leietaker får beskjed pr. e-post.</li>
+                        </ol>
+                    </div>
+
+                    <div>
+                        <h3 style="margin:0 0 8px;">✅ Kontrakt</h3>
+                        <ol style="margin:0; padding-left:20px; line-height:1.7;">
+                            <li>Etter godkjenning vises bookingen under <strong>«Kommende godkjente bookinger»</strong>.</li>
+                            <li>Klikk <strong>«Åpne/signer kontrakt»</strong> på bookingkortet.</li>
+                            <li>Les gjennom kontrakten og klikk <strong>«Signer som utleier»</strong>.</li>
+                            <li>Leietaker får automatisk varsel om å signere. Systemet sender påminnelse hvis de ikke har signert innen 24 timer.</li>
+                            <li>Du kan skrive ut en kopi med <strong>«Skriv ut kontrakt»</strong>.</li>
+                        </ol>
+                    </div>
+
+                    <div>
+                        <h3 style="margin:0 0 8px;">💰 Depositum</h3>
+                        <ol style="margin:0; padding-left:20px; line-height:1.7;">
+                            <li>Etter at kontrakten er signert, klikk <strong>«Send depositumforespørsel»</strong> på bookingkortet.</li>
+                            <li>Leietaker mottar betalingslink (Vipps eller bankoverføring avhengig av hva de valgte).</li>
+                            <li>Betalingen oppdateres automatisk dersom leietaker betaler via Vipps. Sjekk med <strong>«Sjekk Vipps-status»</strong> ved behov.</li>
+                            <li>Har dere mottatt bankoverføring manuelt? Klikk <strong>«Marker depositum betalt»</strong>.</li>
+                        </ol>
+                    </div>
+
+                    <div>
+                        <h3 style="margin:0 0 8px;">🧾 Sluttfaktura</h3>
+                        <ol style="margin:0; padding-left:20px; line-height:1.7;">
+                            <li>Etter arrangementet, klikk <strong>«Send sluttfaktura»</strong> på bookingkortet.</li>
+                            <li>Legg eventuelt til ekstra linjer (f.eks. ekstra rengjøring) i dialogvinduet som åpnes.</li>
+                            <li>Klikk <strong>«Send faktura»</strong> – leietaker mottar fakturaen pr. e-post.</li>
+                            <li>Betalingen oppdateres automatisk ved Vipps. Klikk <strong>«Marker sluttfaktura betalt»</strong> ved bankoverføring.</li>
+                        </ol>
+                    </div>
+
+                    <div>
+                        <h3 style="margin:0 0 8px;">📝 Manuell booking</h3>
+                        <ol style="margin:0; padding-left:20px; line-height:1.7;">
+                            <li>Har noen ringt eller sendt e-post? Klikk <strong>«🗓 Registrer manuell booking»</strong> øverst på siden.</li>
+                            <li>Fyll inn kundens opplysninger og velg lokale, dato og tidspunkt.</li>
+                            <li>Klikk <strong>«Opprett og godkjenn booking»</strong> – bookingen registreres og godkjennes direkte.</li>
+                        </ol>
+                    </div>
+
+                    <div>
+                        <h3 style="margin:0 0 8px;">🔄 Omplanlegging</h3>
+                        <ol style="margin:0; padding-left:20px; line-height:1.7;">
+                            <li>Klikk <strong>«Omplanlegg»</strong> på en godkjent booking.</li>
+                            <li>Velg ny dato og nytt starttidspunkt i dialogvinduet.</li>
+                            <li>Klikk <strong>«Bekreft omplanlegging»</strong> – leietaker varsles automatisk.</li>
+                            <li><strong>Merk:</strong> En booking kan kun omplanlegges én gang (jf. vilkår §5).</li>
+                        </ol>
+                    </div>
+
+                    <div>
+                        <h3 style="margin:0 0 8px;">🔔 Påminnelser</h3>
+                        <ol style="margin:0; padding-left:20px; line-height:1.7;">
+                            <li>Klikk <strong>«Send påminnelse»</strong> på en booking.</li>
+                            <li>Skriv eventuelt en kommentar som skal med i e-posten.</li>
+                            <li>Klikk <strong>«Send»</strong> – leietaker mottar e-post med påminnelse.</li>
+                        </ol>
+                    </div>
+
+                    <div>
+                        <h3 style="margin:0 0 8px;">🔍 Søk og filter</h3>
+                        <ol style="margin:0; padding-left:20px; line-height:1.7;">
+                            <li>Bruk søkefeltet øverst i filterpanelet til å søke etter navn eller e-post.</li>
+                            <li>Velg tidsperiode med knappene <strong>«I dag / Denne uken / Denne måneden»</strong>, eller sett egne datoer.</li>
+                            <li>Filtrer på status med knappene <strong>«Venter / Godkjent / Avvist»</strong>.</li>
+                            <li>Filtrer på lokale med lokalebryterne under statusfiltrene.</li>
+                            <li>Klikk <strong>«Nullstill filter»</strong> for å fjerne alle filter.</li>
+                        </ol>
+                    </div>
+
+                    <div>
+                        <h3 style="margin:0 0 8px;">💳 Vipps-status</h3>
+                        <ol style="margin:0; padding-left:20px; line-height:1.7;">
+                            <li>Statusen oppdateres automatisk når siden lastes inn.</li>
+                            <li>Klikk <strong>«Sjekk Vipps-status»</strong> på en enkelt booking for å hente siste status fra Vipps.</li>
+                            <li>Se en samlet oversikt under seksjonen <strong>«💳 Vipps betalingsoversikt»</strong> lengre ned på siden.</li>
+                        </ol>
+                    </div>
+
+                    <div>
+                        <h3 style="margin:0 0 8px;">🧹 Vask</h3>
+                        <ol style="margin:0; padding-left:20px; line-height:1.7;">
+                            <li>Klikk <strong>«🧹 Vaskoversikt»</strong> lengre ned på siden for å se alle bookinger som inkluderer vask.</li>
+                            <li>Oversikten viser dato, leietaker og vaskeestimatet (ca. 1 000 kr per arrangement).</li>
+                            <li>Bruk oversikten til å koordinere vaskeoppdrag med frivillige eller vaske-ansvarlig.</li>
+                        </ol>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-section">
             <h2 style="cursor:pointer;" onclick="toggleManualBooking()">🗓 Registrer manuell booking (telefon/e-post) <span id="manual-toggle-icon">▼</span></h2>
             <div id="manual-booking-panel" class="hidden">
                 <form id="manual-booking-form" onsubmit="createManualBooking(event)">

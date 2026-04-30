@@ -1254,6 +1254,14 @@ function translateStatus(status) {
     return map[status] || status;
 }
 
+function toggleHelp() {
+    const panel = document.getElementById('help-panel');
+    const icon  = document.getElementById('help-toggle-icon');
+    if (!panel) return;
+    const isHidden = panel.classList.toggle('hidden');
+    if (icon) icon.textContent = isHidden ? '▼' : '▲';
+}
+
 function toggleHistory() {
     const el = document.getElementById('history-list');
     el.classList.toggle('hidden');
