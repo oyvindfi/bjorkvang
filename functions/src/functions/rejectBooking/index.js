@@ -1,5 +1,6 @@
 const { app } = require('@azure/functions');
 const { sendEmail } = require('../../../shared/email');
+const { sendSms } = require('../../../shared/sms');
 const { createHtmlResponse, createJsonResponse, parseBody } = require('../../../shared/http');
 const { getBooking, updateBookingStatus } = require('../../../shared/cosmosDb');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
@@ -217,6 +218,12 @@ app.http('rejectBooking', {
                     html: html,
                 });
                 context.info(`rejectBooking: Rejection email sent to ${existingBooking.requesterEmail}`);
+
+                // --- SMS til leietaker ved avvisning ---
+                if (existingBooking.phone) {
+                    const rejectionSmsBody = `Beklager, din forespørsel for ${existingBooking.date} ble ikke godkjent. Kontakt oss for mer info. – Bjørkvang`;
+                    await sendSms({ to: existingBooking.phone, body: rejectionSmsBody }, context);
+                }
             }
         } catch (error) {
             context.error('rejectBooking: Failed to send booking rejection email', {

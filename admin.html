@@ -593,6 +593,45 @@
                 <pre id="api-status-output" style="background:#f4f4f4;padding:1rem;border-radius:6px;font-size:.85rem;overflow-x:auto;"></pre>
             </div>
         </div>
+
+        <div class="dashboard-section" id="sms-center-section">
+            <h2 style="cursor:pointer;" onclick="toggleSmsDashboard()">💬 SMS-senter <span id="sms-center-toggle">▼</span></h2>
+            <div id="sms-center-panel" class="hidden">
+                <p style="color:#6b7280;font-size:0.88rem;margin-bottom:1.25rem;">
+                    Send en SMS manuelt til en leietaker. Meldingen sendes fra <strong>Bjorkvang</strong>. Maks 160 tegn.
+                </p>
+                <div style="display:flex;flex-direction:column;gap:1rem;max-width:520px;">
+                    <div>
+                        <label style="display:block;font-weight:600;font-size:.9rem;margin-bottom:.35rem;">Booking (valgfritt)</label>
+                        <select id="sms-booking-select" onchange="smsFillFromBooking()" style="width:100%;padding:.5rem .75rem;border:1px solid #d1d5db;border-radius:6px;font-size:.95rem;background:#fff;">
+                            <option value="">— Velg booking for å fylle inn nummer —</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display:block;font-weight:600;font-size:.9rem;margin-bottom:.35rem;">Telefonnummer</label>
+                        <input id="sms-to" type="tel" placeholder="f.eks. 90409836" maxlength="8"
+                            style="width:100%;padding:.5rem .75rem;border:1px solid #d1d5db;border-radius:6px;font-size:.95rem;box-sizing:border-box;" />
+                        <span style="font-size:.8rem;color:#9ca3af;">8-sifret norsk nummer (uten +47)</span>
+                    </div>
+                    <div>
+                        <label style="display:block;font-weight:600;font-size:.9rem;margin-bottom:.35rem;">
+                            Melding <span id="sms-char-counter" style="font-weight:normal;color:#9ca3af;">(0/160)</span>
+                        </label>
+                        <textarea id="sms-body" maxlength="160" rows="3" oninput="updateSmsCounter()"
+                            placeholder="Skriv meldingen her…"
+                            style="width:100%;padding:.5rem .75rem;border:1px solid #d1d5db;border-radius:6px;font-size:.95rem;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+                        <button onclick="sendManualSms()" id="sms-send-btn"
+                            style="padding:.55rem 1.5rem;background:#3b82f6;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:.95rem;">
+                            Send SMS
+                        </button>
+                        <span id="sms-status" style="font-size:.9rem;"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script src="admin.js"></script>

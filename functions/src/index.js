@@ -65,6 +65,9 @@ app.http('apiStatus', {
                     BOARD_TO_ADDRESS:             !!process.env.BOARD_TO_ADDRESS,
                     DEFAULT_FROM_ADDRESS:         !!process.env.DEFAULT_FROM_ADDRESS,
                     COSMOS_CONNECTION_STRING:     !!process.env.COSMOS_CONNECTION_STRING,
+                    TWILIO_ACCOUNT_SID:           !!process.env.TWILIO_ACCOUNT_SID,
+                    TWILIO_AUTH_TOKEN:            !!process.env.TWILIO_AUTH_TOKEN,
+                    BOARD_PHONE_NUMBER:           !!process.env.BOARD_PHONE_NUMBER,
                 },
                 loadedFunctions,
                 loadingErrors,
@@ -78,6 +81,7 @@ app.http('apiStatus', {
 loadFunction('approveBooking', './functions/approveBooking');
 loadFunction('bookingRequest', './functions/bookingRequest');
 loadFunction('emailHttpTriggerBooking', './functions/emailHttpTriggerBooking');
+loadFunction('sendSms', './functions/sendSms');
 loadFunction('getAdminCalendar', './functions/getAdminCalendar');
 loadFunction('getCalendar', './functions/getCalendar');
 loadFunction('rejectBooking', './functions/rejectBooking');

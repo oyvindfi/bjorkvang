@@ -686,6 +686,7 @@ function createBookingCard(booking) {
                 <button onclick="rejectBooking('${booking.id}')" class="btn-sm btn-reject">Avvis</button>
             ` : ''}
             ${approvedActions}
+            ${booking.phone ? `<button onclick="openSmsCenter('${booking.id}', '${booking.phone}', '${(booking.requesterName || '').replace(/'/g, "\\'")}'  )" class="btn-sm" style="background:#3b82f6;" title="Send SMS til leietaker">💬 SMS</button>` : ''}
             <button onclick="exportBookingCSV('${booking.id}')" class="btn-sm" style="background:#6b7280;" title="Last ned leiedetaljer som CSV">⬇ Eksporter</button>
         </div>
     `;
@@ -1362,5 +1363,109 @@ async function createManualBooking(event) {
         statusEl.textContent = 'Nettverksfeil. Sjekk konsollen.';
     } finally {
         submitBtn.disabled = false;
+    }
+}
+
+// ——— SMS-senter ———
+
+function toggleSmsDashboard() {
+    const panel = document.getElementById('sms-center-panel');
+    const toggle = document.getElementById('sms-center-toggle');
+    if (!panel) return;
+    const isHidden = panel.classList.toggle('hidden');
+    if (toggle) toggle.textContent = isHidden ? '▼' : '▲';
+    if (!isHidden) populateSmsBookingSelect();
+}
+
+function populateSmsBookingSelect() {
+    const select = document.getElementById('sms-booking-select');
+    if (!select) return;
+    // Keep first placeholder option
+    select.innerHTML = '<option value="">— Velg booking for å fylle inn nummer —</option>';
+    const bookings = (_allBookings || []).filter(b => b.phone);
+    bookings.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.id;
+        opt.textContent = `${b.date} – ${b.requesterName} (${b.phone})`;
+        select.appendChild(opt);
+    });
+}
+
+function smsFillFromBooking() {
+    const select = document.getElementById('sms-booking-select');
+    const toInput = document.getElementById('sms-to');
+    if (!select || !toInput) return;
+    const booking = (_allBookings || []).find(b => b.id === select.value);
+    if (booking && booking.phone) {
+        toInput.value = booking.phone;
+    }
+}
+
+function updateSmsCounter() {
+    const body = document.getElementById('sms-body');
+    const counter = document.getElementById('sms-char-counter');
+    if (!body || !counter) return;
+    const len = body.value.length;
+    counter.textContent = `(${len}/160)`;
+    counter.style.color = len > 140 ? '#ef4444' : '#9ca3af';
+}
+
+function openSmsCenter(bookingId, phone, name) {
+    // Expand the SMS panel if collapsed
+    const panel = document.getElementById('sms-center-panel');
+    const toggle = document.getElementById('sms-center-toggle');
+    if (panel && panel.classList.contains('hidden')) {
+        panel.classList.remove('hidden');
+        if (toggle) toggle.textContent = '▲';
+        populateSmsBookingSelect();
+    }
+    // Fill in the fields
+    const select = document.getElementById('sms-booking-select');
+    const toInput = document.getElementById('sms-to');
+    if (select) select.value = bookingId;
+    if (toInput) toInput.value = phone;
+    // Scroll into view
+    document.getElementById('sms-center-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('sms-body')?.focus();
+}
+
+async function sendManualSms() {
+    const to = (document.getElementById('sms-to')?.value || '').trim();
+    const body = (document.getElementById('sms-body')?.value || '').trim();
+    const bookingId = document.getElementById('sms-booking-select')?.value || undefined;
+    const statusEl = document.getElementById('sms-status');
+    const btn = document.getElementById('sms-send-btn');
+
+    if (!to) { statusEl.style.color = '#ef4444'; statusEl.textContent = 'Fyll inn telefonnummer.'; return; }
+    if (!body) { statusEl.style.color = '#ef4444'; statusEl.textContent = 'Fyll inn melding.'; return; }
+    if (!/^\d{8}$/.test(to)) { statusEl.style.color = '#ef4444'; statusEl.textContent = 'Nummeret må være nøyaktig 8 sifre (uten +47).'; return; }
+
+    btn.disabled = true;
+    btn.textContent = 'Sender...';
+    statusEl.textContent = '';
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/sms/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ to, body, bookingId }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+            statusEl.style.color = '#059669';
+            statusEl.textContent = `✓ SMS sendt til +47${to}!`;
+            document.getElementById('sms-body').value = '';
+            updateSmsCounter();
+        } else {
+            statusEl.style.color = '#ef4444';
+            statusEl.textContent = `Feil: ${data.error || 'Ukjent feil.'}`;
+        }
+    } catch (err) {
+        console.error('sendManualSms error:', err);
+        statusEl.style.color = '#ef4444';
+        statusEl.textContent = 'Nettverksfeil. Prøv igjen.';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Send SMS';
     }
 }

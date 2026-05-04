@@ -1,5 +1,6 @@
 const { app } = require('@azure/functions');
 const { sendEmail } = require('../../../shared/email');
+const { sendSms } = require('../../../shared/sms');
 const { createHtmlResponse, createJsonResponse, parseBody } = require('../../../shared/http');
 const { getBooking, updateBookingStatus, updateBookingFields } = require('../../../shared/cosmosDb');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
@@ -285,6 +286,12 @@ app.http('approveBooking', {
                     html,
                 });
                 context.info(`approveBooking: Approval email sent to ${existingBooking.requesterEmail}`);
+
+                // --- SMS til leietaker ved godkjenning ---
+                if (existingBooking.phone) {
+                    const approvalSmsBody = `Din booking ${existingBooking.date} er godkjent! Du mottar leieavtale på e-post. – Bjørkvang`;
+                    await sendSms({ to: existingBooking.phone, body: approvalSmsBody }, context);
+                }
             }
         } catch (error) {
             context.error('approveBooking: Failed to send booking approval email', {

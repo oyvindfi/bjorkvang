@@ -1,5 +1,6 @@
 const { app } = require('@azure/functions');
 const { sendEmail } = require('../../../shared/email');
+const { sendSms } = require('../../../shared/sms');
 const { createJsonResponse, parseBody } = require('../../../shared/http');
 const { getBooking } = require('../../../shared/cosmosDb');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
@@ -72,6 +73,12 @@ app.http('sendReminder', {
                 subject: `Påminnelse: Booking ${safeDate}`,
                 html: html
             });
+
+            // --- SMS-påminnelse til leietaker ---
+            if (booking.phone) {
+                const reminderSmsBody = `Påminnelse: Du har leid Bjørkvang ${booking.date} kl. ${booking.time || ''}. Velkommen! – Bjørkvang`;
+                await sendSms({ to: booking.phone, body: reminderSmsBody.replace(/\s+/g, ' ').trim() }, context);
+            }
 
             return createJsonResponse(200, { message: 'Reminder sent' });
 

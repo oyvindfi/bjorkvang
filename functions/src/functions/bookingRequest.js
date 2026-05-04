@@ -1,5 +1,6 @@
 const { app } = require('@azure/functions');
 const { sendEmail } = require('../../shared/email');
+const { sendSms } = require('../../shared/sms');
 const { createJsonResponse, parseBody, resolveBaseUrl } = require('../../shared/http');
 const { saveBooking, listBookings } = require('../../shared/cosmosDb');
 const { generateEmailHtml } = require('../../shared/emailTemplate');
@@ -349,6 +350,12 @@ app.http('bookingRequest', {
             
             context.info('bookingRequest: Board notification email sent');
 
+            // --- Board SMS notification ---
+            if (process.env.BOARD_PHONE_NUMBER) {
+                const boardSmsBody = `Ny booking: ${booking.requesterName}, ${booking.date}, ${booking.eventType}. Se admin for godkjenning. – Bjørkvang`;
+                await sendSms({ to: process.env.BOARD_PHONE_NUMBER, body: boardSmsBody }, context);
+            }
+
             // --- Requester Confirmation Email ---
             const confirmationSubject = isPaid
                 ? 'Booking bekreftet – betaling mottatt'
@@ -397,6 +404,12 @@ app.http('bookingRequest', {
                     html: confirmationHtml,
                 });
                 context.info('bookingRequest: Confirmation email sent to requester');
+
+                // --- Requester SMS confirmation ---
+                if (booking.phone) {
+                    const requesterSmsBody = `Hei ${booking.requesterName}! Vi har mottatt din forespørsel for ${booking.date}. Vi behandler den snart. – Bjørkvang`;
+                    await sendSms({ to: booking.phone, body: requesterSmsBody }, context);
+                }
             } catch (error) {
                 context.error('bookingRequest: Failed to send confirmation email to requester', {
                     error: error.message,
