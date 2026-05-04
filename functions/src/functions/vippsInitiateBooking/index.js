@@ -74,7 +74,7 @@ app.http('vippsInitiateBooking', {
             const returnUrl = `${baseUrl.replace('/api', '')}/booking?status=success&orderId=${orderId}`;
 
             // Create descriptive payment text
-            const paymentText = `Depositum (50%) – ${eventType || 'arrangement'} - ${spaces.join(', ')} - ${date} kl ${time}`;
+            const paymentText = `Forhåndsbetaling (50%) – ${eventType || 'arrangement'} - ${spaces.join(', ')} - ${date} kl ${time}`;
 
             const paymentResponse = await initiatePayment({
                 amount: depositAmount,

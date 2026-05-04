@@ -53,7 +53,7 @@ app.http('sendDepositRequest', {
         // If already sent and not forcing, return current state
         if (booking.depositRequested && !forceResend) {
             return createJsonResponse(200, {
-                message: 'Depositumforespørsel allerede sendt. Bruk force=true for å sende på nytt.',
+                message: 'Forhåndsbetalingsforespørsel allerede sendt. Bruk force=true for å sende på nytt.',
                 booking
             }, request);
         }
@@ -96,13 +96,13 @@ app.http('sendDepositRequest', {
                     <td style="padding:8px 0;text-align:right;">kr ${totalNOK.toLocaleString('nb-NO')}</td>
                 </tr>
                 <tr>
-                    <td style="padding:12px 0;font-weight:bold;font-size:17px;">Depositum å betale nå (50&nbsp;%)</td>
+                    <td style="padding:12px 0;font-weight:bold;font-size:17px;">Forhåndsbetaling å betale nå (50&nbsp;%)</td>
                     <td style="padding:12px 0;text-align:right;font-weight:bold;font-size:17px;">kr ${depositNOK.toLocaleString('nb-NO')}</td>
                 </tr>
             </table>
             <p style="font-size:0.88rem;color:#6b7280;">
                 Restbeløpet (kr ${remainingNOK.toLocaleString('nb-NO')}) faktureres etter arrangementet.
-                Depositum er ikke refunderbart ved kansellering uten saklig grunn.
+                Forhåndsbetaling er ikke refunderbart ved kansellering uten saklig grunn.
             </p>`;
 
         let depositVippsOrderId = null;
@@ -120,7 +120,7 @@ app.http('sendDepositRequest', {
                     amount: depositNOK * 100, // øre
                     orderId,
                     returnUrl,
-                    text: `Depositum – Bjørkvang (${booking.eventType || 'leie'})`,
+                    text: `Forhåndsbetaling – Bjørkvang (${booking.eventType || 'leie'})`,
                     phoneNumber: booking.phone || undefined
                 });
                 vippsUrl = vippsResponse.redirectUrl;
@@ -130,34 +130,34 @@ app.http('sendDepositRequest', {
                 return createJsonResponse(502, { error: 'Kunne ikke opprette Vipps-betaling.' }, request);
             }
 
-            emailSubject = `Depositumforespørsel – Bjørkvang leie (${booking.date || ''})`;
+            emailSubject = `Forhåndsbetalingsforespørsel – Bjørkvang leie (${booking.date || ''})`;
             emailText = [
                 `Hei ${booking.requesterName},`,
                 '',
-                'Din bookingforespørsel er godkjent! For å sikre datoen ber vi deg betale 50 % depositum via Vipps.',
+                'Din bookingforespørsel er godkjent! For å sikre datoen ber vi deg betale 50 % Forhåndsbetaling via Vipps.',
                 '',
                 `Arrangement: ${booking.eventType || ''}`,
                 `Dato: ${booking.date || ''}`,
                 `Lokaler: ${spaces}`,
                 `Estimert totalpris: kr ${totalNOK.toLocaleString('nb-NO')}`,
-                `Depositum nå (50%): kr ${depositNOK.toLocaleString('nb-NO')}`,
+                `Forhåndsbetaling nå (50%): kr ${depositNOK.toLocaleString('nb-NO')}`,
                 '',
                 `Betal med Vipps: ${vippsUrl}`,
                 '',
                 `Restbeløpet (kr ${remainingNOK.toLocaleString('nb-NO')}) faktureres etter arrangementet.`,
-                'Depositum er ikke refunderbart ved kansellering uten saklig grunn.',
+                'Forhåndsbetaling er ikke refunderbart ved kansellering uten saklig grunn.',
                 '',
                 'Med vennlig hilsen,',
                 'Styret ved Bjørkvang'
             ].join('\n');
 
             emailHtml = generateEmailHtml({
-                title: 'Depositumforespørsel – Bjørkvang',
-                previewText: `Betal depositum kr ${depositNOK.toLocaleString('nb-NO')} for din booking`,
+                title: 'Forhåndsbetalingsforespørsel – Bjørkvang',
+                previewText: `Betal Forhåndsbetaling kr ${depositNOK.toLocaleString('nb-NO')} for din booking`,
                 content: `
                     <p>Hei ${escapeHtml(booking.requesterName)},</p>
                     <p>🎉 Din bookingforespørsel er godkjent! For å sikre datoen ber vi deg betale
-                    <strong>50&nbsp;% depositum</strong> innen 5 dager.</p>
+                    <strong>50&nbsp;% Forhåndsbetaling</strong> innen 5 dager.</p>
                     ${summaryTable}
                     <p>Har du spørsmål, ta kontakt med oss på
                     <a href="mailto:styret@bjorkvang.org">styret@bjorkvang.org</a>.</p>
@@ -166,36 +166,36 @@ app.http('sendDepositRequest', {
             });
         } else {
             // Bank transfer
-            emailSubject = `Depositumforespørsel – Bjørkvang leie (${booking.date || ''})`;
+            emailSubject = `Forhåndsbetalingsforespørsel – Bjørkvang leie (${booking.date || ''})`;
             emailText = [
                 `Hei ${booking.requesterName},`,
                 '',
-                'Din bookingforespørsel er godkjent! For å sikre datoen ber vi deg betale 50 % depositum via bankoverføring innen 5 dager.',
+                'Din bookingforespørsel er godkjent! For å sikre datoen ber vi deg betale 50 % Forhåndsbetaling via bankoverføring innen 5 dager.',
                 '',
                 `Arrangement: ${booking.eventType || ''}`,
                 `Dato: ${booking.date || ''}`,
                 `Lokaler: ${spaces}`,
                 `Estimert totalpris: kr ${totalNOK.toLocaleString('nb-NO')}`,
-                `Depositum nå (50%): kr ${depositNOK.toLocaleString('nb-NO')}`,
+                `Forhåndsbetaling nå (50%): kr ${depositNOK.toLocaleString('nb-NO')}`,
                 '',
                 `Kontonummer: ${bankAccount}`,
                 `Merk betalingen med: ${id}`,
                 'Betalingsfrist: 5 dager',
                 '',
                 `Restbeløpet (kr ${remainingNOK.toLocaleString('nb-NO')}) faktureres etter arrangementet.`,
-                'Depositum er ikke refunderbart ved kansellering uten saklig grunn.',
+                'Forhåndsbetaling er ikke refunderbart ved kansellering uten saklig grunn.',
                 '',
                 'Med vennlig hilsen,',
                 'Styret ved Bjørkvang'
             ].join('\n');
 
             emailHtml = generateEmailHtml({
-                title: 'Depositumforespørsel – Bjørkvang',
-                previewText: `Betal depositum kr ${depositNOK.toLocaleString('nb-NO')} – kontonr. ${bankAccount}`,
+                title: 'Forhåndsbetalingsforespørsel – Bjørkvang',
+                previewText: `Betal Forhåndsbetaling kr ${depositNOK.toLocaleString('nb-NO')} – kontonr. ${bankAccount}`,
                 content: `
                     <p>Hei ${escapeHtml(booking.requesterName)},</p>
                     <p>🎉 Din bookingforespørsel er godkjent! For å sikre datoen ber vi deg betale
-                    <strong>50&nbsp;% depositum</strong> via bankoverføring innen 5 dager.</p>
+                    <strong>50&nbsp;% Forhåndsbetaling</strong> via bankoverføring innen 5 dager.</p>
                     ${summaryTable}
                     <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px 20px;margin:16px 0;">
                         <p style="margin:0 0 8px;font-weight:bold;">Betalingsinformasjon</p>
@@ -226,9 +226,9 @@ app.http('sendDepositRequest', {
         if (booking.phone) {
             let depositSmsBody;
             if (paymentMethod === 'vipps' && vippsUrl) {
-                depositSmsBody = `Betal depositum kr ${depositNOK.toLocaleString('nb-NO')} for ${booking.date} via Vipps: ${vippsUrl} – Bjørkvang`;
+                depositSmsBody = `Betal Forhåndsbetaling kr ${depositNOK.toLocaleString('nb-NO')} for ${booking.date} via Vipps: ${vippsUrl} – Bjørkvang`;
             } else {
-                depositSmsBody = `Betal depositum kr ${depositNOK.toLocaleString('nb-NO')} for ${booking.date} til konto ${bankAccount} (merk: ${id.slice(0, 8)}). – Bjørkvang`;
+                depositSmsBody = `Betal Forhåndsbetaling kr ${depositNOK.toLocaleString('nb-NO')} for ${booking.date} til konto ${bankAccount} (merk: ${id.slice(0, 8)}). – Bjørkvang`;
             }
             await sendSms({ to: booking.phone, body: depositSmsBody }, context);
         }
@@ -246,7 +246,7 @@ app.http('sendDepositRequest', {
         context.info(`sendDepositRequest: sent to ${booking.requesterEmail} for booking ${id} via ${paymentMethod}`);
 
         return createJsonResponse(200, {
-            message: 'Depositumforespørsel sendt.',
+            message: 'Forhåndsbetalingsforespørsel sendt.',
             sentTo: booking.requesterEmail,
             depositAmount: depositNOK,
             paymentMethod,

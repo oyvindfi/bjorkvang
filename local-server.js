@@ -208,7 +208,7 @@ async function handleApi(pathname, body, req) {
         };
     }
 
-    // POST /api/vipps/initiate-booking  →  Booking depositum (50%)
+    // POST /api/vipps/initiate-booking  →  Booking Forhåndsbetaling (50%)
     if (pathname === '/api/vipps/initiate-booking') {
         const { spaces, attendees, date, time, requesterName, eventType, phoneNumber, isMember } = body;
         if (!spaces || !Array.isArray(spaces) || !date || !time || !requesterName) {
@@ -232,7 +232,7 @@ async function handleApi(pathname, body, req) {
             amount: depositAmount,
             orderId,
             returnUrl,
-            text: `Depositum (50%) – ${eventType || 'arrangement'} – ${spaces.join(', ')} – ${date} kl ${time}`,
+            text: `Forhåndsbetaling (50%) – ${eventType || 'arrangement'} – ${spaces.join(', ')} – ${date} kl ${time}`,
             phoneNumber
         });
         return { url: result.redirectUrl, orderId, totalAmount: total, depositAmount: total / 2 };

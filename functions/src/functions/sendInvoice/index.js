@@ -93,7 +93,7 @@ app.http('sendInvoice', {
                     <td style="padding:8px 0; text-align:right;">kr ${totalNok.toLocaleString('nb-NO')}</td>
                 </tr>
                 <tr style="border-bottom:1px solid #e5e7eb;">
-                    <td style="padding:8px 0; color:#6b7280;">Allerede betalt (depositum)</td>
+                    <td style="padding:8px 0; color:#6b7280;">Allerede betalt (Forhåndsbetaling)</td>
                     <td style="padding:8px 0; text-align:right; color:#1a823b;">− kr ${depositNok.toLocaleString('nb-NO')}</td>
                 </tr>
                 <tr>
@@ -129,7 +129,7 @@ Lokaler: ${spaces}
 Dato: ${eventDate}
 
 Totalbeløp: kr ${totalNok.toLocaleString('nb-NO')}
-Allerede betalt (depositum): kr ${depositNok.toLocaleString('nb-NO')}
+Allerede betalt (Forhåndsbetaling): kr ${depositNok.toLocaleString('nb-NO')}
 Restbeløp å betale: kr ${remainingNok.toLocaleString('nb-NO')}
 
 Betalingsinformasjon:

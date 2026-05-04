@@ -64,14 +64,14 @@ app.http('checkVippsStatuses', {
                                 const depositNOK = Number(booking.depositAmount) || 0;
                                 const depositStr = depositNOK
                                     ? `kr\u00a0${depositNOK.toLocaleString('nb-NO')}`
-                                    : 'depositum';
+                                    : 'Forhåndsbetaling';
                                 const paidAt = new Date(now).toLocaleDateString('nb-NO', { day: 'numeric', month: 'long', year: 'numeric' });
                                 const dateObj = new Date(`${booking.date}T00:00:00`);
                                 const eventDate = !isNaN(dateObj)
                                     ? dateObj.toLocaleDateString('nb-NO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
                                     : (booking.date || '');
                                 const html = generateEmailHtml({
-                                    title: 'Depositum mottatt \u2705',
+                                    title: 'Forhåndsbetaling mottatt \u2705',
                                     previewText: `Vi har mottatt ${depositStr} \u2013 bookingen din er bekreftet.`,
                                     content: `
                                         <p>Hei ${booking.requesterName || ''},</p>
@@ -90,7 +90,7 @@ app.http('checkVippsStatuses', {
                                 await sendEmail({
                                     to: booking.requesterEmail.trim(),
                                     from,
-                                    subject: `Kvittering \u2013 depositum mottatt (${depositStr})`,
+                                    subject: `Kvittering \u2013 Forhåndsbetaling mottatt (${depositStr})`,
                                     text: `Hei ${booking.requesterName || ''}!\n\nVi har mottatt ${depositStr} via Vipps. Bookingen din er bekreftet.\n\nRestbel\u00f8pet faktureres etter arrangementet.\n\nVennlig hilsen\nHelg\u00f8ens Vel`,
                                     html,
                                 });

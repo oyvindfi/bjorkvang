@@ -223,7 +223,7 @@ app.http('approveBooking', {
                         <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 0;color:#6b7280;">Form\u00e5l</td><td style="padding:8px 0;text-align:right;">${safeEventType}</td></tr>
                         <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 0;color:#6b7280;">Lokale</td><td style="padding:8px 0;text-align:right;">${safeSpaces}</td></tr>
                         <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 0;color:#6b7280;">Estimert leiesum</td><td style="padding:8px 0;text-align:right;">${totalStr}</td></tr>
-                        <tr><td style="padding:8px 0;color:#6b7280;">Depositum (50&nbsp;%)</td><td style="padding:8px 0;text-align:right;font-weight:700;color:#166534;">${depositStr}</td></tr>
+                        <tr><td style="padding:8px 0;color:#6b7280;">Forhåndsbetaling (50&nbsp;%)</td><td style="padding:8px 0;text-align:right;font-weight:700;color:#166534;">${depositStr}</td></tr>
                     </table>`;
 
                 // Optional admin message block
@@ -240,7 +240,7 @@ app.http('approveBooking', {
                     ${summaryTable}
 
                     <h3 style="margin:20px 0 6px;font-size:1rem;">Neste steg &ndash; Signer leieavtalen</h3>
-                    <p style="margin:0 0 4px;">Les gjennom og signer avtalen digitalt. N\u00e5r begge parter har signert, sender vi informasjon om depositumsbetaling.</p>
+                    <p style="margin:0 0 4px;">Les gjennom og signer avtalen digitalt. N\u00e5r begge parter har signert, sender vi informasjon om Forhåndsbetalingsbetaling.</p>
                     <div style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:8px;padding:16px 20px;margin:12px 0 16px;">
                         <a href="${contractLink}" style="display:inline-block;background:#1a56db;color:#fff;font-weight:700;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:1rem;">&#128394; Signer leieavtalen</a>
                     </div>
@@ -250,7 +250,7 @@ app.http('approveBooking', {
                         <ol style="margin:0;padding-left:20px;color:#4b5563;font-size:0.9rem;">
                             <li>Signer leieavtalen digitalt (lenke over)</li>
                             <li>Styret signerer som utleier</li>
-                            <li>Du mottar depositumsforesp\u00f8rsel (${depositStr})</li>
+                            <li>Du mottar Forhåndsbetalingsforesp\u00f8rsel (${depositStr})</li>
                             <li>Etter arrangementet sendes sluttfaktura for restbel\u00f8pet</li>
                         </ol>
                     </div>
@@ -278,7 +278,7 @@ app.http('approveBooking', {
                         'Neste steg \u2013 Signer leieavtalen:',
                         contractLink,
                         '',
-                        'N\u00e5r begge parter har signert, sender vi depositumsforesp\u00f8rsel.',
+                        'N\u00e5r begge parter har signert, sender vi Forhåndsbetalingsforesp\u00f8rsel.',
                         '',
                         'Vennlig hilsen',
                         'Helg\u00f8ens Vel'

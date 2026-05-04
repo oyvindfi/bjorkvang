@@ -393,7 +393,7 @@ app.http('bookingRequest', {
                 previewText: `Forespørselen din for ${formattedStartDate} er mottatt – vi behandler den snarest.`
             });
 
-            const confirmationText = `Hei ${booking.requesterName},\n\nTakk for din forespørsel om å booke Bjørkvang forsamlingslokale.\n\nOppsummering:\n- Dato: ${booking.date}\n- Fra: kl. ${booking.time}\n- Til: ${formattedEnd}\n- Formål: ${booking.eventType}\n- Lokale: ${booking.spaces.join(', ')}\n- Antall gjester: ${booking.attendees || 'Ikke oppgitt'}${totalNOK ? `\n- Estimert leiesum: kr ${totalNOK.toLocaleString('nb-NO')}\n- Depositum (50 %): kr ${depositNOK.toLocaleString('nb-NO')}` : ''}${booking.cateringContact ? '\n- Catering: Du har bedt om å bli kontaktet av Næs Mat og Event' : ''}\n\nStyret vil behandle forespørselen og ta kontakt innen 2\u20133 virkedager.\n\nVennlig hilsen\nHelgøens Vel\nstyret@bjorkvang.org | +47 480 60 273`;
+            const confirmationText = `Hei ${booking.requesterName},\n\nTakk for din forespørsel om å booke Bjørkvang forsamlingslokale.\n\nOppsummering:\n- Dato: ${booking.date}\n- Fra: kl. ${booking.time}\n- Til: ${formattedEnd}\n- Formål: ${booking.eventType}\n- Lokale: ${booking.spaces.join(', ')}\n- Antall gjester: ${booking.attendees || 'Ikke oppgitt'}${totalNOK ? `\n- Estimert leiesum: kr ${totalNOK.toLocaleString('nb-NO')}\n- Forhåndsbetaling (50 %): kr ${depositNOK.toLocaleString('nb-NO')}` : ''}${booking.cateringContact ? '\n- Catering: Du har bedt om å bli kontaktet av Næs Mat og Event' : ''}\n\nStyret vil behandle forespørselen og ta kontakt innen 2\u20133 virkedager.\n\nVennlig hilsen\nHelgøens Vel\nstyret@bjorkvang.org | +47 480 60 273`;
 
             try {
                 await sendEmail({

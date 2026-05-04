@@ -107,7 +107,7 @@ app.http('sendFinalInvoice', {
 
         // Deposit already paid
         itemRows.push({
-            label: '− Depositum allerede betalt',
+            label: '− Forhåndsbetaling allerede betalt',
             amount: -depositNOK,
             style: 'color:#059669;'
         });
@@ -146,8 +146,8 @@ app.http('sendFinalInvoice', {
             </table>`;
 
         const infoNote = `<p style="font-size:0.88rem;color:#6b7280;margin-top:8px;">
-            Depositum (kr ${depositNOK.toLocaleString('nb-NO')}) er allerede betalt og er trukket fra totalbeløpet.
-            Depositumet refunderes ikke. Har du spørsmål? Ta kontakt på
+            Forhåndsbetaling (kr ${depositNOK.toLocaleString('nb-NO')}) er allerede betalt og er trukket fra totalbeløpet.
+            Forhåndsbetalingen refunderes ikke. Har du spørsmål? Ta kontakt på
             <a href="mailto:styret@bjorkvang.org">styret@bjorkvang.org</a>.
             </p>`;
 
@@ -188,7 +188,7 @@ app.http('sendFinalInvoice', {
             `Betalingsfrist: ${dueDateStr}`,
             vippsUrl ? `Betal med Vipps: ${vippsUrl}` : `Kontonummer: ${bankAccount}  |  Merk: ${id}`,
             '',
-            'Depositum er allerede betalt og trukket fra beløpet.',
+            'Forhåndsbetaling er allerede betalt og trukket fra beløpet.',
             '',
             'Med vennlig hilsen,',
             'Styret ved Bjørkvang'
@@ -237,7 +237,7 @@ app.http('sendFinalInvoice', {
             finalInvoiceAmountNOK: remainingNOK,
             invoiceItems: [
                 ...extraItems,
-                { description: 'Depositum trukket fra', amountNOK: -depositNOK }
+                { description: 'Forhåndsbetaling trukket fra', amountNOK: -depositNOK }
             ]
         };
         if (finalInvoiceVippsOrderId) {

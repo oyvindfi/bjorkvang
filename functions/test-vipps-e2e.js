@@ -75,10 +75,10 @@ async function testMembership() {
     }
 }
 
-// ─── 3. Booking-depositum (50%) ───────────────────────────────────────────────
+// ─── 3. Booking-Forhåndsbetaling (50%) ───────────────────────────────────────────────
 
 async function testBookingDeposit() {
-    console.log('\n🏠 Test 2: Booking depositum – Peisestue (50% av 1500 kr = 750 kr)');
+    console.log('\n🏠 Test 2: Booking Forhåndsbetaling – Peisestue (50% av 1500 kr = 750 kr)');
 
     const { status, data } = await post('/vipps/initiate-booking', {
         phoneNumber: '4748059940',
@@ -91,7 +91,7 @@ async function testBookingDeposit() {
     });
 
     if (status === 200 && data.url && data.orderId) {
-        ok(`Depositum initiert`, `Order: ${data.orderId}`);
+        ok(`Forhåndsbetaling initiert`, `Order: ${data.orderId}`);
         ok(`Forventet beløp: 75000 øre (750 kr)`);
         console.log(`\n  🔗 Betalingslenke:`);
         console.log(`     ${data.url}\n`);
@@ -117,7 +117,7 @@ async function testBookingLargeVenue() {
     });
 
     if (status === 200 && data.url) {
-        ok(`Depositum initiert`, `Order: ${data.orderId}`);
+        ok(`Forhåndsbetaling initiert`, `Order: ${data.orderId}`);
         console.log(`\n  🔗 Betalingslenke:`);
         console.log(`     ${data.url}\n`);
     } else {

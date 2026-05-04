@@ -32,7 +32,7 @@ app.http('depositPaid', {
 
         if (booking.depositPaid) {
             context.info(`depositPaid: Deposit already marked as paid for booking ${id}`);
-            return createJsonResponse(200, { message: 'Depositum allerede registrert som betalt.', booking }, request);
+            return createJsonResponse(200, { message: 'Forhåndsbetaling allerede registrert som betalt.', booking }, request);
         }
 
         const updated = await updateBookingFields(id.trim(), null, {
@@ -54,18 +54,18 @@ app.http('depositPaid', {
                 const depositNOK = Number(updated.depositAmount) || 0;
                 const depositStr = depositNOK
                     ? `kr\u00a0${depositNOK.toLocaleString('nb-NO')}`
-                    : 'depositum';
+                    : 'Forhåndsbetaling';
                 const paidAt = new Date().toLocaleDateString('nb-NO', { day: 'numeric', month: 'long', year: 'numeric' });
                 const dateObj = new Date(`${updated.date}T00:00:00`);
                 const eventDate = !isNaN(dateObj)
                     ? dateObj.toLocaleDateString('nb-NO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
                     : (updated.date || '');
                 const html = generateEmailHtml({
-                    title: 'Depositum mottatt \u2705',
+                    title: 'Forhåndsbetaling mottatt \u2705',
                     previewText: `Vi har mottatt ${depositStr} \u2013 bookingen din er bekreftet.`,
                     content: `
                         <p>Hei ${updated.requesterName || ''},</p>
-                        <p>Vi har mottatt <strong>${depositStr}</strong> i depositum. Bookingen din er n\u00e5 bekreftet.</p>
+                        <p>Vi har mottatt <strong>${depositStr}</strong> i Forhåndsbetaling. Bookingen din er n\u00e5 bekreftet.</p>
                         <table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:15px;">
                             <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 0;color:#6b7280;">Kvitteringsdato</td><td style="padding:8px 0;text-align:right;">${paidAt}</td></tr>
                             <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 0;color:#6b7280;">Bel\u00f8p</td><td style="padding:8px 0;text-align:right;font-weight:700;color:#166534;">${depositStr}</td></tr>
@@ -79,8 +79,8 @@ app.http('depositPaid', {
                 await sendEmail({
                     to: updated.requesterEmail.trim(),
                     from,
-                    subject: `Kvittering \u2013 depositum mottatt (${depositStr})`,
-                    text: `Hei ${updated.requesterName || ''}!\n\nVi har mottatt ${depositStr} i depositum. Bookingen din er bekreftet.\n\nRestbel\u00f8pet faktureres etter arrangementet.\n\nVennlig hilsen\nHelg\u00f8ens Vel`,
+                    subject: `Kvittering \u2013 Forhåndsbetaling mottatt (${depositStr})`,
+                    text: `Hei ${updated.requesterName || ''}!\n\nVi har mottatt ${depositStr} i Forhåndsbetaling. Bookingen din er bekreftet.\n\nRestbel\u00f8pet faktureres etter arrangementet.\n\nVennlig hilsen\nHelg\u00f8ens Vel`,
                     html,
                 });
                 context.info(`depositPaid: Receipt sent to ${updated.requesterEmail}`);
@@ -89,6 +89,6 @@ app.http('depositPaid', {
             }
         }
 
-        return createJsonResponse(200, { message: 'Depositum registrert som betalt.', booking: updated }, request);
+        return createJsonResponse(200, { message: 'Forhåndsbetaling registrert som betalt.', booking: updated }, request);
     }
 });
