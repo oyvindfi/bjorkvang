@@ -9,6 +9,10 @@ function injectRescheduleModal() {
     const modal = document.createElement('div');
     modal.id = 'reschedule-modal';
     modal.style.cssText = 'display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9000; align-items:center; justify-content:center;';
+    const timeOpts = Array.from({length: 18}, (_, i) => {
+        const h = String(i + 6).padStart(2, '0');
+        return `<option value="${h}:00">${h}:00</option>`;
+    }).join('');
     modal.innerHTML = `
         <div style="background:#fff; border-radius:10px; padding:2rem; max-width:420px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
             <h3 style="margin:0 0 0.25rem; font-size:1.2rem;">Endre dato for booking</h3>
@@ -19,7 +23,7 @@ function injectRescheduleModal() {
             <label style="display:block; font-weight:600; margin-bottom:0.4rem;">Ny dato</label>
             <input id="reschedule-date" type="date" style="width:100%; padding:0.55rem; border:1px solid #d1d5db; border-radius:6px; font-size:1rem; margin-bottom:1rem; box-sizing:border-box;" />
             <label style="display:block; font-weight:600; margin-bottom:0.4rem;">Nytt tidspunkt</label>
-            <input id="reschedule-time" type="time" style="width:100%; padding:0.55rem; border:1px solid #d1d5db; border-radius:6px; font-size:1rem; margin-bottom:1.5rem; box-sizing:border-box;" />
+            <select id="reschedule-time" style="width:100%; padding:0.55rem; border:1px solid #d1d5db; border-radius:6px; font-size:1rem; margin-bottom:1.5rem; box-sizing:border-box; background:#fff;">${timeOpts}</select>
             <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
                 <button onclick="closeRescheduleModal()" style="padding:0.55rem 1.2rem; border:1px solid #d1d5db; border-radius:6px; background:#fff; cursor:pointer; font-size:0.95rem;">Avbryt</button>
                 <button id="reschedule-confirm-btn" onclick="confirmReschedule()" style="padding:0.55rem 1.4rem; border:none; border-radius:6px; background:#3b82f6; color:#fff; font-weight:600; cursor:pointer; font-size:0.95rem;">Bekreft flytt</button>
