@@ -76,7 +76,7 @@ app.http('sendReminder', {
 
             // --- SMS-påminnelse til leietaker ---
             if (booking.phone) {
-                const reminderSmsBody = `Påminnelse: Du har leid Bjørkvang ${booking.date} kl. ${booking.time || ''}. Velkommen! – Bjørkvang`;
+                const reminderSmsBody = `Påminnelse: Du har leid Bjørkvang ${booking.date} kl. ${booking.time || ''}. Signer avtalen: ${contractLink} – Bjørkvang`;
                 await sendSms({ to: booking.phone, body: reminderSmsBody.replace(/\s+/g, ' ').trim() }, context);
             }
 

@@ -289,7 +289,7 @@ app.http('approveBooking', {
 
                 // --- SMS til leietaker ved godkjenning ---
                 if (existingBooking.phone) {
-                    const approvalSmsBody = `Din booking ${existingBooking.date} er godkjent! Du mottar leieavtale på e-post. – Bjørkvang`;
+                    const approvalSmsBody = `Din booking ${existingBooking.date} er godkjent! Signer avtalen: ${contractLink} – Bjørkvang`;
                     await sendSms({ to: existingBooking.phone, body: approvalSmsBody }, context);
                 }
             }

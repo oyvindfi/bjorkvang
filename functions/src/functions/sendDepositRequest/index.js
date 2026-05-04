@@ -2,6 +2,7 @@ const { app } = require('@azure/functions');
 const { createJsonResponse } = require('../../../shared/http');
 const { getBooking, updateBookingFields } = require('../../../shared/cosmosDb');
 const { sendEmail } = require('../../../shared/email');
+const { sendSms } = require('../../../shared/sms');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
 const vipps = require('../../../shared/vipps');
 
@@ -219,6 +220,17 @@ app.http('sendDepositRequest', {
         } catch (err) {
             context.error('sendDepositRequest: Failed to send email', err);
             return createJsonResponse(500, { error: 'Kunne ikke sende e-post.' }, request);
+        }
+
+        // --- SMS med betalingslenke ---
+        if (booking.phone) {
+            let depositSmsBody;
+            if (paymentMethod === 'vipps' && vippsUrl) {
+                depositSmsBody = `Betal depositum kr ${depositNOK.toLocaleString('nb-NO')} for ${booking.date} via Vipps: ${vippsUrl} – Bjørkvang`;
+            } else {
+                depositSmsBody = `Betal depositum kr ${depositNOK.toLocaleString('nb-NO')} for ${booking.date} til konto ${bankAccount} (merk: ${id.slice(0, 8)}). – Bjørkvang`;
+            }
+            await sendSms({ to: booking.phone, body: depositSmsBody }, context);
         }
 
         const updateFields = {
