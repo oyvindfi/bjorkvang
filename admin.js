@@ -646,13 +646,15 @@ function createBookingCard(booking) {
             approvedActions += `<button onclick="markFinalInvoicePaid('${booking.id}')" class="btn-sm" style="background:#0ea5e9;">✅ Sluttfaktura betalt${paymentMethod === 'bank' ? ' (bank)' : ' (manuelt)'}</button>`;
         }
 
-        // Contextual reminder — only shown when there is something to remind about
-        if (!isRequesterSigned) {
-            approvedActions += `<button onclick="sendReminder('${booking.id}')" class="btn-sm" style="background:#f59e0b;color:black;" title="Send signaturpåminnelse til leietaker">📄 Signaturpåminnelse</button>`;
+        // Contextual reminder — only shown when leietaker has a pending action
+        const bookingDatePast = booking.date && new Date(booking.date + 'T23:59:59') < new Date();
+        if (!isRequesterSigned && !bookingDatePast) {
+            // Signing reminder only makes sense before the event date
+            approvedActions += `<button onclick="sendReminder('${booking.id}', 'signing')" class="btn-sm" style="background:#f59e0b;color:black;" title="Send signaturpåminnelse til leietaker">📄 Signaturpåminnelse</button>`;
         } else if (depositRequested && !depositPaid) {
-            approvedActions += `<button onclick="sendReminder('${booking.id}')" class="btn-sm" style="background:#f59e0b;color:black;" title="Minn leietaker om å betale forhåndsbetalingen">💸 Betalingspåminnelse</button>`;
+            approvedActions += `<button onclick="sendReminder('${booking.id}', 'deposit')" class="btn-sm" style="background:#f59e0b;color:black;" title="Minn leietaker om å betale forhåndsbetalingen">💸 Betalingspåminnelse</button>`;
         } else if (finalInvoiceSent && !finalInvoicePaid) {
-            approvedActions += `<button onclick="sendReminder('${booking.id}')" class="btn-sm" style="background:#f59e0b;color:black;" title="Minn leietaker om å betale sluttfakturaen">💰 Sluttfakturapåminnelse</button>`;
+            approvedActions += `<button onclick="sendReminder('${booking.id}', 'finalInvoice')" class="btn-sm" style="background:#f59e0b;color:black;" title="Minn leietaker om å betale sluttfakturaen">💰 Sluttfakturapåminnelse</button>`;
         }
 
         if ((booking.rescheduleCount || 0) < 1) {
@@ -760,8 +762,14 @@ function copyContractLink(id) {
     navigator.clipboard.writeText(link).then(() => alert('Lenke kopiert!'));
 }
 
-async function sendReminder(id) {
-    const comment = prompt('Vil du legge til en kommentar i påminnelsen? (Valgfritt)');
+async function sendReminder(id, type) {
+    const typeLabels = {
+        signing:      'Signaturpåminnelse – leietaker blir bedt om å signere leieavtalen.',
+        deposit:      'Betalingspåminnelse – leietaker blir minnet om å betale forhåndsbetalingen.',
+        finalInvoice: 'Sluttfakturapåminnelse – leietaker blir minnet om å betale sluttfakturaen.',
+    };
+    const description = typeLabels[type] || 'Generell påminnelse sendes til leietaker.';
+    const comment = prompt(`${description}\n\nVil du legge til en kommentar? (Valgfritt)`);
     if (comment === null) return; // Cancelled
 
     try {
@@ -1008,19 +1016,38 @@ async function checkVippsPayment(orderId, bookingId) {
         const data = await res.json().catch(() => ({}));
         if (res.ok) {
             const status = data.status || 'UNKNOWN';
-            const statusMap = {
-                'CREATED': '⏳ Opprettet – venter på bruker',
-                'AUTHORIZED': '✅ Autorisert – betaling godkjent!',
-                'CAPTURED': '✅ Fanget – betaling fullført!',
-                'CANCELLED': '❌ Kansellert av bruker',
-                'EXPIRED': '⏰ Utløpt',
-                'FAILED': '❌ Feilet',
-                'ABORTED': '❌ Avbrutt',
-            };
-            const statusText = statusMap[status] || `Status: ${status}`;
-            alert(`Vipps-status for ordre ${orderId}:\n\n${statusText}`);
+            const isDeposit = orderId.startsWith('dep-');
+            const isInvoice = orderId.startsWith('inv-');
+            const typeLabel = isDeposit ? 'forhåndsbetalingen' : isInvoice ? 'sluttfakturaen' : 'betalingen';
+
             if (status === 'AUTHORIZED' || status === 'CAPTURED') {
+                alert(`✅ Betaling bekreftet!\n\nVipps har bekreftet betaling av ${typeLabel}. Siden oppdateres nå.`);
                 loadDashboard();
+            } else if (status === 'EXPIRED' || status === 'CANCELLED' || status === 'ABORTED') {
+                const statusLabels = { EXPIRED: 'utløpt (leietaker åpnet ikke Vipps i tide)', CANCELLED: 'kansellert av leietaker', ABORTED: 'avbrutt' };
+                const want = confirm(
+                    `⚠️ Vipps-ordren er ${statusLabels[status] || status.toLowerCase()}.\n\n` +
+                    `Leietaker har ikke fullført betaling av ${typeLabel}.\n\n` +
+                    `Vil du sende en ny betalingsforespørsel?`
+                );
+                if (want) {
+                    if (isDeposit) {
+                        sendDepositRequest(bookingId);
+                    } else if (isInvoice) {
+                        const booking = _allBookings.find(b => b.id === bookingId);
+                        if (booking) {
+                            const totalNOK = booking.totalAmount || 0;
+                            const depositNOK = booking.depositAmount || Math.round(totalNOK * 0.5);
+                            openFinalInvoiceModal(bookingId, totalNOK, depositNOK);
+                        }
+                    }
+                }
+            } else if (status === 'CREATED') {
+                alert(`⏳ Vipps-ordren er sendt, men leietaker har ikke betalt ${typeLabel} ennå.\n\nDu kan vente eller sende en betalingspåminnelse.`);
+            } else if (status === 'FAILED') {
+                alert(`❌ Betalingen av ${typeLabel} feilet i Vipps.\n\nSend en ny betalingsforespørsel eller be leietaker kontakte banken sin.`);
+            } else {
+                alert(`Vipps-status for ${typeLabel}: ${status}`);
             }
         } else {
             alert(`Feil ved sjekk: ${data.error || 'Ukjent feil'}`);

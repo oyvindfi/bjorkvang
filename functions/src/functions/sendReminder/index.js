@@ -29,10 +29,11 @@ app.http('sendReminder', {
             const depositPaid = !!booking.depositPaid;
             const finalInvoiceSent = !!(booking.finalInvoiceSentAt || booking.invoiceSentAt);
             const finalInvoicePaid = !!booking.finalInvoicePaid;
+            const bookingDatePast = booking.date && new Date(booking.date + 'T23:59:59') < new Date();
 
             // Determine what we are reminding about
             let reminderType;
-            if (!isRequesterSigned) {
+            if (!isRequesterSigned && !bookingDatePast) {
                 reminderType = 'signing';
             } else if (depositRequested && !depositPaid) {
                 reminderType = 'deposit';
