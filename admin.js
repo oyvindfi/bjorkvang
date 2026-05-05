@@ -646,7 +646,14 @@ function createBookingCard(booking) {
             approvedActions += `<button onclick="markFinalInvoicePaid('${booking.id}')" class="btn-sm" style="background:#0ea5e9;">✅ Sluttfaktura betalt${paymentMethod === 'bank' ? ' (bank)' : ' (manuelt)'}</button>`;
         }
 
-        approvedActions += `<button onclick="sendReminder('${booking.id}')" class="btn-sm" style="background:#f59e0b;color:black;">Påminnelse</button>`;
+        // Contextual reminder — only shown when there is something to remind about
+        if (!isRequesterSigned) {
+            approvedActions += `<button onclick="sendReminder('${booking.id}')" class="btn-sm" style="background:#f59e0b;color:black;" title="Send signaturpåminnelse til leietaker">📄 Signaturpåminnelse</button>`;
+        } else if (depositRequested && !depositPaid) {
+            approvedActions += `<button onclick="sendReminder('${booking.id}')" class="btn-sm" style="background:#f59e0b;color:black;" title="Minn leietaker om å betale forhåndsbetalingen">💸 Betalingspåminnelse</button>`;
+        } else if (finalInvoiceSent && !finalInvoicePaid) {
+            approvedActions += `<button onclick="sendReminder('${booking.id}')" class="btn-sm" style="background:#f59e0b;color:black;" title="Minn leietaker om å betale sluttfakturaen">💰 Sluttfakturapåminnelse</button>`;
+        }
 
         if ((booking.rescheduleCount || 0) < 1) {
             approvedActions += `<button onclick="openRescheduleModal('${booking.id}', '${booking.date}', '${(booking.time || '').replace(/'/g, '')}', ${booking.rescheduleCount || 0})" class="btn-sm" style="background:#6366f1;" title="Flytt bookingen til ny dato (maks 1 gang iht. vilkår §5)">📅 Endre dato</button>`;

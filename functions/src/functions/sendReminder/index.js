@@ -23,65 +23,130 @@ app.http('sendReminder', {
                 return createJsonResponse(404, { error: 'Booking not found.' });
             }
 
+            const contract = booking.contract || {};
+            const isRequesterSigned = !!contract.signedAt;
+            const depositRequested = !!booking.depositRequested;
+            const depositPaid = !!booking.depositPaid;
+            const finalInvoiceSent = !!(booking.finalInvoiceSentAt || booking.invoiceSentAt);
+            const finalInvoicePaid = !!booking.finalInvoicePaid;
+
             // Determine what we are reminding about
-            // Usually it's about signing the contract if status is approved
-            // Or maybe just a general follow-up
-            
-            // Generate contract link - use WEBSITE_URL environment variable
+            let reminderType;
+            if (!isRequesterSigned) {
+                reminderType = 'signing';
+            } else if (depositRequested && !depositPaid) {
+                reminderType = 'deposit';
+            } else if (finalInvoiceSent && !finalInvoicePaid) {
+                reminderType = 'finalInvoice';
+            } else {
+                return createJsonResponse(400, { error: 'Ingen aktiv påminnelse å sende for denne bookingen.' });
+            }
+
             const websiteUrl = process.env.WEBSITE_URL || 'https://bjorkvang.org';
             const contractLink = `${websiteUrl}/leieavtale.html?id=${booking.id}`;
+            const bankAccount = process.env.BANK_ACCOUNT || '1822.40.12345';
 
             const escapeHtml = (str) => String(str).replace(/[&<>"']/g, (m) => ({
                 '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
             })[m]);
 
             const safeName = escapeHtml(booking.requesterName || 'Kunde');
+            const firstName = booking.requesterName ? booking.requesterName.split(' ')[0] : 'deg';
             const safeComment = comment ? escapeHtml(comment) : null;
-            const safeDate = escapeHtml(booking.date || '');
 
-            let htmlContent = `
-                <p>Hei ${safeName},</p>
-                <p>Dette er en påminnelse vedrørende din booking på Bjørkvang forsamlingslokale (${safeDate}).</p>
-            `;
+            const dateObj = new Date(`${booking.date}T00:00:00`);
+            const formattedDate = !isNaN(dateObj)
+                ? dateObj.toLocaleDateString('nb-NO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+                : (booking.date || '');
+            const safeDate = escapeHtml(formattedDate);
 
-            if (safeComment) {
-                htmlContent += `
-                    <div style="background-color: #f9fafb; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; font-style: italic;">
-                        "${safeComment}"
+            const depositNOK = booking.depositAmount || Math.round((booking.totalAmount || 0) * 0.5);
+            const remainingNOK = booking.finalInvoiceAmountNOK || ((booking.totalAmount || 0) - depositNOK);
+
+            const commentBlock = safeComment
+                ? `<div style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px 18px;margin:16px 0;">
+                       <strong>Melding fra styret:</strong><br>${safeComment}
+                   </div>`
+                : '';
+
+            let subject, htmlContent, actionButton, smsBody, previewText;
+
+            if (reminderType === 'signing') {
+                subject = `Påminnelse: Signer leieavtalen – ${formattedDate}`;
+                previewText = `Du har en usignert leieavtale for ${formattedDate}.`;
+                actionButton = { text: '📄 Signer leieavtalen', url: contractLink };
+                htmlContent = `
+                    <p>Hei ${safeName},</p>
+                    <p>Vi vil minne deg på at leieavtalen for din booking på Bjørkvang forsamlingslokale (<strong>${safeDate}</strong>) ennå ikke er signert.</p>
+                    ${commentBlock}
+                    <p>Vennligst signer avtalen for å bekrefte reservasjonen din. Forhåndsbetalingsforespørsel sendes automatisk når begge parter har signert.</p>
+                    <div style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:8px;padding:16px 20px;margin:12px 0 16px;">
+                        <a href="${contractLink}" style="display:inline-block;background:#1a56db;color:#fff;font-weight:700;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:1rem;">📄 Signer leieavtalen</a>
                     </div>
+                    <p style="font-size:0.9em;color:#6b7280;">Spørsmål? Ta kontakt på <a href="mailto:styret@bjørkvang.no" style="color:#1a823b;">styret@bjørkvang.no</a>.</p>
                 `;
+                smsBody = `Hei ${firstName}! Påminnelse: Leieavtalen for ${formatDate(booking.date)} er ikke signert ennå. Signer her: ${contractLink} – Bjørkvang forsamlingslokale`;
+
+            } else if (reminderType === 'deposit') {
+                subject = `Påminnelse: Forhåndsbetaling forfaller – ${formattedDate}`;
+                previewText = `Vi venter fortsatt på forhåndsbetalingen for ${formattedDate}.`;
+                actionButton = { text: '📄 Se leieavtalen', url: contractLink };
+                const depositStr = depositNOK ? `kr\u00a0${depositNOK.toLocaleString('nb-NO')}` : '(oppgitt beløp)';
+                const paymentInfoHtml = booking.paymentMethod === 'vipps'
+                    ? `<p>Sjekk e-posten du tidligere mottok med betalingslenke for Vipps, eller ta kontakt med styret.</p>`
+                    : `<p>Betal til kontonummer <strong>${escapeHtml(bankAccount)}</strong> og merk betalingen med <strong>${escapeHtml(id.slice(0, 8))}</strong>.</p>`;
+                htmlContent = `
+                    <p>Hei ${safeName},</p>
+                    <p>Vi venter fortsatt på forhåndsbetalingen (<strong>${depositStr}</strong>) for din booking på Bjørkvang forsamlingslokale den <strong>${safeDate}</strong>.</p>
+                    ${commentBlock}
+                    ${paymentInfoHtml}
+                    <p style="font-size:0.9em;color:#6b7280;">Spørsmål? Ta kontakt på <a href="mailto:styret@bjørkvang.no" style="color:#1a823b;">styret@bjørkvang.no</a>.</p>
+                `;
+                smsBody = booking.paymentMethod === 'vipps'
+                    ? `Hei ${firstName}! Påminnelse: Forhåndsbetaling${depositNOK ? ' kr ' + depositNOK.toLocaleString('nb-NO') + ',-' : ''} for ${formatDate(booking.date)} er ikke betalt. Sjekk e-posten for betalingslenke. – Bjørkvang forsamlingslokale`
+                    : `Hei ${firstName}! Påminnelse: Betal forhåndsbetaling${depositNOK ? ' kr ' + depositNOK.toLocaleString('nb-NO') + ',-' : ''} for ${formatDate(booking.date)} til kontonr. ${bankAccount}. Merk: ${id.slice(0, 8)}. – Bjørkvang forsamlingslokale`;
+
+            } else { // finalInvoice
+                subject = `Påminnelse: Sluttfaktura for ${formattedDate}`;
+                previewText = `Vi venter fortsatt på betaling av sluttfakturaen for ${formattedDate}.`;
+                actionButton = { text: '📄 Se leieavtalen', url: contractLink };
+                const remainingStr = remainingNOK ? `kr\u00a0${remainingNOK.toLocaleString('nb-NO')}` : '(oppgitt beløp)';
+                const paymentInfoHtml = booking.paymentMethod === 'vipps'
+                    ? `<p>Sjekk e-posten du tidligere mottok med betalingslenke for Vipps, eller ta kontakt med styret.</p>`
+                    : `<p>Betal til kontonummer <strong>${escapeHtml(bankAccount)}</strong> og merk betalingen med <strong>${escapeHtml(id.slice(0, 8))}</strong>.</p>`;
+                htmlContent = `
+                    <p>Hei ${safeName},</p>
+                    <p>Vi venter fortsatt på betaling av sluttfakturaen (<strong>${remainingStr}</strong>) for din booking på Bjørkvang forsamlingslokale den <strong>${safeDate}</strong>.</p>
+                    ${commentBlock}
+                    ${paymentInfoHtml}
+                    <p style="font-size:0.9em;color:#6b7280;">Spørsmål? Ta kontakt på <a href="mailto:styret@bjørkvang.no" style="color:#1a823b;">styret@bjørkvang.no</a>.</p>
+                `;
+                smsBody = booking.paymentMethod === 'vipps'
+                    ? `Hei ${firstName}! Påminnelse: Sluttfaktura${remainingNOK ? ' kr ' + remainingNOK.toLocaleString('nb-NO') + ',-' : ''} for ${formatDate(booking.date)} er ikke betalt. Sjekk e-posten for betalingslenke. – Bjørkvang forsamlingslokale`
+                    : `Hei ${firstName}! Påminnelse: Betal sluttfaktura${remainingNOK ? ' kr ' + remainingNOK.toLocaleString('nb-NO') + ',-' : ''} for ${formatDate(booking.date)} til kontonr. ${bankAccount}. Merk: ${id.slice(0, 8)}. – Bjørkvang forsamlingslokale`;
             }
 
-            htmlContent += `
-                <p>Vennligst sjekk status på din booking og signer leieavtalen hvis du ikke allerede har gjort det.</p>
-                <p>Vennlig hilsen<br>Helgøens Vel</p>
-            `;
-
             const html = generateEmailHtml({
-                title: 'Påminnelse om booking',
+                title: subject,
                 content: htmlContent,
-                action: {
-                    text: 'Gå til leieavtale',
-                    url: contractLink
-                },
-                previewText: `Påminnelse vedrørende din booking for ${safeDate}.`
+                action: actionButton,
+                previewText
             });
 
             await sendEmail({
                 to: booking.requesterEmail,
                 from: process.env.DEFAULT_FROM_ADDRESS,
-                subject: `Påminnelse: Booking ${safeDate}`,
-                html: html
+                subject,
+                html,
+                text: smsBody,
             });
 
-            // --- SMS-påminnelse til leietaker ---
             if (booking.phone) {
-                const firstName = booking.requesterName ? booking.requesterName.split(' ')[0] : 'deg';
-                const reminderSmsBody = `Hei ${firstName}! Påminnelse: Du har leid Bjørkvang ${formatDate(booking.date)} kl. ${booking.time || ''}. Signer leieavtalen her: ${contractLink} – Bjørkvang forsamlingslokale`;
-                await sendSms({ to: booking.phone, body: reminderSmsBody.replace(/\s+/g, ' ').trim() }, context);
+                await sendSms({ to: booking.phone, body: smsBody }, context);
             }
 
-            return createJsonResponse(200, { message: 'Reminder sent' });
+            context.info(`sendReminder: type=${reminderType}, booking=${id}`);
+            return createJsonResponse(200, { message: 'Reminder sent', type: reminderType });
 
         } catch (error) {
             context.error('Error sending reminder:', error);
