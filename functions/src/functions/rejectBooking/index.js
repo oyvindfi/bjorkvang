@@ -1,6 +1,6 @@
 const { app } = require('@azure/functions');
 const { sendEmail } = require('../../../shared/email');
-const { sendSms } = require('../../../shared/sms');
+const { sendSms, formatDate } = require('../../../shared/sms');
 const { createHtmlResponse, createJsonResponse, parseBody } = require('../../../shared/http');
 const { getBooking, updateBookingStatus } = require('../../../shared/cosmosDb');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
@@ -221,7 +221,7 @@ app.http('rejectBooking', {
 
                 // --- SMS til leietaker ved avvisning ---
                 if (existingBooking.phone) {
-                    const rejectionSmsBody = `Beklager, din forespørsel for ${existingBooking.date} ble ikke godkjent. Kontakt oss for mer info. – Bjørkvang`;
+                    const rejectionSmsBody = `Hei ${existingBooking.requesterName ? existingBooking.requesterName.split(' ')[0] : 'deg'}. Din leieforespørsel for ${formatDate(existingBooking.date)} ble dessverre ikke godkjent. Ta kontakt for mer informasjon. – Bjørkvang forsamlingslokale`;
                     await sendSms({ to: existingBooking.phone, body: rejectionSmsBody }, context);
                 }
             }

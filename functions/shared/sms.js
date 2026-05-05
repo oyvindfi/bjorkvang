@@ -1,4 +1,23 @@
-const SENDER_ID = 'Bjorkvang';
+// Max 11 chars, ASCII only (A-Za-z0-9) — Norwegian Ø/Æ/Å are not allowed in Twilio sender IDs
+const SENDER_ID = process.env.SMS_SENDER_ID || 'Bjorkvang';
+
+const MONTHS_NB = ['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
+
+/**
+ * Format a YYYY-MM-DD date string to a short Norwegian date, e.g. "30. mai".
+ * Falls back to the raw string if parsing fails.
+ * @param {string} dateStr
+ * @returns {string}
+ */
+const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const parts = String(dateStr).split('-');
+    if (parts.length < 3) return dateStr;
+    const day = parseInt(parts[2], 10);
+    const monthIdx = parseInt(parts[1], 10) - 1;
+    if (isNaN(day) || isNaN(monthIdx) || monthIdx < 0 || monthIdx > 11) return dateStr;
+    return `${day}. ${MONTHS_NB[monthIdx]}`;
+};
 
 /**
  * Normalize a Norwegian phone number to E.164 (+47XXXXXXXX).
@@ -45,8 +64,9 @@ const sendSms = async (options, context = console) => {
         return null;
     }
 
-    // Truncate to 160 chars to ensure single-part SMS
-    const body = options.body.trim().substring(0, 160);
+    // Allow multi-part SMS so Vipps URLs are never silently truncated.
+    // Twilio automatically joins segments on modern phones.
+    const body = options.body.trim();
 
     try {
         const twilio = require('twilio');
@@ -68,4 +88,4 @@ const sendSms = async (options, context = console) => {
     }
 };
 
-module.exports = { sendSms, normalizeNorwegianPhone };
+module.exports = { sendSms, normalizeNorwegianPhone, formatDate };

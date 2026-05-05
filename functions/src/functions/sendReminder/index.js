@@ -1,6 +1,6 @@
 const { app } = require('@azure/functions');
 const { sendEmail } = require('../../../shared/email');
-const { sendSms } = require('../../../shared/sms');
+const { sendSms, formatDate } = require('../../../shared/sms');
 const { createJsonResponse, parseBody } = require('../../../shared/http');
 const { getBooking } = require('../../../shared/cosmosDb');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
@@ -76,7 +76,8 @@ app.http('sendReminder', {
 
             // --- SMS-påminnelse til leietaker ---
             if (booking.phone) {
-                const reminderSmsBody = `Påminnelse: Du har leid Bjørkvang ${booking.date} kl. ${booking.time || ''}. Signer avtalen: ${contractLink} – Bjørkvang`;
+                const firstName = booking.requesterName ? booking.requesterName.split(' ')[0] : 'deg';
+                const reminderSmsBody = `Hei ${firstName}! Påminnelse: Du har leid Bjørkvang ${formatDate(booking.date)} kl. ${booking.time || ''}. Signer leieavtalen her: ${contractLink} – Bjørkvang forsamlingslokale`;
                 await sendSms({ to: booking.phone, body: reminderSmsBody.replace(/\s+/g, ' ').trim() }, context);
             }
 

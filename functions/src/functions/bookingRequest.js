@@ -1,6 +1,6 @@
 const { app } = require('@azure/functions');
 const { sendEmail } = require('../../shared/email');
-const { sendSms } = require('../../shared/sms');
+const { sendSms, formatDate } = require('../../shared/sms');
 const { createJsonResponse, parseBody, resolveBaseUrl } = require('../../shared/http');
 const { saveBooking, listBookings } = require('../../shared/cosmosDb');
 const { generateEmailHtml } = require('../../shared/emailTemplate');
@@ -352,7 +352,7 @@ app.http('bookingRequest', {
 
             // --- Board SMS notification ---
             if (process.env.BOARD_PHONE_NUMBER) {
-                const boardSmsBody = `Ny booking: ${booking.requesterName}, ${booking.date}, ${booking.eventType}. Se admin for godkjenning. – Bjørkvang`;
+                const boardSmsBody = `Ny leieforespørsel: ${booking.requesterName}, ${formatDate(booking.date)} (${booking.eventType || 'Reservasjon'}), ${booking.attendees || '?'} gjester. Godkjenn i admin. – Bjørkvang forsamlingslokale`;
                 await sendSms({ to: process.env.BOARD_PHONE_NUMBER, body: boardSmsBody }, context);
             }
 
@@ -407,7 +407,8 @@ app.http('bookingRequest', {
 
                 // --- Requester SMS confirmation ---
                 if (booking.phone) {
-                    const requesterSmsBody = `Hei ${booking.requesterName}! Vi har mottatt din forespørsel for ${booking.date}. Vi behandler den snart. – Bjørkvang`;
+                    const firstName = booking.requesterName ? booking.requesterName.split(' ')[0] : 'deg';
+                    const requesterSmsBody = `Hei ${firstName}! Vi har mottatt din leieforespørsel for ${formatDate(booking.date)}. Vi behandler den og gir deg svar snart. – Bjørkvang forsamlingslokale`;
                     await sendSms({ to: booking.phone, body: requesterSmsBody }, context);
                 }
             } catch (error) {

@@ -50,10 +50,11 @@ document.addEventListener('DOMContentLoaded', function () {
     'Hele lokalet': 4000,
     'Bryllupspakke': 6000,
     'Små møter': 30, // per person
-    'Vask': 1000 // estimert
+    'Vask': 1000, // estimert
+    'Projektor': 500
   };
 
-  const SERVICE_PRICING = ['Vask'];
+  const SERVICE_PRICING = ['Vask', 'Projektor'];
 
   const MEMBER_DISCOUNT = 500;
   const MEMBER_ELIGIBLE_SPACES = ['Hele lokalet', 'Bryllupspakke'];
@@ -186,6 +187,31 @@ document.addEventListener('DOMContentLoaded', function () {
     if (attendeesInput) {
       attendeesInput.addEventListener('input', updatePriceDisplay);
     }
+
+    // Live "slutter ca." summary when time + duration are both filled
+    const endTimeSummaryWrap = document.getElementById('end-time-summary');
+    const endTimeSummaryEl = endTimeSummaryWrap ? endTimeSummaryWrap.querySelector('.end-time-summary') : null;
+    const timeSelectEl = document.getElementById('time');
+
+    const updateEndTimeSummary = () => {
+      if (!endTimeSummaryWrap || !endTimeSummaryEl || !timeSelectEl || !durationInputEl) return;
+      const timeVal = timeSelectEl.value;
+      const durationVal = parseFloat(durationInputEl.value);
+      if (!timeVal || !Number.isFinite(durationVal) || durationVal <= 0) {
+        endTimeSummaryWrap.hidden = true;
+        return;
+      }
+      const [hours, minutes] = timeVal.split(':').map(Number);
+      const totalMinutes = hours * 60 + minutes + durationVal * 60;
+      const endH = String(Math.floor((totalMinutes % (24 * 60)) / 60)).padStart(2, '0');
+      const endM = String(totalMinutes % 60).padStart(2, '0');
+      const overnight = totalMinutes >= 24 * 60 ? ' (neste dag)' : '';
+      endTimeSummaryEl.textContent = `\u23F0 Slutter ca. ${endH}:${endM}${overnight}`;
+      endTimeSummaryWrap.hidden = false;
+    };
+
+    if (timeSelectEl) timeSelectEl.addEventListener('change', updateEndTimeSummary);
+    if (durationInputEl) durationInputEl.addEventListener('input', updateEndTimeSummary);
   }
 
   // Debounce utility to prevent excessive function calls
@@ -384,7 +410,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   };
 
-  const showStatus = (message, type = 'success') => {
+  const showStatus = (message, type = 'success', focusTarget = null) => {
     if (!statusEl) {
       if (type === 'error') {
         alert(message);
@@ -392,12 +418,22 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
+    // Clear previous invalid highlights
+    form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
     statusEl.textContent = message;
     statusEl.classList.remove('is-success', 'is-error', 'is-info', 'is-visible');
     statusEl.classList.add('is-visible');
 
     if (type === 'error') {
       statusEl.classList.add('is-error');
+      if (focusTarget) {
+        focusTarget.classList.add('is-invalid');
+        focusTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        focusTarget.focus({ preventScroll: true });
+      } else {
+        statusEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     } else if (type === 'info') {
       statusEl.classList.add('is-info');
     } else {
@@ -1052,31 +1088,25 @@ document.addEventListener('DOMContentLoaded', function () {
       const selectedSpaces = Array.from(form.querySelectorAll('input[name="spaces"]:checked')).map((input) => input.value);
       const selectedServices = Array.from(form.querySelectorAll('input[name="services"]:checked')).map((input) => input.value);
       const isWedding = selectedSpaces.includes('Bryllupspakke');
-      const notificationEmailRaw = (formValues.notificationEmail || '').trim();
       const paymentMethod = formValues.paymentMethod || 'vipps';
 
-      const notificationRecipients = notificationEmailRaw
-        ? notificationEmailRaw
-            .split(/[;,]/)
-            .map((value) => value.trim())
-            .filter(Boolean)
-        : [];
-
-      const invalidRecipient = notificationRecipients.find((value) => !isValidEmail(value));
-      if (invalidRecipient) {
-        showStatus(`"${invalidRecipient}" er ikke en gyldig e-postadresse.`, 'error');
-        isSubmitting = false;
-        return;
-      }
-
       if (!name || !email || !phone || !dateValue || !timeValue || !eventType) {
-        showStatus('Vennligst fyll ut alle obligatoriske felter.', 'error');
+        // Highlight the first empty required field
+        const firstEmpty = [
+          ['name', form.querySelector('#name')],
+          ['email', form.querySelector('#email')],
+          ['phone', form.querySelector('#phone')],
+          ['date', form.querySelector('#date')],
+          ['time', form.querySelector('#time')],
+          ['eventType', form.querySelector('#event-type')],
+        ].find(([val, el]) => !formValues[val] || !String(formValues[val]).trim());
+        showStatus('Vennligst fyll ut alle obligatoriske felter.', 'error', firstEmpty ? firstEmpty[1] : null);
         isSubmitting = false;
         return;
       }
 
       if (!selectedSpaces.length) {
-        showStatus('Velg minst ett område du ønsker å leie.', 'error');
+        showStatus('Velg minst ett område du ønsker å leie.', 'error', form.querySelector('fieldset[aria-labelledby="spaces-label"]'));
         isSubmitting = false;
         return;
       }

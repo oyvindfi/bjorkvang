@@ -97,6 +97,7 @@ const generateEmailHtml = ({ title, content, action, previewText }) => {
                 ${buttonHtml}
             </div>
             <div class="footer">
+                <p style="margin: 0 0 8px; font-size: 12px; color: #9ca3af;">Finner du ikke e-poster fra oss? De kan ha havnet i søppelpostmappen. Legg gjerne til <a href="mailto:styret@bjorkvang.org" style="color: #9ca3af;">styret@bjorkvang.org</a> i kontaktlisten din for å sikre at du mottar videre meldinger.</p>
                 <p style="margin: 0 0 4px; color: #6b7280;">Dette er en automatisk melding fra Helgøens Vel.</p>
                 <p style="margin: 0 0 4px; color: #6b7280;">Org.nr: 995 519 240 &nbsp;|&nbsp; <a href="mailto:styret@bjorkvang.org" style="color: #1a6fa3;">styret@bjorkvang.org</a> &nbsp;|&nbsp; <a href="https://bjorkvang.org" style="color: #1a6fa3;">bjorkvang.org</a></p>
             </div>

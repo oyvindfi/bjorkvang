@@ -1,6 +1,6 @@
 const { app } = require('@azure/functions');
 const { sendEmail } = require('../../../shared/email');
-const { sendSms } = require('../../../shared/sms');
+const { sendSms, formatDate } = require('../../../shared/sms');
 const { createHtmlResponse, createJsonResponse, parseBody } = require('../../../shared/http');
 const { getBooking, updateBookingStatus, updateBookingFields } = require('../../../shared/cosmosDb');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
@@ -289,7 +289,8 @@ app.http('approveBooking', {
 
                 // --- SMS til leietaker ved godkjenning ---
                 if (existingBooking.phone) {
-                    const approvalSmsBody = `Din booking ${existingBooking.date} er godkjent! Signer avtalen: ${contractLink} – Bjørkvang`;
+                    const firstName = existingBooking.requesterName ? existingBooking.requesterName.split(' ')[0] : 'deg';
+                    const approvalSmsBody = `Hei ${firstName}! Din booking ${formatDate(existingBooking.date)} er godkjent. Signer leieavtalen: ${contractLink} – Bjørkvang forsamlingslokale`;
                     await sendSms({ to: existingBooking.phone, body: approvalSmsBody }, context);
                 }
             }

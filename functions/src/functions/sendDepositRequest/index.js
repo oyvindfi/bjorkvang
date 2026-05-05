@@ -2,7 +2,7 @@ const { app } = require('@azure/functions');
 const { createJsonResponse } = require('../../../shared/http');
 const { getBooking, updateBookingFields } = require('../../../shared/cosmosDb');
 const { sendEmail } = require('../../../shared/email');
-const { sendSms } = require('../../../shared/sms');
+const { sendSms, formatDate } = require('../../../shared/sms');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
 const vipps = require('../../../shared/vipps');
 
@@ -224,11 +224,12 @@ app.http('sendDepositRequest', {
 
         // --- SMS med betalingslenke ---
         if (booking.phone) {
+            const firstName = booking.requesterName ? booking.requesterName.split(' ')[0] : 'deg';
             let depositSmsBody;
             if (paymentMethod === 'vipps' && vippsUrl) {
-                depositSmsBody = `Betal Forhåndsbetaling kr ${depositNOK.toLocaleString('nb-NO')} for ${booking.date} via Vipps: ${vippsUrl} – Bjørkvang`;
+                depositSmsBody = `Hei ${firstName}! Betal forhåndsbetaling kr ${depositNOK.toLocaleString('nb-NO')},- for ${formatDate(booking.date)} via Vipps: ${vippsUrl} – Bjørkvang forsamlingslokale`;
             } else {
-                depositSmsBody = `Betal Forhåndsbetaling kr ${depositNOK.toLocaleString('nb-NO')} for ${booking.date} til konto ${bankAccount} (merk: ${id.slice(0, 8)}). – Bjørkvang`;
+                depositSmsBody = `Hei ${firstName}! Betal forhåndsbetaling kr ${depositNOK.toLocaleString('nb-NO')},- for ${formatDate(booking.date)} til kontonr. ${bankAccount}. Merk betalingen: ${id.slice(0, 8)}. – Bjørkvang forsamlingslokale`;
             }
             await sendSms({ to: booking.phone, body: depositSmsBody }, context);
         }

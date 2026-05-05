@@ -2,6 +2,7 @@ const { app } = require('@azure/functions');
 const { addContractSignature, getBooking, updateBookingFields } = require('../../../shared/cosmosDb');
 const { createJsonResponse } = require('../../../shared/http');
 const { sendEmail } = require('../../../shared/email');
+const { sendSms, formatDate } = require('../../../shared/sms');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
 const vipps = require('../../../shared/vipps');
 
@@ -242,6 +243,24 @@ app.http('signBooking', {
                     });
 
                     context.info(`Final agreement + deposit email sent to ${updatedBooking.requesterEmail}`);
+
+                    // --- SMS til leietaker: forhåndsbetaling klar for betaling ---
+                    if (updatedBooking.phone) {
+                        const firstName = updatedBooking.requesterName ? updatedBooking.requesterName.split(' ')[0] : 'deg';
+                        let depositSmsTxt;
+                        if (paymentMethod === 'vipps' && depositNOK > 0) {
+                            // vippsResp may have thrown; fall back to contractLink in that case
+                            const vippsPayUrl = depositVippsOrderId
+                                ? depositPaymentText.match(/https?:\/\/\S+/)?.[0] || contractLink
+                                : `${websiteUrl}/complete-payment.html?bookingId=${encodeURIComponent(id)}`;
+                            depositSmsTxt = `Hei ${firstName}! Avtalen er signert av begge parter. Betal forhåndsbetaling kr ${depositNOK.toLocaleString('nb-NO')},- for ${formatDate(updatedBooking.date)} via Vipps: ${vippsPayUrl} – Bjørkvang forsamlingslokale`;
+                        } else if (paymentMethod === 'bank' && depositNOK > 0) {
+                            depositSmsTxt = `Hei ${firstName}! Avtalen er signert av begge parter. Betal forhåndsbetaling kr ${depositNOK.toLocaleString('nb-NO')},- for ${formatDate(updatedBooking.date)} til kontonr. ${bankAccount}. Merk: ${id.slice(0, 8)}. – Bjørkvang forsamlingslokale`;
+                        }
+                        if (depositSmsTxt) {
+                            await sendSms({ to: updatedBooking.phone, body: depositSmsTxt }, context);
+                        }
+                    }
 
                     // Also notify board
                     const boardTo = process.env.BOARD_TO_ADDRESS || process.env.DEFAULT_TO_ADDRESS;

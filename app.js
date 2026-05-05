@@ -238,33 +238,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  // Add visual feedback for form interactions
-  const enhanceFormInputs = () => {
-    const inputs = document.querySelectorAll('input, textarea, select');
-    inputs.forEach(input => {
-      // Add floating label effect
-      if (input.value) {
-        input.classList.add('has-value');
-      }
-
-      input.addEventListener('blur', () => {
-        if (input.value) {
-          input.classList.add('has-value');
-        } else {
-          input.classList.remove('has-value');
-        }
-      });
-
-      input.addEventListener('input', () => {
-        if (input.value) {
-          input.classList.add('has-value');
-        } else {
-          input.classList.remove('has-value');
-        }
-      });
-    });
-  };
-
   // Detect link type and add appropriate aria labels
   const enhanceLinks = () => {
     document.querySelectorAll('a').forEach(link => {
@@ -305,7 +278,6 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     addRippleEffect();
     enhanceSmoothScroll();
-    enhanceFormInputs();
     enhanceLinks();
   }, 100);
 

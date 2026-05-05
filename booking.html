@@ -393,7 +393,7 @@
                                 <input type="date" id="date" name="date" required>
                             </div>
                             <div class="form-field">
-                                <label for="time">Starttid *</label>
+                                <label for="time">Estimert oppstartstid *</label>
                                 <select id="time" name="time" required>
                                     <option value="" disabled selected>Velg time</option>
                                     <option value="06:00">06:00</option>
@@ -415,17 +415,22 @@
                                     <option value="22:00">22:00</option>
                                     <option value="23:00">23:00</option>
                                 </select>
+                                <p class="form-help">Omtrentlig tidspunkt – kan justeres i avtalen.</p>
                             </div>
                             <div class="form-field" id="duration-field">
-                                <label for="duration">Varighet (timer) *</label>
+                                <label for="duration">Varighet *</label>
                                 <input type="number" id="duration" name="duration" min="1" max="72" value="4" required>
+                                <p class="form-help" id="duration-help">Antall timer. Standard: 4 timer.</p>
+                            </div>
+                            <div class="form-field form-field--full" id="end-time-summary" hidden>
+                                <p class="end-time-summary" aria-live="polite"></p>
                             </div>
                             <div class="form-field" id="end-date-field" hidden>
                                 <label for="end-date">Ca. sluttdato</label>
                                 <input type="date" id="end-date" name="endDate">
                             </div>
                             <div class="form-field" id="end-time-field" hidden>
-                                <label for="end-time">Ca. slutttid</label>
+                                <label for="end-time">Ca. sluttid</label>
                                 <select id="end-time" name="endTime">
                                     <option value="">Velg time</option>
                                     <option value="06:00">06:00</option>
@@ -523,16 +528,20 @@
                         <p class="fieldset-description">Ikke medlem ennå? <a href="medlemskap">Bli medlem for 250 kr/år og spar på denne bookingen →</a></p>
                     </div>
 
-                    <div class="form-grid">
-                        <div class="form-field">
-                            <label for="attendees">Antall deltakere (ca.)</label>
-                            <input type="number" id="attendees" name="attendees" min="1" placeholder="Antall gjester (maks 120 i Salen, 25 i Peisestua)">
+                    <fieldset class="form-fieldset form-fieldset--full">
+                        <legend>Øvrig informasjon</legend>
+                        <div class="form-grid">
+                            <div class="form-field">
+                                <label for="attendees">Antall deltakere (ca.)</label>
+                                <input type="number" id="attendees" name="attendees" min="1" placeholder="ca. antall">
+                                <p class="form-help">Maks kapasitet: 120 i Salen, 25 i Peisestua.</p>
+                            </div>
+                            <div class="form-field form-field--full">
+                                <label for="message">Tilleggsinformasjon</label>
+                                <textarea id="message" name="message" rows="3" placeholder="Har du spesielle behov eller spørsmål?"></textarea>
+                            </div>
                         </div>
-                        <div class="form-field form-field--full">
-                            <label for="message">Tilleggsinformasjon</label>
-                            <textarea id="message" name="message" rows="3" placeholder="Har du spesielle behov eller spørsmål?"></textarea>
-                        </div>
-                    </div>
+                    </fieldset>
 
                     <fieldset class="form-fieldset form-fieldset--full" aria-labelledby="catering-label">
                         <legend id="catering-label">Catering</legend>
@@ -559,16 +568,16 @@
                         <div class="payment-info">
                             <p id="calculated-price" class="price-display">Estimert pris: Velg lokaler</p>
                             <p class="payment-notice">
-                                ℹ️ <strong>Ingen betaling nå.</strong> Etter at styret har godkjent forespørselen, vil du motta en betalingsforespørsel for 50 % forh&amp;#229;ndsbetaling via den metoden du velger nedenfor. Restbeløpet faktureres etter arrangementet.
+                                ℹ️ <strong>Ingen betaling nå.</strong> Etter at styret har godkjent forespørselen, vil du motta en betalingsforespørsel for 50 % forhåndsbetaling via den metoden du velger nedenfor. Restbeløpet faktureres etter arrangementet.
                             </p>
                             <div class="option-grid" style="margin-top: 12px;">
                                 <label class="option-pill">
                                     <input type="radio" name="paymentMethod" value="vipps" checked>
-                                    <span><strong>Vipps</strong> – du mottar en Vipps-betalingslenke for forh&amp;#229;ndsbetaling (50 %) etter godkjenning</span>
+                                    <span><strong>Vipps</strong> – du mottar en Vipps-betalingslenke for forhåndsbetaling (50 %) etter godkjenning</span>
                                 </label>
                                 <label class="option-pill">
                                     <input type="radio" name="paymentMethod" value="bank">
-                                    <span><strong>Bankinnbetaling</strong> – du mottar kontonummer og betalingsinformasjon for forh&amp;#229;ndsbetaling (50 %) etter godkjenning</span>
+                                    <span><strong>Bankinnbetaling</strong> – du mottar kontonummer og betalingsinformasjon for forhåndsbetaling (50 %) etter godkjenning</span>
                                 </label>
                             </div>
                             <div style="margin-top: 12px; display: flex; justify-content: center; overflow: hidden; max-width: 100%;">

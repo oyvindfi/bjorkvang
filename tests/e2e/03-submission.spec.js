@@ -13,6 +13,7 @@ async function fillValidForm(page, { paymentMethod = 'bank' } = {}) {
 
   await page.goto('/booking.html');
   await page.waitForSelector('#booking-form', { state: 'visible' });
+  await page.waitForSelector('#address', { state: 'visible', timeout: 5000 });
 
   await page.locator('#name').fill('Ole Nordmann');
   await page.locator('#email').fill('ole@example.com');
