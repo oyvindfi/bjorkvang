@@ -238,7 +238,7 @@ app.http('sendFinalInvoice', {
             const firstName = booking.requesterName ? booking.requesterName.split(' ')[0] : 'deg';
             let invoiceSmsBody;
             if (vippsUrl) {
-                invoiceSmsBody = `Hei ${firstName}! Sluttfaktura for ${formatDate(booking.date)}: kr ${remainingNOK.toLocaleString('nb-NO')},-. Betal via Vipps: ${vippsUrl} – Bjørkvang forsamlingslokale`;
+                invoiceSmsBody = `Hei ${firstName}! Sluttfaktura for ${formatDate(booking.date)}: kr ${remainingNOK.toLocaleString('nb-NO')},-. Sjekk e-posten din for Vipps-betalingslenke. – Bjørkvang forsamlingslokale`;
             } else {
                 const bankAccount = process.env.BANK_ACCOUNT || '1822.40.12345';
                 invoiceSmsBody = `Hei ${firstName}! Sluttfaktura for ${formatDate(booking.date)}: kr ${remainingNOK.toLocaleString('nb-NO')},-. Betal til kontonr. ${bankAccount}. Merk: ${id.slice(0, 8)}. – Bjørkvang forsamlingslokale`;

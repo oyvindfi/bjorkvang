@@ -253,7 +253,7 @@ app.http('signBooking', {
                             const vippsPayUrl = depositVippsOrderId
                                 ? depositPaymentText.match(/https?:\/\/\S+/)?.[0] || contractLink
                                 : `${websiteUrl}/complete-payment.html?bookingId=${encodeURIComponent(id)}`;
-                            depositSmsTxt = `Hei ${firstName}! Avtalen er signert av begge parter. Betal forhåndsbetaling kr ${depositNOK.toLocaleString('nb-NO')},- for ${formatDate(updatedBooking.date)} via Vipps: ${vippsPayUrl} – Bjørkvang forsamlingslokale`;
+                            depositSmsTxt = `Hei ${firstName}! Avtalen er signert av begge parter. Forhåndsbetaling kr ${depositNOK.toLocaleString('nb-NO')},- for ${formatDate(updatedBooking.date)} er klar. Sjekk e-posten din for Vipps-betalingslenke. – Bjørkvang forsamlingslokale`;
                         } else if (paymentMethod === 'bank' && depositNOK > 0) {
                             depositSmsTxt = `Hei ${firstName}! Avtalen er signert av begge parter. Betal forhåndsbetaling kr ${depositNOK.toLocaleString('nb-NO')},- for ${formatDate(updatedBooking.date)} til kontonr. ${bankAccount}. Merk: ${id.slice(0, 8)}. – Bjørkvang forsamlingslokale`;
                         }
