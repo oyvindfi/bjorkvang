@@ -6,8 +6,23 @@ document.addEventListener('DOMContentLoaded', function () {
   const calendarEl = document.getElementById('calendar');
   const form = document.getElementById('booking-form');
   const statusEl = document.getElementById('booking-status');
-  const calendarDateStatusEl = document.getElementById('calendar-date-status');
   const reservationListEl = document.getElementById('reservation-list');
+
+  // Site notice dismiss handler
+  const siteNotice = document.getElementById('site-notice-fullbooked');
+  if (siteNotice) {
+    if (localStorage.getItem('bjorkvangNoticeDismissed2026') === '1') {
+      siteNotice.hidden = true;
+    }
+    const noticeCloseBtn = siteNotice.querySelector('.site-notice__close');
+    if (noticeCloseBtn) {
+      noticeCloseBtn.addEventListener('click', () => {
+        siteNotice.classList.add('site-notice--dismissing');
+        setTimeout(() => { siteNotice.hidden = true; }, 250);
+        localStorage.setItem('bjorkvangNoticeDismissed2026', '1');
+      });
+    }
+  }
   const reservationEmptyState = document.getElementById('reservation-empty');
   const dateInput = document.getElementById('date');
   const timeInput = document.getElementById('time');
@@ -874,19 +889,10 @@ document.addEventListener('DOMContentLoaded', function () {
         return classes;
       },
       dateClick: function (info) {
-        // Check if the clicked date is blocked (confirmed/approved)
         const clickedCell = calendarEl.querySelector(`.fc-daygrid-day[data-date="${info.dateStr}"]`);
         const isBlocked = clickedCell && clickedCell.classList.contains('is-blocked');
 
-        const showInlineStatus = (msg, type) => {
-          if (!calendarDateStatusEl) return;
-          calendarDateStatusEl.textContent = msg;
-          calendarDateStatusEl.className = `calendar-date-status calendar-date-status--${type}`;
-          calendarDateStatusEl.hidden = false;
-        };
-
         if (isBlocked) {
-          showInlineStatus('Denne datoen er allerede reservert. Velg en annen ledig dato.', 'error');
           showStatus('Denne datoen er allerede reservert. Velg en annen ledig dato.', 'error');
           return;
         }
@@ -902,14 +908,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const isPending = clickedCell && clickedCell.classList.contains('is-pending');
         if (isPending) {
-          showInlineStatus('Det finnes en forespørsel på denne datoen som ikke er godkjent ennå. Du kan fortsatt sende inn din forespørsel.', 'pending');
-          showStatus('Det finnes en forespørsel på denne datoen som ikke er godkjent ennå. Du kan fortsatt sende din forespørsel.', 'info');
-        } else {
-          showInlineStatus('Datoen er ledig! Fyll ut skjemaet nedenfor for å sende forespørsel.', 'available');
-          showStatus('Datoen er lagt inn i skjemaet. Fullfør feltene under for å sende forespørselen.', 'info');
+          showStatus('Det finnes en forespørsel på denne datoen som ikke er godkjent ennå. Du kan fortsatt sende inn din forespørsel.', 'info');
         }
+
         if (form) {
+          const formSection = document.getElementById('booking-form-section');
           form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          if (formSection) {
+            formSection.classList.add('form-section--highlight');
+            setTimeout(() => formSection.classList.remove('form-section--highlight'), 1400);
+          }
+          if (dateInput) {
+            dateInput.classList.add('input--date-highlight');
+            setTimeout(() => dateInput.classList.remove('input--date-highlight'), 1400);
+          }
         }
       },
       select: function (selectionInfo) {
@@ -934,11 +946,17 @@ document.addEventListener('DOMContentLoaded', function () {
             }
           }
         }
-        if (statusEl) {
-          showStatus('Tidspunktet er markert. Sjekk feltene under og send inn forespørselen.', 'info');
-        }
         if (form) {
+          const formSection = document.getElementById('booking-form-section');
           form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          if (formSection) {
+            formSection.classList.add('form-section--highlight');
+            setTimeout(() => formSection.classList.remove('form-section--highlight'), 1400);
+          }
+          if (dateInput) {
+            dateInput.classList.add('input--date-highlight');
+            setTimeout(() => dateInput.classList.remove('input--date-highlight'), 1400);
+          }
         }
         calendar.unselect();
       },

@@ -267,32 +267,13 @@
         </div>
     </header>
 
-    <!-- Header shortcuts: Kan aktiveres senere hvis ønskelig
-    <div class="header-shortcuts">
-        <div class="container shortcuts-container">
-            <a href="booking#calendar" class="shortcut-link">
-                <span class="shortcut-icon">📅</span>
-                <span class="shortcut-text">Kalender</span>
-            </a>
-            <a href="booking" class="shortcut-link">
-                <span class="shortcut-icon">🏠</span>
-                <span class="shortcut-text">Lei lokalet</span>
-            </a>
-            <a href="lokaler" class="shortcut-link">
-                <span class="shortcut-icon">🚪</span>
-                <span class="shortcut-text">Våre lokaler</span>
-            </a>
-            <a href="medlemskap" class="shortcut-link">
-                <span class="shortcut-icon">⭐</span>
-                <span class="shortcut-text">Bli medlem</span>
-            </a>
-            <a href="kontakt" class="shortcut-link">
-                <span class="shortcut-icon">✉️</span>
-                <span class="shortcut-text">Kontakt oss</span>
-            </a>
+    <div class="site-notice site-notice--warning" id="site-notice-fullbooked" role="status" aria-live="polite">
+        <div class="container site-notice__inner">
+            <span class="site-notice__icon" aria-hidden="true">📅</span>
+            <p class="site-notice__text">Bjørkvang er fullbooket frem til slutten av oktober 2026. For spørsmål, ta kontakt på <a href="mailto:styret@bjorkvang.org">styret@bjorkvang.org</a>.</p>
+            <button class="site-notice__close" aria-label="Lukk melding" type="button">&#xd7;</button>
         </div>
     </div>
-    -->
 
     <section class="page-header" aria-labelledby="page-title">
         <div class="container">
@@ -307,10 +288,12 @@
                 <div class="booking-main">
                     <div class="section-heading">
                         <h2 id="booking-calendar-heading">Finn ledige datoer</h2>
-                        <p>Klikk på en ledig dato for å starte forespørselen.</p>
+                    </div>
+                    <div class="calendar-cta-hint">
+                        <span class="calendar-cta-hint__icon" aria-hidden="true">👆</span>
+                        <span>Klikk på en ledig dato for å åpne bookingskjemaet</span>
                     </div>
                     <div id="calendar" aria-live="polite"></div>
-                    <div id="calendar-date-status" class="calendar-date-status" role="status" aria-live="polite" hidden></div>
                 </div>
                 <aside class="booking-aside" aria-labelledby="availability-heading">
                     <h3 id="availability-heading">Slik leser du kalenderen</h3>
