@@ -683,6 +683,8 @@ function createBookingCard(booking) {
                 Sendt inn: ${createdStr}<br>
                 ID: ${booking.id} | Status: ${translateStatus(booking.status)}
             </div>
+            ${booking.adminCreated ? `<div class="booking-meta" style="margin-top:4px;"><span style="background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:4px;font-size:0.78rem;font-weight:600;">🖊 Manuelt registrert av admin</span></div>` : ''}
+            ${booking.externalContract ? `<div class="booking-meta" style="margin-top:3px;"><span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:4px;font-size:0.78rem;font-weight:600;">📄 Kontrakt signert på fysisk papir</span></div>` : ''}
             ${isRequesterSigned ? `<div class="booking-meta" style="color:#1e40af;font-size:0.8rem;">Leietaker signerte: ${new Date(contract.signedAt).toLocaleString('nb-NO')}</div>` : ''}
             ${isLandlordSigned ? `<div class="booking-meta" style="color:#059669;font-size:0.8rem;">Utleier signerte: ${new Date(contract.landlordSignedAt).toLocaleString('nb-NO')}</div>` : ''}
             ${booking.depositRequestedAt ? `<div class="booking-meta" style="color:#075985;font-size:0.8rem;">💸 Forhåndsbetalingsforespørsel sendt: ${new Date(booking.depositRequestedAt).toLocaleString('nb-NO')}</div>` : ''}
@@ -850,7 +852,7 @@ function openFinalInvoiceModal(id, totalNOK, depositNOK, hasVask, eventType, est
     _finalInvoiceBookingId = id;
     _finalInvoiceTotalNOK = totalNOK || 0;
     _finalInvoiceDepositNOK = depositNOK || 0;
-    _finalInvoiceCleaningFeeNOK = hasVask ? 0 : 1000;
+    _finalInvoiceCleaningFeeNOK = 1000;
     _isMinnestund = eventType === 'Minnestund';
     _minnestundEstimatedAttendees = estimatedAttendees || 0;
     _hasEmail = !!hasEmail;
@@ -874,7 +876,7 @@ function openFinalInvoiceModal(id, totalNOK, depositNOK, hasVask, eventType, est
     const cleaningInput = document.getElementById('fi-cleaning-fee');
     if (cleaningInput) cleaningInput.value = _finalInvoiceCleaningFeeNOK;
     const cleaningNote = document.getElementById('fi-cleaning-note');
-    if (cleaningNote) cleaningNote.textContent = hasVask ? '(satt til 0 – vask var inkludert i leiesum)' : '';
+    if (cleaningNote) cleaningNote.textContent = '(normalt kr 1 000 – legges til etter arrangementet)';
     document.getElementById('fi-extra-rows').innerHTML = '';
     const sendEmailCb = document.getElementById('fi-send-email');
     if (sendEmailCb) sendEmailCb.checked = _hasEmail;
