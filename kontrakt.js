@@ -199,10 +199,7 @@ const loadContract = async () => {
 
         document.getElementById('rental-price').textContent = totalNOK ? formatCurrency(totalNOK) : 'Etter avtale';
 
-        // Show vask row if services include Vask
-        const hasVask = Array.isArray(booking.services) && booking.services.includes('Vask');
-        const vaskRowEl = document.getElementById('vask-row');
-        if (vaskRowEl) vaskRowEl.hidden = !hasVask;
+        // Vask is now mandatory — always shown as a fixed row in leieavtale.html
 
         // Populate deposit row if element exists
         const depositEl = document.getElementById('rental-deposit');

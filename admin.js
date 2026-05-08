@@ -638,7 +638,8 @@ function createBookingCard(booking) {
 
         // Final invoice — only available after deposit is paid
         if (depositPaid && !finalInvoiceSent) {
-            approvedActions += `<button onclick="openFinalInvoiceModal('${booking.id}', ${totalNOK}, ${depositNOK})" class="btn-sm" style="background:#8b5cf6;">📧 Send sluttfaktura</button>`;
+            const _hasVask = !!(Array.isArray(booking.services) && booking.services.includes('Vask'));
+            approvedActions += `<button onclick="openFinalInvoiceModal('${booking.id}', ${totalNOK}, ${depositNOK}, ${_hasVask})" class="btn-sm" style="background:#8b5cf6;">📧 Send sluttfaktura</button>`;
         } else if (finalInvoiceSent && !finalInvoicePaid) {
             if (finalViaVipps && booking.finalInvoiceVippsOrderId) {
                 approvedActions += `<button onclick="checkVippsPayment('${booking.finalInvoiceVippsOrderId}', '${booking.id}')" class="btn-sm" style="background:#ff5b24;color:#fff;">🔍 Sjekk Vipps-status</button>`;
@@ -839,18 +840,25 @@ async function sendDepositRequest(id) {
 let _finalInvoiceBookingId = null;
 let _finalInvoiceTotalNOK = 0;
 let _finalInvoiceDepositNOK = 0;
+let _finalInvoiceCleaningFeeNOK = 1000;
 let _extraItemCount = 0;
 
-function openFinalInvoiceModal(id, totalNOK, depositNOK) {
+function openFinalInvoiceModal(id, totalNOK, depositNOK, hasVask) {
     _finalInvoiceBookingId = id;
     _finalInvoiceTotalNOK = totalNOK || 0;
     _finalInvoiceDepositNOK = depositNOK || 0;
+    // If booking already had Vask priced in, default cleaning fee to 0 to avoid double-charging
+    _finalInvoiceCleaningFeeNOK = hasVask ? 0 : 1000;
     _extraItemCount = 0;
 
     injectFinalInvoiceModal();
 
     document.getElementById('fi-base-total').textContent = totalNOK ? `kr ${totalNOK.toLocaleString('nb-NO')}` : '–';
     document.getElementById('fi-deposit').textContent = depositNOK ? `− kr ${depositNOK.toLocaleString('nb-NO')}` : '–';
+    const cleaningInput = document.getElementById('fi-cleaning-fee');
+    if (cleaningInput) cleaningInput.value = _finalInvoiceCleaningFeeNOK;
+    const cleaningNote = document.getElementById('fi-cleaning-note');
+    if (cleaningNote) cleaningNote.textContent = hasVask ? '(satt til 0 – vask var inkludert i leiesum)' : '';
     document.getElementById('fi-extra-rows').innerHTML = '';
     updateFinalInvoiceTotal();
 
@@ -873,6 +881,17 @@ function injectFinalInvoiceModal() {
                 </tr>
                 <tr id="fi-extra-rows"></tr>
                 <tr>
+                    <td style="padding:6px 0;">
+                        <span style="font-weight:500;">Vask / Rengjøring (obligatorisk)</span>
+                        <span id="fi-cleaning-note" style="font-size:0.78rem;color:#b45309;margin-left:6px;"></span>
+                    </td>
+                    <td style="text-align:right;white-space:nowrap;padding:6px 0;">
+                        kr <input id="fi-cleaning-fee" type="number" min="0" step="1" value="1000"
+                            oninput="updateFinalInvoiceTotal()"
+                            style="width:80px;padding:3px 6px;border:1px solid #d1d5db;border-radius:5px;font:inherit;font-size:0.9rem;text-align:right;">
+                    </td>
+                </tr>
+                <tr>
                     <td style="padding:6px 0;color:#059669;">Forhåndsbetaling allerede mottatt (trekkes fra)</td>
                     <td id="fi-deposit" style="text-align:right;color:#059669;">–</td>
                 </tr>
@@ -883,7 +902,7 @@ function injectFinalInvoiceModal() {
             </table>
 
             <div style="margin-bottom:1rem;">
-                <strong style="font-size:0.9rem;">Tilleggsbelastninger (f.eks. vask, ekstra utstyr)</strong>
+                <strong style="font-size:0.9rem;">Andre tilleggsbelastninger (f.eks. ekstra utstyr, skader)</strong>
                 <div id="fi-extra-items-container" style="margin-top:8px;"></div>
                 <button type="button" onclick="addExtraInvoiceItem()" style="margin-top:8px;padding:5px 12px;border:1px dashed #9ca3af;border-radius:6px;background:transparent;cursor:pointer;font-size:0.88rem;color:#6b7280;">+ Legg til rad</button>
             </div>
@@ -906,7 +925,7 @@ function addExtraInvoiceItem() {
     row.id = rowId;
     row.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:6px;';
     row.innerHTML = `
-        <input type="text" placeholder="Beskrivelse (f.eks. Vask)" oninput="updateFinalInvoiceTotal()"
+        <input type="text" placeholder="Beskrivelse (f.eks. ekstra utstyr)" oninput="updateFinalInvoiceTotal()"
             style="flex:1;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font:inherit;font-size:0.9rem;"
             class="fi-desc">
         <input type="number" placeholder="kr" min="0" step="1" oninput="updateFinalInvoiceTotal()"
@@ -925,7 +944,8 @@ function updateFinalInvoiceTotal() {
         const amt = parseFloat(row.querySelector('.fi-amount')?.value) || 0;
         extrasTotal += amt;
     });
-    const remaining = (_finalInvoiceTotalNOK - _finalInvoiceDepositNOK) + extrasTotal;
+    const cleaningFee = parseFloat(document.getElementById('fi-cleaning-fee')?.value) || 0;
+    const remaining = (_finalInvoiceTotalNOK - _finalInvoiceDepositNOK) + cleaningFee + extrasTotal;
     const el = document.getElementById('fi-remaining');
     if (el) el.textContent = `kr ${remaining.toLocaleString('nb-NO')}`;
 }
@@ -940,6 +960,9 @@ async function submitFinalInvoice() {
     const btn = document.getElementById('fi-submit-btn');
     const errEl = document.getElementById('fi-error');
     errEl.style.display = 'none';
+
+    // Collect cleaning fee
+    const cleaningFeeNOK = parseFloat(document.getElementById('fi-cleaning-fee')?.value) || 0;
 
     // Collect extra items
     const extraItems = [];
@@ -961,7 +984,7 @@ async function submitFinalInvoice() {
         const res = await fetch(`${API_BASE_URL}/booking/send-final-invoice`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ id: _finalInvoiceBookingId, extraItems })
+            body: JSON.stringify({ id: _finalInvoiceBookingId, cleaningFeeNOK, extraItems })
         });
         const data = await res.json().catch(() => ({}));
         if (res.ok) {
@@ -1038,7 +1061,8 @@ async function checkVippsPayment(orderId, bookingId) {
                         if (booking) {
                             const totalNOK = booking.totalAmount || 0;
                             const depositNOK = booking.depositAmount || Math.round(totalNOK * 0.5);
-                            openFinalInvoiceModal(bookingId, totalNOK, depositNOK);
+                            const hasVask = !!(Array.isArray(booking.services) && booking.services.includes('Vask'));
+                            openFinalInvoiceModal(bookingId, totalNOK, depositNOK, hasVask);
                         }
                     }
                 }

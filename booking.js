@@ -65,11 +65,10 @@ document.addEventListener('DOMContentLoaded', function () {
     'Hele lokalet': 4000,
     'Bryllupspakke': 6000,
     'Små møter': 30, // per person
-    'Vask': 1000, // estimert
     'Projektor': 500
   };
 
-  const SERVICE_PRICING = ['Vask', 'Projektor'];
+  const SERVICE_PRICING = ['Projektor'];
 
   const MEMBER_DISCOUNT = 500;
   const MEMBER_ELIGIBLE_SPACES = ['Hele lokalet', 'Bryllupspakke'];
@@ -91,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
 
-    // Add priced services (e.g. Vask)
+    // Add priced services (e.g. Projektor)
     selectedServices.forEach(service => {
       if (SERVICE_PRICING.includes(service) && PRICING[service]) {
         total += PRICING[service];

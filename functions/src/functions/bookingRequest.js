@@ -155,7 +155,6 @@ app.http('bookingRequest', {
                 'Bryllupspakke': 6000,
                 'Små møter': 30 // per person
             };
-            const SERVICE_PRICING = { 'Vask': 1000 };
 
             const MEMBER_ELIGIBLE_SPACES = ['Hele lokalet', 'Bryllupspakke'];
             let paymentAmount = 0;
@@ -167,12 +166,6 @@ app.http('bookingRequest', {
                 }
             });
 
-            // Add priced services (e.g. Vask)
-            safeServices.forEach(service => {
-                if (SERVICE_PRICING[service]) {
-                    paymentAmount += SERVICE_PRICING[service];
-                }
-            });
 
             const memberIsEligible = isMember === true && safeSpaces.some(s => MEMBER_ELIGIBLE_SPACES.includes(s));
             if (memberIsEligible) {
@@ -267,12 +260,9 @@ app.http('bookingRequest', {
 
             const totalNOK = booking.totalAmount || 0;
             const depositNOK = totalNOK ? Math.round(totalNOK * 0.5) : 0;
-            const hasVask = booking.services && booking.services.includes('Vask');
-            const vaskRow = hasVask
-                ? `<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 0;color:#6b7280;">Vask (estimert)</td><td style="padding:8px 0;text-align:right;">kr\u00a01\u00a0000</td></tr>`
-                : '';
             const priceRow = totalNOK
-                ? `${vaskRow}<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 0;color:#6b7280;">Estimert leiesum</td><td style="padding:8px 0;text-align:right;font-weight:600;">kr\u00a0${totalNOK.toLocaleString('nb-NO')}</td></tr>
+                ? `<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 0;color:#6b7280;">Estimert leiesum</td><td style="padding:8px 0;text-align:right;font-weight:600;">kr\u00a0${totalNOK.toLocaleString('nb-NO')}</td></tr>
+                   <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 0;color:#6b7280;">Vask / Rengj\u00f8ring (obligatorisk, faktureres etterpå)</td><td style="padding:8px 0;text-align:right;">~kr\u00a01\u00a0000</td></tr>
                    <tr><td style="padding:8px 0;color:#6b7280;">Forh\u00e5ndsbetaling (50\u00a0%)</td><td style="padding:8px 0;text-align:right;font-weight:700;color:#166534;">kr\u00a0${depositNOK.toLocaleString('nb-NO')}</td></tr>`
                 : '';
 

@@ -13,9 +13,9 @@ const escapeHtml = (str) => String(str || '').replace(/[&<>"']/g, (m) => ({
 /**
  * Send an itemised final invoice (sluttfaktura) to the booking requester.
  * POST /api/booking/send-final-invoice
- * Body: { id, extraItems?: [{ description: string, amountNOK: number }] }
+ * Body: { id, cleaningFeeNOK?: number, extraItems?: [{ description: string, amountNOK: number }] }
  *
- * - Calculates remaining = (totalAmount - depositAmount) + sum(extraItems)
+ * - Calculates remaining = (totalAmount - depositAmount) + cleaningFeeNOK + sum(extraItems)
  * - If paymentMethod === 'vipps': creates Vipps payment link, embeds in email
  * - If 'bank': includes bank account in email
  * - Returns 409 if invoice was already sent (prevents accidental duplicate)
@@ -38,6 +38,10 @@ app.http('sendFinalInvoice', {
         }
 
         const extraItems = Array.isArray(body.extraItems) ? body.extraItems : [];
+        // Mandatory cleaning fee — default 1000 NOK, admin can adjust
+        const cleaningFeeNOK = (typeof body.cleaningFeeNOK === 'number' && body.cleaningFeeNOK >= 0)
+            ? body.cleaningFeeNOK
+            : 1000;
         // Validate extra items
         for (const item of extraItems) {
             if (!item.description || typeof item.description !== 'string' || item.description.length > 200) {
@@ -74,7 +78,7 @@ app.http('sendFinalInvoice', {
         const depositNOK = booking.depositAmount || 0;
         const totalNOK = booking.totalAmount || depositNOK * 2;
         const extrasTotal = extraItems.reduce((sum, item) => sum + item.amountNOK, 0);
-        const grandTotalNOK = totalNOK + extrasTotal;
+        const grandTotalNOK = totalNOK + cleaningFeeNOK + extrasTotal;
         const remainingNOK = grandTotalNOK - depositNOK;
         const paymentMethod = booking.paymentMethod || 'bank';
         const bankAccount = process.env.BANK_ACCOUNT || '1822.40.12345';
@@ -100,6 +104,9 @@ app.http('sendFinalInvoice', {
         if (services) {
             itemRows.push({ label: `Inkluderte tillegg – ${services}`, amount: null, style: 'color:#6b7280;' });
         }
+
+        // Mandatory cleaning fee
+        itemRows.push({ label: 'Vask / Rengjøring (obligatorisk)', amount: cleaningFeeNOK, style: 'color:#b45309;' });
 
         // Extra charges added by admin
         for (const item of extraItems) {
@@ -249,7 +256,9 @@ app.http('sendFinalInvoice', {
         const updateFields = {
             finalInvoiceSentAt: now,
             finalInvoiceAmountNOK: remainingNOK,
+            cleaningFeeNOK,
             invoiceItems: [
+                { description: 'Vask / Rengjøring', amountNOK: cleaningFeeNOK },
                 ...extraItems,
                 { description: 'Forhåndsbetaling trukket fra', amountNOK: -depositNOK }
             ]
