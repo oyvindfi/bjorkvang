@@ -176,7 +176,7 @@ const capturePayment = async (reference, amount) => {
  * @param {Object} options
  * @param {string} options.productName - Short product name shown in Vipps
  * @param {string} options.productDescription - Longer description
- * @param {number} options.amount - Amount in øre (e.g. 25000 = 250 kr)
+ * @param {number} options.amount - Amount in NOK (e.g. 250 = 250 kr)
  * @param {string} options.intervalUnit - 'YEAR' | 'MONTH' | 'WEEK' | 'DAY'
  * @param {number} options.intervalCount - Number of interval units between charges
  * @param {string} options.merchantRedirectUrl - Where to send user after agreement

@@ -12,7 +12,7 @@ app.http('vippsInitiateMembership', {
             const body = await parseBody(request);
             const { phoneNumber, name } = body;
 
-            const amount = 25000; // 250 kr i øre
+            const amount = 250; // 250 kr (Vipps Recurring v3 bruker NOK, ikke øre)
             // Vipps Recurring API krever HTTPS-URLer.
             // Bruk den konfigurerte SITE_BASE_URL eller fall tilbake til produksjonsdomenet.
             const siteBase = process.env.SITE_BASE_URL || 'https://bjorkvang.org';
