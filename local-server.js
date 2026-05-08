@@ -170,7 +170,7 @@ async function handleApi(pathname, body, req) {
         const result = await vippsCreateRecurringAgreement({
             productName: 'Medlemskap Helgøens Vel',
             productDescription: 'Årlig kontingent – 250 kr. Gir rabatt på leie av Bjørkvang.',
-            amount: 25000,
+            amount: 250,
             intervalUnit: 'YEAR',
             intervalCount: 1,
             merchantRedirectUrl,
@@ -187,7 +187,7 @@ async function handleApi(pathname, body, req) {
                 phoneNumber: body.phoneNumber || null,
                 status: 'PENDING',
                 productName: 'Medlemskap Helgøens Vel',
-                amount: 25000,
+                amount: 250,
                 createdAt: new Date().toISOString(),
             };
         }
