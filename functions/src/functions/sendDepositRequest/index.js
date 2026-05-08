@@ -49,12 +49,33 @@ app.http('sendDepositRequest', {
 
         // Allow force resend via ?force=true or body.force
         const forceResend = body.force === true || request.query.get('force') === 'true';
+        // skipEmail: just register the request internally without sending anything (for manual/admin bookings)
+        const skipEmail = body.skipEmail === true;
 
         // If already sent and not forcing, return current state
         if (booking.depositRequested && !forceResend) {
             return createJsonResponse(200, {
                 message: 'Forhåndsbetalingsforespørsel allerede sendt. Bruk force=true for å sende på nytt.',
                 booking
+            }, request);
+        }
+
+        // skipEmail path: mark depositRequested without sending anything
+        if (skipEmail) {
+            const totalNOK = booking.totalAmount || 0;
+            const depositNOK = Math.round(totalNOK * 0.5);
+            const now = new Date().toISOString();
+            const updated = await updateBookingFields(id.trim(), null, {
+                depositRequested: true,
+                depositRequestedAt: now,
+                depositAmount: depositNOK
+            });
+            context.info(`sendDepositRequest: registered (skipEmail) for booking ${id}`);
+            return createJsonResponse(200, {
+                message: 'Forhåndsbetalingsforespørsel registrert (ingen e-post sendt).',
+                depositAmount: depositNOK,
+                paymentMethod: booking.paymentMethod || 'bank',
+                booking: updated || booking
             }, request);
         }
 

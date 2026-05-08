@@ -622,24 +622,35 @@ function createBookingCard(booking) {
         approvedActions += `<button onclick="printContract('${booking.id}')" class="btn-sm" style="background:#64748b;" title="Åpner utskriftsvennlig versjon">🖨 Skriv ut avtale</button>`;
 
         // Deposit flow
-        if (!depositRequested) {
-            approvedActions += `<button onclick="sendDepositRequest('${booking.id}')" class="btn-sm" style="background:#0ea5e9;">💸 Send forhåndsbetalingsforespørsel</button>`;
-        } else if (depositRequested && !depositPaid) {
-            if (paymentMethod === 'bank') {
-                approvedActions += `<button onclick="markDepositPaid('${booking.id}')" class="btn-sm" style="background:#0ea5e9;">💰 Forhåndsbetaling mottatt (bank)</button>`;
+        if (booking.adminCreated) {
+            // Manual booking — no emails, just register internally
+            if (!depositRequested && !depositPaid) {
+                approvedActions += `<button onclick="registerDepositRequestOnly('${booking.id}')" class="btn-sm" style="background:#0ea5e9;">💸 Registrer forhåndsbetalingsforespørsel</button>`;
+                approvedActions += `<button onclick="markDepositPaid('${booking.id}')" class="btn-sm" style="background:#059669;">💰 Registrer forhåndsbetaling mottatt</button>`;
+            } else if (depositRequested && !depositPaid) {
+                approvedActions += `<button onclick="markDepositPaid('${booking.id}')" class="btn-sm" style="background:#059669;">💰 Registrer forhåndsbetaling mottatt</button>`;
             }
-            if (paymentMethod === 'vipps') {
-                if (booking.depositVippsOrderId) {
-                    approvedActions += `<button onclick="checkVippsPayment('${booking.depositVippsOrderId}', '${booking.id}')" class="btn-sm" style="background:#ff5b24;color:#fff;">🔍 Sjekk Vipps-status</button>`;
+        } else {
+            // Normal flow — send emails/Vipps
+            if (!depositRequested) {
+                approvedActions += `<button onclick="sendDepositRequest('${booking.id}')" class="btn-sm" style="background:#0ea5e9;">💸 Send forhåndsbetalingsforespørsel</button>`;
+            } else if (depositRequested && !depositPaid) {
+                if (paymentMethod === 'bank') {
+                    approvedActions += `<button onclick="markDepositPaid('${booking.id}')" class="btn-sm" style="background:#0ea5e9;">💰 Forhåndsbetaling mottatt (bank)</button>`;
                 }
-                approvedActions += `<button onclick="markDepositPaid('${booking.id}')" class="btn-sm" style="background:#64748b;font-size:0.75rem;">💰 Merk betalt (manuelt)</button>`;
+                if (paymentMethod === 'vipps') {
+                    if (booking.depositVippsOrderId) {
+                        approvedActions += `<button onclick="checkVippsPayment('${booking.depositVippsOrderId}', '${booking.id}')" class="btn-sm" style="background:#ff5b24;color:#fff;">🔍 Sjekk Vipps-status</button>`;
+                    }
+                    approvedActions += `<button onclick="markDepositPaid('${booking.id}')" class="btn-sm" style="background:#64748b;font-size:0.75rem;">💰 Merk betalt (manuelt)</button>`;
+                }
             }
         }
 
         // Final invoice — only available after deposit is paid
         if (depositPaid && !finalInvoiceSent) {
             const _hasVask = !!(Array.isArray(booking.services) && booking.services.includes('Vask'));
-            approvedActions += `<button onclick="openFinalInvoiceModal('${booking.id}', ${totalNOK}, ${depositNOK}, ${_hasVask}, '${booking.eventType || ''}', ${booking.attendees || 0}, ${!!booking.requesterEmail})" class="btn-sm" style="background:#8b5cf6;">📋 Sluttoppgjør</button>`;
+            approvedActions += `<button onclick="openFinalInvoiceModal('${booking.id}', ${totalNOK}, ${depositNOK}, ${_hasVask}, '${booking.eventType || ''}', ${booking.attendees || 0}, ${!!booking.requesterEmail}, ${!!booking.adminCreated})" class="btn-sm" style="background:#8b5cf6;">📋 Sluttoppgjør</button>`;
         } else if (finalInvoiceSent && !finalInvoicePaid) {
             if (finalViaVipps && booking.finalInvoiceVippsOrderId) {
                 approvedActions += `<button onclick="checkVippsPayment('${booking.finalInvoiceVippsOrderId}', '${booking.id}')" class="btn-sm" style="background:#ff5b24;color:#fff;">🔍 Sjekk Vipps-status</button>`;
@@ -815,6 +826,27 @@ async function markDepositPaid(id) {
     }
 }
 
+async function registerDepositRequestOnly(id) {
+    if (!confirm('Registrer forhåndsbetalingsforespørsel internt (ingen e-post eller SMS sendes)?')) return;
+    try {
+        const res = await fetch(`${API_BASE_URL}/booking/send-deposit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ id, skipEmail: true })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+            alert(`Forhåndsbetalingsforespørsel registrert internt (kr ${(data.depositAmount || 0).toLocaleString('nb-NO')}).`);
+            loadDashboard();
+        } else {
+            alert(`Feil: ${data.error || 'Kunne ikke registrere forhåndsbetalingsforespørsel.'}`);
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Nettverksfeil.');
+    }
+}
+
 async function sendDepositRequest(id) {
     if (!confirm('Send forhåndsbetalingsforespørsel til leietaker?')) return;
     try {
@@ -848,7 +880,7 @@ let _minnestundEstimatedAttendees = 0;
 let _hasEmail = false;
 let _extraItemCount = 0;
 
-function openFinalInvoiceModal(id, totalNOK, depositNOK, hasVask, eventType, estimatedAttendees, hasEmail) {
+function openFinalInvoiceModal(id, totalNOK, depositNOK, hasVask, eventType, estimatedAttendees, hasEmail, isAdminCreated) {
     _finalInvoiceBookingId = id;
     _finalInvoiceTotalNOK = totalNOK || 0;
     _finalInvoiceDepositNOK = depositNOK || 0;
@@ -879,7 +911,7 @@ function openFinalInvoiceModal(id, totalNOK, depositNOK, hasVask, eventType, est
     if (cleaningNote) cleaningNote.textContent = '(normalt kr 1 000 – legges til etter arrangementet)';
     document.getElementById('fi-extra-rows').innerHTML = '';
     const sendEmailCb = document.getElementById('fi-send-email');
-    if (sendEmailCb) sendEmailCb.checked = _hasEmail;
+    if (sendEmailCb) sendEmailCb.checked = isAdminCreated ? false : _hasEmail;
     updateFinalInvoiceSubmitLabel();
     updateFinalInvoiceTotal();
 

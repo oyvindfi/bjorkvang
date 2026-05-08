@@ -35,9 +35,18 @@ app.http('depositPaid', {
             return createJsonResponse(200, { message: 'Forhåndsbetaling allerede registrert som betalt.', booking }, request);
         }
 
+        // Also register the deposit request if admin marked paid directly without sending a request
+        const extraFields = {};
+        if (!booking.depositRequested) {
+            extraFields.depositRequested = true;
+            extraFields.depositRequestedAt = new Date().toISOString();
+            extraFields.depositAmount = booking.depositAmount || Math.round((booking.totalAmount || 0) * 0.5);
+        }
+
         const updated = await updateBookingFields(id.trim(), null, {
             depositPaid: true,
-            depositPaidAt: new Date().toISOString()
+            depositPaidAt: new Date().toISOString(),
+            ...extraFields
         });
 
         if (!updated) {
@@ -47,9 +56,9 @@ app.http('depositPaid', {
 
         context.info(`depositPaid: Marked deposit as paid for booking ${id}`);
 
-        // Send receipt email to requester
+        // Send receipt email to requester (skip for manually-managed bookings)
         const from = process.env.DEFAULT_FROM_ADDRESS;
-        if (from && updated.requesterEmail) {
+        if (from && updated.requesterEmail && !updated.suppressEmails) {
             try {
                 const depositNOK = Number(updated.depositAmount) || 0;
                 const depositStr = depositNOK
