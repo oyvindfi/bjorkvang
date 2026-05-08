@@ -588,21 +588,27 @@
                         <label style="flex-direction:row; align-items:center; gap:8px; font-weight:normal;">
                             <input type="checkbox" id="mb-member"> Kunden er medlem av Helgøens Vel (−500 kr rabatt – gjelder Hele lokalet og Bryllupspakke)
                         </label>
+                        <label>Betalingsmetode *
+                            <select id="mb-payment-method">
+                                <option value="bank" selected>Bank (kontooverføring)</option>
+                                <option value="vipps">Vipps</option>
+                            </select>
+                        </label>
                         <div class="full" style="border-top:1px solid #e5e7eb;padding-top:14px;margin-top:6px;">
-                            <strong style="font-size:0.9rem;color:#4b5563;">📋 Håndtert utenfor systemet</strong>
-                            <p style="font-size:0.82rem;color:#9ca3af;margin:4px 0 10px;">For bookinger der kontrakt, betaling o.l. allerede er ordnet direkte (telefon, e-post, kontant).</p>
+                            <strong style="font-size:0.9rem;color:#4b5563;">📋 Allerede ordnet utenfor systemet</strong>
+                            <p style="font-size:0.82rem;color:#9ca3af;margin:4px 0 10px;">Kryss av for det som allerede er håndtert direkte (telefon, e-post, fysisk møte).</p>
                             <div style="display:flex;flex-direction:column;gap:8px;">
                                 <label style="flex-direction:row;align-items:center;gap:8px;font-weight:normal;cursor:pointer;">
                                     <input type="checkbox" id="mb-external-contract" onchange="mbExternalChanged()">
-                                    Kontrakt signert utenfor systemet
+                                    Kontrakt signert på fysisk papir
                                 </label>
                                 <label style="flex-direction:row;align-items:center;gap:8px;font-weight:normal;cursor:pointer;">
                                     <input type="checkbox" id="mb-deposit-paid" onchange="mbExternalChanged()">
-                                    Forhåndsbetaling allerede mottatt
+                                    Forhåndsbetaling mottatt
                                 </label>
                                 <label style="flex-direction:row;align-items:center;gap:8px;font-weight:normal;cursor:pointer;">
                                     <input type="checkbox" id="mb-fully-paid" onchange="mbExternalChanged()">
-                                    Fullt betalt utenfor systemet <span style="font-size:0.8rem;color:#9ca3af;margin-left:4px;">(ingen sluttfaktura nødvendig)</span>
+                                    Sluttoppgjør mottatt
                                 </label>
                             </div>
                         </div>
