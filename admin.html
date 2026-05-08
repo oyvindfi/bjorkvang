@@ -518,9 +518,15 @@
                         <label>Kundens e-post
                             <input type="email" id="mb-email" placeholder="ola@example.com">
                         </label>
-                        <label style="flex-direction:row;align-items:center;gap:8px;font-weight:normal;cursor:pointer;margin-top:2px;">
-                            <input type="checkbox" id="mb-send-emails"> Send booking-bekreftelse og kontrakt på e-post til kunden
-                        </label>
+                        <div class="full" style="background:#fffbeb;border:2px solid #f59e0b;border-radius:8px;padding:12px 14px;margin-top:4px;">
+                            <label style="flex-direction:row;align-items:flex-start;gap:10px;font-weight:600;cursor:pointer;margin:0;color:#92400e;">
+                                <input type="checkbox" id="mb-send-emails" style="width:18px;height:18px;margin-top:2px;flex-shrink:0;">
+                                <span>Send e-post, SMS og kontrakt til kunden</span>
+                            </label>
+                            <p style="margin:6px 0 0 28px;font-size:0.82rem;color:#b45309;font-weight:normal;">
+                                Avkryss kun hvis kunden har e-post og skal motta digital bookingbekreftelse, kontrakt og betalingsvarsler. Ikke avkrysset = ingen utsendelser.
+                            </p>
+                        </div>
                         <label>Telefon
                             <input type="tel" id="mb-phone" placeholder="+47 000 00 000">
                         </label>

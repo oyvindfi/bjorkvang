@@ -205,7 +205,8 @@ app.http('bookingRequest', {
                 status: bookingStatus,
                 paymentOrderId: paymentOrderId || null,
                 paymentStatus: paymentStatus || 'unpaid',
-                paymentMethod: paymentMethod || 'vipps',
+                // Admin-created bookings default to bank; public bookings default to bank too
+                paymentMethod: (paymentMethod && ['bank', 'vipps'].includes(paymentMethod)) ? paymentMethod : 'bank',
                 totalAmount: totalAmount || paymentAmount / 100,
                 paymentAmount: paymentAmount,
                 cateringContact: cateringContact === true || cateringContact === 'true',
