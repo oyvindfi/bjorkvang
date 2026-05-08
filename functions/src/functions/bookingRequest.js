@@ -21,10 +21,14 @@ app.http('bookingRequest', {
         }
 
         const body = await parseBody(request);
-        const { date, time, requesterName, requesterEmail, message, duration, eventType, spaces, services, attendees, paymentOrderId, paymentStatus, isMember, paymentMethod, totalAmount, cateringContact, endDate, endTime, phone, address, source, adminCreated, externalContract, depositAlreadyPaid, fullyPaid } = body;
+        const { date, time, requesterName, requesterEmail, message, duration, eventType, spaces, services, attendees, paymentOrderId, paymentStatus, isMember, paymentMethod, totalAmount, cateringContact, endDate, endTime, phone, address, source, adminCreated, externalContract, depositAlreadyPaid, fullyPaid, sendConfirmationEmail } = body;
 
-        // Validate required fields
-        if (!date || !time || !requesterName || !requesterEmail) {
+        const isAdminBooking = adminCreated === true;
+        // For admin bookings, emails are opt-in (require explicit sendConfirmationEmail flag)
+        const suppressEmails = isAdminBooking && sendConfirmationEmail !== true;
+
+        // Validate required fields (email optional for admin bookings)
+        if (!date || !time || !requesterName || (!requesterEmail && !isAdminBooking)) {
             context.warn('bookingRequest: Missing required fields', { 
                 hasDate: Boolean(date),
                 hasTime: Boolean(time),
@@ -36,14 +40,14 @@ app.http('bookingRequest', {
         
         // Validate field types and formats
         if (typeof date !== 'string' || typeof time !== 'string' || 
-            typeof requesterName !== 'string' || typeof requesterEmail !== 'string') {
+            typeof requesterName !== 'string' || (requesterEmail && typeof requesterEmail !== 'string')) {
             context.warn('bookingRequest: Invalid field types');
             return createJsonResponse(400, { error: 'Invalid field types.' }, request);
         }
         
-        // Validate email format
+        // Validate email format (only when provided)
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(requesterEmail.trim())) {
+        if (requesterEmail && !emailRegex.test(requesterEmail.trim())) {
             context.warn('bookingRequest: Invalid email format', { email: requesterEmail });
             return createJsonResponse(400, { error: 'Invalid email format.' }, request);
         }
@@ -52,7 +56,7 @@ app.http('bookingRequest', {
         const trimmedDate = date.trim();
         const trimmedTime = time.trim();
         const trimmedName = requesterName.trim();
-        const trimmedEmail = requesterEmail.trim();
+        const trimmedEmail = requesterEmail ? requesterEmail.trim() : '';
         const trimmedMessage = message ? String(message).trim() : '';
         const trimmedEventType = eventType ? String(eventType).trim() : 'Reservasjon';
         const safeDuration = Number(duration) || 4;
@@ -206,6 +210,7 @@ app.http('bookingRequest', {
                 paymentAmount: paymentAmount,
                 cateringContact: cateringContact === true || cateringContact === 'true',
                 adminCreated: adminCreated === true,
+                suppressEmails: suppressEmails || false,
                 // External tracking: pre-set fields if admin indicated these were handled outside the system
                 ...(adminCreated === true && externalContract === true ? {
                     contract: {
@@ -357,8 +362,8 @@ app.http('bookingRequest', {
 
             const text = `Ny bookingforespørsel:\nDato: ${booking.date}\nTid: ${booking.time}\nType: ${booking.eventType}\nNavn: ${booking.requesterName}\nE-post: ${booking.requesterEmail}${booking.phone ? `\nTelefon: ${booking.phone}` : ''}${booking.address ? `\nAdresse: ${booking.address}` : ''}\nMelding: ${booking.message || 'Ingen melding'}\n\nÅpne i admin: ${adminLink}\nGodkjenn: ${approveLink}\nAvvis: ${rejectLink}`;
 
-            // Skip all emails for admin-seed bookings to avoid notification spam
-            if (source !== 'admin-seed') {
+            // Skip all emails for admin-seed bookings or admin-created bookings where emails were not requested
+            if (source !== 'admin-seed' && !suppressEmails) {
             await sendEmail({
                 to,
                 from,

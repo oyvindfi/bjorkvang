@@ -170,11 +170,11 @@ app.http('approveBooking', {
         
         context.info(`approveBooking: Successfully approved booking ${id} for ${existingBooking.requesterEmail}`);
 
-        // Skip confirmation email for admin-seed bookings
-        if (existingBooking.source === 'admin-seed') {
-            context.info('approveBooking: Skipping confirmation email for admin-seed booking');
-            if (isApiRequest) return createJsonResponse(200, { message: 'Booking approved (admin-seed, no email sent).' }, request);
-            return createHtmlResponse(200, '<p>Booking godkjent (admin-seed, ingen e-post sendt).</p>', request);
+        // Skip confirmation email for admin-seed bookings, or admin-created bookings where emails were suppressed
+        if (existingBooking.source === 'admin-seed' || existingBooking.suppressEmails) {
+            context.info('approveBooking: Skipping confirmation email (admin-seed or suppressEmails flag)');
+            if (isApiRequest) return createJsonResponse(200, { message: 'Booking approved (no email sent).' }, request);
+            return createHtmlResponse(200, '<p>Booking godkjent (ingen e-post sendt).</p>', request);
         }
 
         try {

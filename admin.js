@@ -1449,6 +1449,7 @@ async function createManualBooking(event) {
         externalContract:   document.getElementById('mb-external-contract')?.checked || false,
         depositAlreadyPaid: document.getElementById('mb-deposit-paid')?.checked || false,
         fullyPaid:          document.getElementById('mb-fully-paid')?.checked || false,
+        sendConfirmationEmail: document.getElementById('mb-send-emails')?.checked || false,
     };
 
     submitBtn.disabled = true;
