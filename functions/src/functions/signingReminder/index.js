@@ -105,7 +105,7 @@ app.timer('signingReminder', {
                 // --- SMS-påminnelse til leietaker ---
                 if (booking.phone) {
                     const firstName = booking.requesterName ? booking.requesterName.split(' ')[0] : 'deg';
-                    const tenantSms = `Hei ${firstName}! Din leieavtale for ${formatDate(booking.date)} venter på din signatur. Signer her: ${contractLink} – Bjørkvang forsamlingslokale`;
+                    const tenantSms = `Hei ${firstName}! Din leieavtale for ${formatDate(booking.date)} venter på din signatur. Signer her: ${contractLink} – Bjørkvang forsamlingslokale og Helgøens Vel`;
                     await sendSms({ to: booking.phone, body: tenantSms }, context);
                 }
 

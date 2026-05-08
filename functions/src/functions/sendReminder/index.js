@@ -86,7 +86,7 @@ app.http('sendReminder', {
                     </div>
                     <p style="font-size:0.9em;color:#6b7280;">Spørsmål? Ta kontakt på <a href="mailto:styret@bjørkvang.no" style="color:#1a823b;">styret@bjørkvang.no</a>.</p>
                 `;
-                smsBody = `Hei ${firstName}! Påminnelse: Leieavtalen for ${formatDate(booking.date)} er ikke signert ennå. Signer her: ${contractLink} – Bjørkvang forsamlingslokale`;
+                smsBody = `Hei ${firstName}! Påminnelse: Leieavtalen for ${formatDate(booking.date)} er ikke signert ennå. Signer her: ${contractLink} – Bjørkvang forsamlingslokale og Helgøens Vel`;
 
             } else if (reminderType === 'deposit') {
                 subject = `Påminnelse: Forhåndsbetaling forfaller – ${formattedDate}`;
@@ -104,8 +104,8 @@ app.http('sendReminder', {
                     <p style="font-size:0.9em;color:#6b7280;">Spørsmål? Ta kontakt på <a href="mailto:styret@bjørkvang.no" style="color:#1a823b;">styret@bjørkvang.no</a>.</p>
                 `;
                 smsBody = booking.paymentMethod === 'vipps'
-                    ? `Hei ${firstName}! Påminnelse: Forhåndsbetaling${depositNOK ? ' kr ' + depositNOK.toLocaleString('nb-NO') + ',-' : ''} for ${formatDate(booking.date)} er ikke betalt. Sjekk e-posten for betalingslenke. – Bjørkvang forsamlingslokale`
-                    : `Hei ${firstName}! Påminnelse: Betal forhåndsbetaling${depositNOK ? ' kr ' + depositNOK.toLocaleString('nb-NO') + ',-' : ''} for ${formatDate(booking.date)} til kontonr. ${bankAccount}. Merk: ${id.slice(0, 8)}. – Bjørkvang forsamlingslokale`;
+                    ? `Hei ${firstName}! Påminnelse: Forhåndsbetaling${depositNOK ? ' kr ' + depositNOK.toLocaleString('nb-NO') + ',-' : ''} for ${formatDate(booking.date)} er ikke betalt. Sjekk e-posten for betalingslenke. – Bjørkvang forsamlingslokale og Helgøens Vel`
+                    : `Hei ${firstName}! Påminnelse: Betal forhåndsbetaling${depositNOK ? ' kr ' + depositNOK.toLocaleString('nb-NO') + ',-' : ''} for ${formatDate(booking.date)} til kontonr. ${bankAccount}. Merk: ${id.slice(0, 8)}. – Bjørkvang forsamlingslokale og Helgøens Vel`;
 
             } else { // finalInvoice
                 subject = `Påminnelse: Sluttfaktura for ${formattedDate}`;
@@ -123,8 +123,8 @@ app.http('sendReminder', {
                     <p style="font-size:0.9em;color:#6b7280;">Spørsmål? Ta kontakt på <a href="mailto:styret@bjørkvang.no" style="color:#1a823b;">styret@bjørkvang.no</a>.</p>
                 `;
                 smsBody = booking.paymentMethod === 'vipps'
-                    ? `Hei ${firstName}! Påminnelse: Sluttfaktura${remainingNOK ? ' kr ' + remainingNOK.toLocaleString('nb-NO') + ',-' : ''} for ${formatDate(booking.date)} er ikke betalt. Sjekk e-posten for betalingslenke. – Bjørkvang forsamlingslokale`
-                    : `Hei ${firstName}! Påminnelse: Betal sluttfaktura${remainingNOK ? ' kr ' + remainingNOK.toLocaleString('nb-NO') + ',-' : ''} for ${formatDate(booking.date)} til kontonr. ${bankAccount}. Merk: ${id.slice(0, 8)}. – Bjørkvang forsamlingslokale`;
+                    ? `Hei ${firstName}! Påminnelse: Sluttfaktura${remainingNOK ? ' kr ' + remainingNOK.toLocaleString('nb-NO') + ',-' : ''} for ${formatDate(booking.date)} er ikke betalt. Sjekk e-posten for betalingslenke. – Bjørkvang forsamlingslokale og Helgøens Vel`
+                    : `Hei ${firstName}! Påminnelse: Betal sluttfaktura${remainingNOK ? ' kr ' + remainingNOK.toLocaleString('nb-NO') + ',-' : ''} for ${formatDate(booking.date)} til kontonr. ${bankAccount}. Merk: ${id.slice(0, 8)}. – Bjørkvang forsamlingslokale og Helgøens Vel`;
             }
 
             const html = generateEmailHtml({

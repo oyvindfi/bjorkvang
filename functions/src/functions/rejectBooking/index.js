@@ -221,7 +221,7 @@ app.http('rejectBooking', {
 
                 // --- SMS til leietaker ved avvisning ---
                 if (existingBooking.phone) {
-                    const rejectionSmsBody = `Hei ${existingBooking.requesterName ? existingBooking.requesterName.split(' ')[0] : 'deg'}. Din leieforespørsel for ${formatDate(existingBooking.date)} ble dessverre ikke godkjent. Ta kontakt for mer informasjon. – Bjørkvang forsamlingslokale`;
+                    const rejectionSmsBody = `Hei ${existingBooking.requesterName ? existingBooking.requesterName.split(' ')[0] : 'deg'}. Din leieforespørsel for ${formatDate(existingBooking.date)} ble dessverre ikke godkjent. Ta kontakt for mer informasjon. – Bjørkvang forsamlingslokale og Helgøens Vel`;
                     await sendSms({ to: existingBooking.phone, body: rejectionSmsBody }, context);
                 }
             }

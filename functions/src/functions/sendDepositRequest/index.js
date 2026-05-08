@@ -227,9 +227,9 @@ app.http('sendDepositRequest', {
             const firstName = booking.requesterName ? booking.requesterName.split(' ')[0] : 'deg';
             let depositSmsBody;
             if (paymentMethod === 'vipps' && vippsUrl) {
-                depositSmsBody = `Hei ${firstName}! Forhåndsbetaling kr ${depositNOK.toLocaleString('nb-NO')},- for ${formatDate(booking.date)} er klar. Sjekk e-posten din for Vipps-betalingslenke. – Bjørkvang forsamlingslokale`;
+                depositSmsBody = `Hei ${firstName}! Forhåndsbetaling kr ${depositNOK.toLocaleString('nb-NO')},- for ${formatDate(booking.date)} er klar. Sjekk e-posten din for Vipps-betalingslenke. – Bjørkvang forsamlingslokale og Helgøens Vel`;
             } else {
-                depositSmsBody = `Hei ${firstName}! Betal forhåndsbetaling kr ${depositNOK.toLocaleString('nb-NO')},- for ${formatDate(booking.date)} til kontonr. ${bankAccount}. Merk betalingen: ${id.slice(0, 8)}. – Bjørkvang forsamlingslokale`;
+                depositSmsBody = `Hei ${firstName}! Betal forhåndsbetaling kr ${depositNOK.toLocaleString('nb-NO')},- for ${formatDate(booking.date)} til kontonr. ${bankAccount}. Merk betalingen: ${id.slice(0, 8)}. – Bjørkvang forsamlingslokale og Helgøens Vel`;
             }
             await sendSms({ to: booking.phone, body: depositSmsBody }, context);
         }

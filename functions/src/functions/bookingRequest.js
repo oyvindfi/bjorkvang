@@ -377,7 +377,7 @@ app.http('bookingRequest', {
 
             // --- Board SMS notification ---
             if (process.env.BOARD_PHONE_NUMBER) {
-                const boardSmsBody = `Ny leieforespørsel: ${booking.requesterName}, ${formatDate(booking.date)} (${booking.eventType || 'Reservasjon'}), ${booking.attendees || '?'} gjester. Godkjenn i admin. – Bjørkvang forsamlingslokale`;
+                const boardSmsBody = `Ny leieforespørsel: ${booking.requesterName}, ${formatDate(booking.date)} (${booking.eventType || 'Reservasjon'}), ${booking.attendees || '?'} gjester. Godkjenn i admin. – Bjørkvang forsamlingslokale og Helgøens Vel`;
                 await sendSms({ to: process.env.BOARD_PHONE_NUMBER, body: boardSmsBody }, context);
             }
 
@@ -433,7 +433,7 @@ app.http('bookingRequest', {
                 // --- Requester SMS confirmation ---
                 if (booking.phone) {
                     const firstName = booking.requesterName ? booking.requesterName.split(' ')[0] : 'deg';
-                    const requesterSmsBody = `Hei ${firstName}! Vi har mottatt din leieforespørsel for ${formatDate(booking.date)}. Vi behandler den og gir deg svar snart. – Bjørkvang forsamlingslokale`;
+                    const requesterSmsBody = `Hei ${firstName}! Vi har mottatt din leieforespørsel for ${formatDate(booking.date)}. Vi behandler den og gir deg svar snart. – Bjørkvang forsamlingslokale og Helgøens Vel`;
                     await sendSms({ to: booking.phone, body: requesterSmsBody }, context);
                 }
             } catch (error) {
