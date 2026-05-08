@@ -73,6 +73,8 @@ document.addEventListener('DOMContentLoaded', function () {
   const MEMBER_DISCOUNT = 500;
   const MEMBER_ELIGIBLE_SPACES = ['Hele lokalet', 'Bryllupspakke'];
 
+  const MINNESTUND_RATE = 30; // kr per person
+
   // Calculate total price based on selected spaces, services, attendees and member discount
   const calculatePrice = () => {
     const spacesCheckboxes = form.querySelectorAll('input[name="spaces"]:checked');
@@ -80,6 +82,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const servicesCheckboxes = form.querySelectorAll('input[name="services"]:checked');
     const selectedServices = Array.from(servicesCheckboxes).map(cb => cb.value);
     const attendees = parseInt(attendeesInput?.value) || 10;
+    const eventType = form.querySelector('#event-type')?.value;
+
+    // Minnesamvær: override all space pricing — flat rate per person
+    if (eventType === 'Minnestund') {
+      return attendees * MINNESTUND_RATE;
+    }
 
     let total = 0;
     selectedSpaces.forEach(space => {
@@ -200,6 +208,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (attendeesInput) {
       attendeesInput.addEventListener('input', updatePriceDisplay);
+    }
+
+    if (eventTypeSelect) {
+      eventTypeSelect.addEventListener('change', () => {
+        const isMinnestund = eventTypeSelect.value === 'Minnestund';
+        const hint = document.getElementById('minnestund-hint');
+        if (hint) hint.style.display = isMinnestund ? '' : 'none';
+        updatePriceDisplay();
+      });
     }
 
     // Live "slutter ca." summary when time + duration are both filled

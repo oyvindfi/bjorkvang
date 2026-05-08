@@ -21,7 +21,7 @@ app.http('bookingRequest', {
         }
 
         const body = await parseBody(request);
-        const { date, time, requesterName, requesterEmail, message, duration, eventType, spaces, services, attendees, paymentOrderId, paymentStatus, isMember, paymentMethod, totalAmount, cateringContact, endDate, endTime, phone, address, source } = body;
+        const { date, time, requesterName, requesterEmail, message, duration, eventType, spaces, services, attendees, paymentOrderId, paymentStatus, isMember, paymentMethod, totalAmount, cateringContact, endDate, endTime, phone, address, source, adminCreated, externalContract, depositAlreadyPaid, fullyPaid } = body;
 
         // Validate required fields
         if (!date || !time || !requesterName || !requesterEmail) {
@@ -157,19 +157,25 @@ app.http('bookingRequest', {
             };
 
             const MEMBER_ELIGIBLE_SPACES = ['Hele lokalet', 'Bryllupspakke'];
+            const MINNESTUND_RATE = 30; // kr per person
             let paymentAmount = 0;
-            safeSpaces.forEach(space => {
-                if (space === 'Små møter') {
-                    paymentAmount += PRICING[space] * (safeAttendees || 10);
-                } else if (PRICING[space]) {
-                    paymentAmount += PRICING[space];
+
+            // Minnesamvær: flat rate per person, overrides space pricing
+            if (eventType === 'Minnestund') {
+                paymentAmount = (safeAttendees || 10) * MINNESTUND_RATE;
+            } else {
+                safeSpaces.forEach(space => {
+                    if (space === 'Små møter') {
+                        paymentAmount += PRICING[space] * (safeAttendees || 10);
+                    } else if (PRICING[space]) {
+                        paymentAmount += PRICING[space];
+                    }
+                });
+
+                const memberIsEligible = isMember === true && safeSpaces.some(s => MEMBER_ELIGIBLE_SPACES.includes(s));
+                if (memberIsEligible) {
+                    paymentAmount = Math.max(0, paymentAmount - 500);
                 }
-            });
-
-
-            const memberIsEligible = isMember === true && safeSpaces.some(s => MEMBER_ELIGIBLE_SPACES.includes(s));
-            if (memberIsEligible) {
-                paymentAmount = Math.max(0, paymentAmount - 500);
             }
 
             // Convert to øre for storage
@@ -198,7 +204,30 @@ app.http('bookingRequest', {
                 paymentMethod: paymentMethod || 'vipps',
                 totalAmount: totalAmount || paymentAmount / 100,
                 paymentAmount: paymentAmount,
-                cateringContact: cateringContact === true || cateringContact === 'true'
+                cateringContact: cateringContact === true || cateringContact === 'true',
+                adminCreated: adminCreated === true,
+                // External tracking: pre-set fields if admin indicated these were handled outside the system
+                ...(adminCreated === true && externalContract === true ? {
+                    contract: {
+                        externallyHandled: true,
+                        externalNote: 'Kontrakt signert utenfor systemet',
+                        signedAt: new Date().toISOString(),
+                        landlordSignedAt: new Date().toISOString(),
+                    }
+                } : {}),
+                ...(adminCreated === true && (depositAlreadyPaid === true || fullyPaid === true) ? {
+                    depositPaid: true,
+                    depositPaidAt: new Date().toISOString(),
+                    depositRequested: true,
+                    depositRequestedAt: new Date().toISOString(),
+                    depositAmount: Math.round((totalAmount || paymentAmount / 100) * 0.5),
+                } : {}),
+                ...(adminCreated === true && fullyPaid === true ? {
+                    finalInvoicePaid: true,
+                    finalInvoicePaidAt: new Date().toISOString(),
+                    finalInvoiceSentAt: new Date().toISOString(),
+                    finalInvoiceAmountNOK: 0,
+                } : {}),
             });
             
             context.info('bookingRequest: Created booking', {

@@ -639,7 +639,7 @@ function createBookingCard(booking) {
         // Final invoice — only available after deposit is paid
         if (depositPaid && !finalInvoiceSent) {
             const _hasVask = !!(Array.isArray(booking.services) && booking.services.includes('Vask'));
-            approvedActions += `<button onclick="openFinalInvoiceModal('${booking.id}', ${totalNOK}, ${depositNOK}, ${_hasVask})" class="btn-sm" style="background:#8b5cf6;">📧 Send sluttfaktura</button>`;
+            approvedActions += `<button onclick="openFinalInvoiceModal('${booking.id}', ${totalNOK}, ${depositNOK}, ${_hasVask}, '${booking.eventType || ''}', ${booking.attendees || 0})" class="btn-sm" style="background:#8b5cf6;">📧 Send sluttfaktura</button>`;
         } else if (finalInvoiceSent && !finalInvoicePaid) {
             if (finalViaVipps && booking.finalInvoiceVippsOrderId) {
                 approvedActions += `<button onclick="checkVippsPayment('${booking.finalInvoiceVippsOrderId}', '${booking.id}')" class="btn-sm" style="background:#ff5b24;color:#fff;">🔍 Sjekk Vipps-status</button>`;
@@ -841,19 +841,33 @@ let _finalInvoiceBookingId = null;
 let _finalInvoiceTotalNOK = 0;
 let _finalInvoiceDepositNOK = 0;
 let _finalInvoiceCleaningFeeNOK = 1000;
+let _isMinnestund = false;
+let _minnestundEstimatedAttendees = 0;
 let _extraItemCount = 0;
 
-function openFinalInvoiceModal(id, totalNOK, depositNOK, hasVask) {
+function openFinalInvoiceModal(id, totalNOK, depositNOK, hasVask, eventType, estimatedAttendees) {
     _finalInvoiceBookingId = id;
     _finalInvoiceTotalNOK = totalNOK || 0;
     _finalInvoiceDepositNOK = depositNOK || 0;
-    // If booking already had Vask priced in, default cleaning fee to 0 to avoid double-charging
     _finalInvoiceCleaningFeeNOK = hasVask ? 0 : 1000;
+    _isMinnestund = eventType === 'Minnestund';
+    _minnestundEstimatedAttendees = estimatedAttendees || 0;
     _extraItemCount = 0;
 
     injectFinalInvoiceModal();
 
-    document.getElementById('fi-base-total').textContent = totalNOK ? `kr ${totalNOK.toLocaleString('nb-NO')}` : '–';
+    // Minnesamvær: show per-person row, hide fixed leiesum row
+    const baseRow = document.getElementById('fi-base-row');
+    const minneRow = document.getElementById('fi-minnesamvaer-row');
+    if (baseRow) baseRow.style.display = _isMinnestund ? 'none' : '';
+    if (minneRow) minneRow.style.display = _isMinnestund ? '' : 'none';
+    if (_isMinnestund) {
+        const countEl = document.getElementById('fi-minne-count');
+        if (countEl) countEl.value = _minnestundEstimatedAttendees || '';
+    } else {
+        document.getElementById('fi-base-total').textContent = totalNOK ? `kr ${totalNOK.toLocaleString('nb-NO')}` : '–';
+    }
+
     document.getElementById('fi-deposit').textContent = depositNOK ? `− kr ${depositNOK.toLocaleString('nb-NO')}` : '–';
     const cleaningInput = document.getElementById('fi-cleaning-fee');
     if (cleaningInput) cleaningInput.value = _finalInvoiceCleaningFeeNOK;
@@ -875,9 +889,24 @@ function injectFinalInvoiceModal() {
             <h3 style="margin:0 0 1rem; font-size:1.2rem;">📧 Send sluttfaktura</h3>
 
             <table style="width:100%;border-collapse:collapse;font-size:0.95rem;margin-bottom:1rem;">
-                <tr>
+                <tr id="fi-base-row">
                     <td style="padding:6px 0;color:#6b7280;">Leiesum (estimert total)</td>
                     <td id="fi-base-total" style="text-align:right;font-weight:600;">–</td>
+                </tr>
+                <tr id="fi-minnesamvaer-row" style="display:none;">
+                    <td style="padding:6px 0;">
+                        <span style="font-weight:500;">Minnesamvær</span>
+                        <span style="font-size:0.85rem;color:#6b7280;margin-left:4px;">faktisk antall gjester</span><br>
+                        <span style="font-size:0.88rem;">
+                            <input id="fi-minne-count" type="number" min="1" placeholder="antall" oninput="updateFinalInvoiceTotal()"
+                                style="width:70px;padding:3px 6px;border:1px solid #d1d5db;border-radius:5px;font:inherit;font-size:0.9rem;text-align:right;">
+                            pers ×
+                            <input id="fi-minne-rate" type="number" min="0" step="1" value="30" oninput="updateFinalInvoiceTotal()"
+                                style="width:55px;padding:3px 6px;border:1px solid #d1d5db;border-radius:5px;font:inherit;font-size:0.9rem;text-align:right;">
+                            kr/pers
+                        </span>
+                    </td>
+                    <td id="fi-minne-total" style="text-align:right;font-weight:600;padding:6px 0;">–</td>
                 </tr>
                 <tr id="fi-extra-rows"></tr>
                 <tr>
@@ -945,7 +974,19 @@ function updateFinalInvoiceTotal() {
         extrasTotal += amt;
     });
     const cleaningFee = parseFloat(document.getElementById('fi-cleaning-fee')?.value) || 0;
-    const remaining = (_finalInvoiceTotalNOK - _finalInvoiceDepositNOK) + cleaningFee + extrasTotal;
+
+    let baseNOK;
+    if (_isMinnestund) {
+        const count = parseFloat(document.getElementById('fi-minne-count')?.value) || 0;
+        const rate = parseFloat(document.getElementById('fi-minne-rate')?.value) || 30;
+        baseNOK = count * rate;
+        const minneTotal = document.getElementById('fi-minne-total');
+        if (minneTotal) minneTotal.textContent = baseNOK > 0 ? `kr ${baseNOK.toLocaleString('nb-NO')}` : '–';
+    } else {
+        baseNOK = _finalInvoiceTotalNOK;
+    }
+
+    const remaining = (baseNOK - _finalInvoiceDepositNOK) + cleaningFee + extrasTotal;
     const el = document.getElementById('fi-remaining');
     if (el) el.textContent = `kr ${remaining.toLocaleString('nb-NO')}`;
 }
@@ -963,6 +1004,19 @@ async function submitFinalInvoice() {
 
     // Collect cleaning fee
     const cleaningFeeNOK = parseFloat(document.getElementById('fi-cleaning-fee')?.value) || 0;
+
+    // Collect minnesamvær per-person data if applicable
+    let minnesamvaerActualCount = null;
+    let minnesamvaerRate = null;
+    if (_isMinnestund) {
+        minnesamvaerActualCount = parseFloat(document.getElementById('fi-minne-count')?.value) || 0;
+        minnesamvaerRate = parseFloat(document.getElementById('fi-minne-rate')?.value) || 30;
+        if (!minnesamvaerActualCount) {
+            errEl.textContent = 'Fyll inn faktisk antall gjester for minnesamvær.';
+            errEl.style.display = 'block';
+            return;
+        }
+    }
 
     // Collect extra items
     const extraItems = [];
@@ -984,7 +1038,8 @@ async function submitFinalInvoice() {
         const res = await fetch(`${API_BASE_URL}/booking/send-final-invoice`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ id: _finalInvoiceBookingId, cleaningFeeNOK, extraItems })
+            body: JSON.stringify({ id: _finalInvoiceBookingId, cleaningFeeNOK, extraItems,
+                ...(minnesamvaerActualCount !== null ? { minnesamvaerActualCount, minnesamvaerRate } : {}) })
         });
         const data = await res.json().catch(() => ({}));
         if (res.ok) {
@@ -1062,7 +1117,7 @@ async function checkVippsPayment(orderId, bookingId) {
                             const totalNOK = booking.totalAmount || 0;
                             const depositNOK = booking.depositAmount || Math.round(totalNOK * 0.5);
                             const hasVask = !!(Array.isArray(booking.services) && booking.services.includes('Vask'));
-                            openFinalInvoiceModal(bookingId, totalNOK, depositNOK, hasVask);
+                            openFinalInvoiceModal(bookingId, totalNOK, depositNOK, hasVask, booking.eventType || '', booking.attendees || 0);
                         }
                     }
                 }
@@ -1354,6 +1409,14 @@ function mbEnforceSpace(changed) {
     }
 }
 
+function mbExternalChanged() {
+    // "Fullt betalt" implies forhåndsbetaling is also received
+    if (document.getElementById('mb-fully-paid')?.checked) {
+        const dep = document.getElementById('mb-deposit-paid');
+        if (dep) dep.checked = true;
+    }
+}
+
 async function createManualBooking(event) {
     event.preventDefault();
     const statusEl = document.getElementById('mb-status');
@@ -1382,6 +1445,10 @@ async function createManualBooking(event) {
         spaces,
         services,
         adminCreated:   true,
+        paymentMethod:  'bank',
+        externalContract:   document.getElementById('mb-external-contract')?.checked || false,
+        depositAlreadyPaid: document.getElementById('mb-deposit-paid')?.checked || false,
+        fullyPaid:          document.getElementById('mb-fully-paid')?.checked || false,
     };
 
     submitBtn.disabled = true;

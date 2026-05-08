@@ -13,7 +13,7 @@ const escapeHtml = (str) => String(str || '').replace(/[&<>"']/g, (m) => ({
 /**
  * Send an itemised final invoice (sluttfaktura) to the booking requester.
  * POST /api/booking/send-final-invoice
- * Body: { id, cleaningFeeNOK?: number, extraItems?: [{ description: string, amountNOK: number }] }
+ * Body: { id, cleaningFeeNOK?: number, extraItems?: [...], minnesamvaerActualCount?: number, minnesamvaerRate?: number }
  *
  * - Calculates remaining = (totalAmount - depositAmount) + cleaningFeeNOK + sum(extraItems)
  * - If paymentMethod === 'vipps': creates Vipps payment link, embeds in email
@@ -42,6 +42,13 @@ app.http('sendFinalInvoice', {
         const cleaningFeeNOK = (typeof body.cleaningFeeNOK === 'number' && body.cleaningFeeNOK >= 0)
             ? body.cleaningFeeNOK
             : 1000;
+        // Minnesamvær per-person pricing
+        const minnesamvaerActualCount = (typeof body.minnesamvaerActualCount === 'number' && body.minnesamvaerActualCount > 0)
+            ? Math.floor(body.minnesamvaerActualCount)
+            : null;
+        const minnesamvaerRate = (typeof body.minnesamvaerRate === 'number' && body.minnesamvaerRate >= 0)
+            ? body.minnesamvaerRate
+            : 30;
         // Validate extra items
         for (const item of extraItems) {
             if (!item.description || typeof item.description !== 'string' || item.description.length > 200) {
@@ -76,7 +83,11 @@ app.http('sendFinalInvoice', {
         }
 
         const depositNOK = booking.depositAmount || 0;
-        const totalNOK = booking.totalAmount || depositNOK * 2;
+        // For Minnesamvær bookings, the final total is based on actual guest count × rate
+        const baseTotalNOK = (minnesamvaerActualCount !== null)
+            ? minnesamvaerActualCount * minnesamvaerRate
+            : (booking.totalAmount || depositNOK * 2);
+        const totalNOK = baseTotalNOK;
         const extrasTotal = extraItems.reduce((sum, item) => sum + item.amountNOK, 0);
         const grandTotalNOK = totalNOK + cleaningFeeNOK + extrasTotal;
         const remainingNOK = grandTotalNOK - depositNOK;
@@ -95,8 +106,14 @@ app.http('sendFinalInvoice', {
         // Build itemised rows for the email table
         const itemRows = [];
 
-        // Original package cost
-        if (spaces) {
+        // Original package cost (or per-person for Minnesamvær)
+        if (minnesamvaerActualCount !== null) {
+            itemRows.push({
+                label: `Minnesamvær – ${minnesamvaerActualCount} gjester × kr ${minnesamvaerRate.toLocaleString('nb-NO')}/pers`,
+                amount: totalNOK,
+                style: ''
+            });
+        } else if (spaces) {
             itemRows.push({ label: `Lokale – ${spaces}`, amount: totalNOK, style: '' });
         }
 
@@ -257,6 +274,7 @@ app.http('sendFinalInvoice', {
             finalInvoiceSentAt: now,
             finalInvoiceAmountNOK: remainingNOK,
             cleaningFeeNOK,
+            ...(minnesamvaerActualCount !== null ? { minnesamvaerActualCount, minnesamvaerRate } : {}),
             invoiceItems: [
                 { description: 'Vask / Rengjøring', amountNOK: cleaningFeeNOK },
                 ...extraItems,
