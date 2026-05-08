@@ -639,7 +639,7 @@ function createBookingCard(booking) {
         // Final invoice — only available after deposit is paid
         if (depositPaid && !finalInvoiceSent) {
             const _hasVask = !!(Array.isArray(booking.services) && booking.services.includes('Vask'));
-            approvedActions += `<button onclick="openFinalInvoiceModal('${booking.id}', ${totalNOK}, ${depositNOK}, ${_hasVask}, '${booking.eventType || ''}', ${booking.attendees || 0})" class="btn-sm" style="background:#8b5cf6;">📧 Send sluttfaktura</button>`;
+            approvedActions += `<button onclick="openFinalInvoiceModal('${booking.id}', ${totalNOK}, ${depositNOK}, ${_hasVask}, '${booking.eventType || ''}', ${booking.attendees || 0}, ${!!booking.requesterEmail})" class="btn-sm" style="background:#8b5cf6;">📋 Sluttoppgjør</button>`;
         } else if (finalInvoiceSent && !finalInvoicePaid) {
             if (finalViaVipps && booking.finalInvoiceVippsOrderId) {
                 approvedActions += `<button onclick="checkVippsPayment('${booking.finalInvoiceVippsOrderId}', '${booking.id}')" class="btn-sm" style="background:#ff5b24;color:#fff;">🔍 Sjekk Vipps-status</button>`;
@@ -843,15 +843,17 @@ let _finalInvoiceDepositNOK = 0;
 let _finalInvoiceCleaningFeeNOK = 1000;
 let _isMinnestund = false;
 let _minnestundEstimatedAttendees = 0;
+let _hasEmail = false;
 let _extraItemCount = 0;
 
-function openFinalInvoiceModal(id, totalNOK, depositNOK, hasVask, eventType, estimatedAttendees) {
+function openFinalInvoiceModal(id, totalNOK, depositNOK, hasVask, eventType, estimatedAttendees, hasEmail) {
     _finalInvoiceBookingId = id;
     _finalInvoiceTotalNOK = totalNOK || 0;
     _finalInvoiceDepositNOK = depositNOK || 0;
     _finalInvoiceCleaningFeeNOK = hasVask ? 0 : 1000;
     _isMinnestund = eventType === 'Minnestund';
     _minnestundEstimatedAttendees = estimatedAttendees || 0;
+    _hasEmail = !!hasEmail;
     _extraItemCount = 0;
 
     injectFinalInvoiceModal();
@@ -874,6 +876,9 @@ function openFinalInvoiceModal(id, totalNOK, depositNOK, hasVask, eventType, est
     const cleaningNote = document.getElementById('fi-cleaning-note');
     if (cleaningNote) cleaningNote.textContent = hasVask ? '(satt til 0 – vask var inkludert i leiesum)' : '';
     document.getElementById('fi-extra-rows').innerHTML = '';
+    const sendEmailCb = document.getElementById('fi-send-email');
+    if (sendEmailCb) sendEmailCb.checked = _hasEmail;
+    updateFinalInvoiceSubmitLabel();
     updateFinalInvoiceTotal();
 
     document.getElementById('final-invoice-modal').style.display = 'flex';
@@ -886,7 +891,7 @@ function injectFinalInvoiceModal() {
     modal.style.cssText = 'display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9000; align-items:flex-start; justify-content:center; padding:40px 16px; overflow-y:auto;';
     modal.innerHTML = `
         <div style="background:#fff; border-radius:10px; padding:2rem; max-width:560px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
-            <h3 style="margin:0 0 1rem; font-size:1.2rem;">📧 Send sluttfaktura</h3>
+            <h3 style="margin:0 0 1rem; font-size:1.2rem;">� Sluttoppgjør</h3>
 
             <table style="width:100%;border-collapse:collapse;font-size:0.95rem;margin-bottom:1rem;">
                 <tr id="fi-base-row">
@@ -936,15 +941,29 @@ function injectFinalInvoiceModal() {
                 <button type="button" onclick="addExtraInvoiceItem()" style="margin-top:8px;padding:5px 12px;border:1px dashed #9ca3af;border-radius:6px;background:transparent;cursor:pointer;font-size:0.88rem;color:#6b7280;">+ Legg til rad</button>
             </div>
 
+            <div style="margin-bottom:1.25rem;padding:12px 14px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;">
+                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin:0;font-weight:normal;">
+                    <input type="checkbox" id="fi-send-email" onchange="updateFinalInvoiceSubmitLabel()" style="width:16px;height:16px;">
+                    <span>Send sluttfaktura til kunden på e-post / Vipps</span>
+                </label>
+                <p style="margin:6px 0 0 26px;font-size:0.8rem;color:#9ca3af;">Ikke avkrysset: beløpet registreres kun internt og markeres som betalt.</p>
+            </div>
+
             <div style="display:flex; gap:0.75rem; justify-content:flex-end; margin-top:1.25rem;">
                 <button onclick="closeFinalInvoiceModal()" style="padding:0.55rem 1.2rem; border:1px solid #d1d5db; border-radius:6px; background:#fff; cursor:pointer; font-size:0.95rem;">Avbryt</button>
-                <button id="fi-submit-btn" onclick="submitFinalInvoice()" style="padding:0.55rem 1.4rem; border:none; border-radius:6px; background:#8b5cf6; color:#fff; font-weight:600; cursor:pointer; font-size:0.95rem;">Send sluttfaktura</button>
+                <button id="fi-submit-btn" onclick="submitFinalInvoice()" style="padding:0.55rem 1.4rem; border:none; border-radius:6px; background:#8b5cf6; color:#fff; font-weight:600; cursor:pointer; font-size:0.95rem;">Registrer og merk betalt</button>
             </div>
             <p id="fi-error" style="display:none; color:#ef4444; font-size:0.85rem; margin-top:0.75rem;"></p>
         </div>
     `;
     modal.addEventListener('click', (e) => { if (e.target === modal) closeFinalInvoiceModal(); });
     document.body.appendChild(modal);
+}
+
+function updateFinalInvoiceSubmitLabel() {
+    const btn = document.getElementById('fi-submit-btn');
+    const sendEmail = document.getElementById('fi-send-email')?.checked;
+    if (btn) btn.textContent = sendEmail ? 'Send sluttfaktura' : 'Registrer og merk betalt';
 }
 
 function addExtraInvoiceItem() {
@@ -1031,20 +1050,25 @@ async function submitFinalInvoice() {
         }
     }
 
+    const skipEmail = !document.getElementById('fi-send-email')?.checked;
     btn.disabled = true;
-    btn.textContent = 'Sender...';
+    btn.textContent = skipEmail ? 'Registrerer...' : 'Sender...';
 
     try {
         const res = await fetch(`${API_BASE_URL}/booking/send-final-invoice`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ id: _finalInvoiceBookingId, cleaningFeeNOK, extraItems,
+            body: JSON.stringify({ id: _finalInvoiceBookingId, cleaningFeeNOK, extraItems, skipEmail,
                 ...(minnesamvaerActualCount !== null ? { minnesamvaerActualCount, minnesamvaerRate } : {}) })
         });
         const data = await res.json().catch(() => ({}));
         if (res.ok) {
             closeFinalInvoiceModal();
-            alert(`Sluttfaktura sendt til ${data.sentTo}!\nGjenstående beløp: kr ${(data.remainingAmount || 0).toLocaleString('nb-NO')}`);
+            if (skipEmail) {
+                alert(`Sluttoppgjør registrert og markert som betalt.\nBeløp: kr ${(data.remainingAmount || 0).toLocaleString('nb-NO')}`);
+            } else {
+                alert(`Sluttfaktura sendt til ${data.sentTo}!\nGjenstående beløp: kr ${(data.remainingAmount || 0).toLocaleString('nb-NO')}`);
+            }
             loadDashboard();
         } else {
             errEl.textContent = data.error || 'Noe gikk galt.';
@@ -1056,7 +1080,7 @@ async function submitFinalInvoice() {
         errEl.style.display = 'block';
     } finally {
         btn.disabled = false;
-        btn.textContent = 'Send sluttfaktura';
+        updateFinalInvoiceSubmitLabel();
     }
 }
 
@@ -1117,7 +1141,7 @@ async function checkVippsPayment(orderId, bookingId) {
                             const totalNOK = booking.totalAmount || 0;
                             const depositNOK = booking.depositAmount || Math.round(totalNOK * 0.5);
                             const hasVask = !!(Array.isArray(booking.services) && booking.services.includes('Vask'));
-                            openFinalInvoiceModal(bookingId, totalNOK, depositNOK, hasVask, booking.eventType || '', booking.attendees || 0);
+                            openFinalInvoiceModal(bookingId, totalNOK, depositNOK, hasVask, booking.eventType || '', booking.attendees || 0, !!booking.requesterEmail);
                         }
                     }
                 }

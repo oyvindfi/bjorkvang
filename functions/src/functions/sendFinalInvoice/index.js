@@ -49,6 +49,8 @@ app.http('sendFinalInvoice', {
         const minnesamvaerRate = (typeof body.minnesamvaerRate === 'number' && body.minnesamvaerRate >= 0)
             ? body.minnesamvaerRate
             : 30;
+        // Skip sending email/Vipps — just record amounts and mark as paid
+        const skipEmail = body.skipEmail === true;
         // Validate extra items
         for (const item of extraItems) {
             if (!item.description || typeof item.description !== 'string' || item.description.length > 200) {
@@ -78,7 +80,7 @@ app.http('sendFinalInvoice', {
             return createJsonResponse(500, { error: 'Manglende e-postkonfigurasjon.' }, request);
         }
 
-        if (!booking.requesterEmail) {
+        if (!booking.requesterEmail && !skipEmail) {
             return createJsonResponse(400, { error: 'Booking mangler e-postadresse.' }, request);
         }
 
@@ -151,9 +153,9 @@ app.http('sendFinalInvoice', {
 
         let finalInvoiceVippsOrderId = null;
         let vippsUrl = null;
-        let emailHtml, emailText, emailSubject;
 
-        const tableHtml = `
+        if (!skipEmail) {
+            const tableHtml = `
             <table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:15px;">
                 <tr style="border-bottom:2px solid #e5e7eb;font-weight:600;">
                     <td style="padding:8px 0;">Beskrivelse</td>
@@ -170,104 +172,106 @@ app.http('sendFinalInvoice', {
                 </tr>
             </table>`;
 
-        const infoNote = `<p style="font-size:0.88rem;color:#6b7280;margin-top:8px;">
+            const infoNote = `<p style="font-size:0.88rem;color:#6b7280;margin-top:8px;">
             Forhåndsbetaling (kr ${depositNOK.toLocaleString('nb-NO')}) er allerede betalt og er trukket fra totalbeløpet.
             Forhåndsbetalingen refunderes ikke. Har du spørsmål? Ta kontakt på
             <a href="mailto:styret@bjorkvang.org">styret@bjorkvang.org</a>.
             </p>`;
 
-        if (paymentMethod === 'vipps' && remainingNOK > 0) {
-            const safeId = id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 24);
-            const orderId = `inv-${safeId}-${Date.now().toString(36)}`.slice(0, 50);
-            const returnUrl = `${websiteUrl}/booking?invoiceReturn=1&orderId=${encodeURIComponent(orderId)}`;
+            if (paymentMethod === 'vipps' && remainingNOK > 0) {
+                const safeId = id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 24);
+                const orderId = `inv-${safeId}-${Date.now().toString(36)}`.slice(0, 50);
+                const returnUrl = `${websiteUrl}/booking?invoiceReturn=1&orderId=${encodeURIComponent(orderId)}`;
+
+                try {
+                    const vippsResponse = await vipps.initiatePayment({
+                        amount: remainingNOK * 100, // øre
+                        orderId,
+                        returnUrl,
+                        text: `Sluttfaktura – Bjørkvang (${booking.eventType || 'leie'})`,
+                        phoneNumber: booking.phone || undefined
+                    });
+                    vippsUrl = vippsResponse.redirectUrl;
+                    finalInvoiceVippsOrderId = orderId;
+                } catch (err) {
+                    context.error('sendFinalInvoice: Failed to create Vipps payment', err);
+                    return createJsonResponse(502, { error: 'Kunne ikke opprette Vipps-betaling.' }, request);
+                }
+            }
+
+            const emailSubject = `Sluttfaktura – Bjørkvang (${booking.date || ''})`;
+
+            const emailText = [
+                `Hei ${booking.requesterName},`,
+                '',
+                'Takk for at du leide Bjørkvang! Vi håper arrangementet gikk bra.',
+                '',
+                `Arrangement: ${booking.eventType || ''}  |  Dato: ${booking.date || ''}`,
+                '',
+                itemRowsText,
+                `Totalt for leieforholdet: kr ${grandTotalNOK.toLocaleString('nb-NO')}`,
+                `Gjenstående å betale: kr ${remainingNOK.toLocaleString('nb-NO')}`,
+                '',
+                `Betalingsfrist: ${dueDateStr}`,
+                vippsUrl ? `Betal med Vipps: ${vippsUrl}` : `Kontonummer: ${bankAccount}  |  Merk: ${id}`,
+                '',
+                'Forhåndsbetaling er allerede betalt og trukket fra beløpet.',
+                '',
+                'Med vennlig hilsen,',
+                'Styret ved Bjørkvang'
+            ].join('\n');
+
+            const paymentInfoHtml = vippsUrl
+                ? `<p>Bruk knappen under for å betale sikkert med Vipps:</p>`
+                : `
+                    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px 20px;margin:16px 0;">
+                        <p style="margin:0 0 8px;font-weight:bold;">Betalingsinformasjon</p>
+                        <p style="margin:4px 0;">🏦 <strong>Kontonummer:</strong> ${escapeHtml(bankAccount)}</p>
+                        <p style="margin:4px 0;">📋 <strong>Merk betalingen med:</strong> ${escapeHtml(id)}</p>
+                        <p style="margin:4px 0;">📅 <strong>Betalingsfrist:</strong> ${escapeHtml(dueDateStr)}</p>
+                    </div>`;
+
+            const emailHtml = generateEmailHtml({
+                title: 'Sluttfaktura – Bjørkvang',
+                previewText: `Restbeløp kr ${remainingNOK.toLocaleString('nb-NO')} – betalingsfrist ${dueDateStr}`,
+                content: `
+                    <p>Hei ${escapeHtml(booking.requesterName)},</p>
+                    <p>Takk for at du leide Bjørkvang forsamlingslokale! Vi håper arrangementet gikk bra.</p>
+                    <p>Her er sluttfakturaen med full oversikt over kostnader:</p>
+                    ${tableHtml}
+                    ${paymentInfoHtml}
+                    ${infoNote}
+                    <p>Med vennlig hilsen,<br>Styret ved Bjørkvang</p>`,
+                ...(vippsUrl ? { action: { text: 'Betal kr ' + remainingNOK.toLocaleString('nb-NO') + ' med Vipps', url: vippsUrl, color: '#ff5b24', rounded: true } } : {})
+            });
 
             try {
-                const vippsResponse = await vipps.initiatePayment({
-                    amount: remainingNOK * 100, // øre
-                    orderId,
-                    returnUrl,
-                    text: `Sluttfaktura – Bjørkvang (${booking.eventType || 'leie'})`,
-                    phoneNumber: booking.phone || undefined
+                await sendEmail({
+                    from,
+                    to: booking.requesterEmail,
+                    subject: emailSubject,
+                    html: emailHtml,
+                    text: emailText
                 });
-                vippsUrl = vippsResponse.redirectUrl;
-                finalInvoiceVippsOrderId = orderId;
+                context.info(`sendFinalInvoice: Invoice sent to ${booking.requesterEmail} for booking ${id}`);
             } catch (err) {
-                context.error('sendFinalInvoice: Failed to create Vipps payment', err);
-                return createJsonResponse(502, { error: 'Kunne ikke opprette Vipps-betaling.' }, request);
+                context.error(`sendFinalInvoice: Failed to send email for booking ${id}`, err);
+                return createJsonResponse(500, { error: 'Kunne ikke sende faktura-e-post.' }, request);
             }
-        }
 
-        emailSubject = `Sluttfaktura – Bjørkvang (${booking.date || ''})`;
-
-        emailText = [
-            `Hei ${booking.requesterName},`,
-            '',
-            'Takk for at du leide Bjørkvang! Vi håper arrangementet gikk bra.',
-            '',
-            `Arrangement: ${booking.eventType || ''}  |  Dato: ${booking.date || ''}`,
-            '',
-            itemRowsText,
-            `Totalt for leieforholdet: kr ${grandTotalNOK.toLocaleString('nb-NO')}`,
-            `Gjenstående å betale: kr ${remainingNOK.toLocaleString('nb-NO')}`,
-            '',
-            `Betalingsfrist: ${dueDateStr}`,
-            vippsUrl ? `Betal med Vipps: ${vippsUrl}` : `Kontonummer: ${bankAccount}  |  Merk: ${id}`,
-            '',
-            'Forhåndsbetaling er allerede betalt og trukket fra beløpet.',
-            '',
-            'Med vennlig hilsen,',
-            'Styret ved Bjørkvang'
-        ].join('\n');
-
-        const paymentInfoHtml = vippsUrl
-            ? `<p>Bruk knappen under for å betale sikkert med Vipps:</p>`
-            : `
-                <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px 20px;margin:16px 0;">
-                    <p style="margin:0 0 8px;font-weight:bold;">Betalingsinformasjon</p>
-                    <p style="margin:4px 0;">🏦 <strong>Kontonummer:</strong> ${escapeHtml(bankAccount)}</p>
-                    <p style="margin:4px 0;">📋 <strong>Merk betalingen med:</strong> ${escapeHtml(id)}</p>
-                    <p style="margin:4px 0;">📅 <strong>Betalingsfrist:</strong> ${escapeHtml(dueDateStr)}</p>
-                </div>`;
-
-        emailHtml = generateEmailHtml({
-            title: 'Sluttfaktura – Bjørkvang',
-            previewText: `Restbeløp kr ${remainingNOK.toLocaleString('nb-NO')} – betalingsfrist ${dueDateStr}`,
-            content: `
-                <p>Hei ${escapeHtml(booking.requesterName)},</p>
-                <p>Takk for at du leide Bjørkvang forsamlingslokale! Vi håper arrangementet gikk bra.</p>
-                <p>Her er sluttfakturaen med full oversikt over kostnader:</p>
-                ${tableHtml}
-                ${paymentInfoHtml}
-                ${infoNote}
-                <p>Med vennlig hilsen,<br>Styret ved Bjørkvang</p>`,
-            ...(vippsUrl ? { action: { text: 'Betal kr ' + remainingNOK.toLocaleString('nb-NO') + ' med Vipps', url: vippsUrl, color: '#ff5b24', rounded: true } } : {})
-        });
-
-        try {
-            await sendEmail({
-                from,
-                to: booking.requesterEmail,
-                subject: emailSubject,
-                html: emailHtml,
-                text: emailText
-            });
-            context.info(`sendFinalInvoice: Invoice sent to ${booking.requesterEmail} for booking ${id}`);
-        } catch (err) {
-            context.error(`sendFinalInvoice: Failed to send email for booking ${id}`, err);
-            return createJsonResponse(500, { error: 'Kunne ikke sende faktura-e-post.' }, request);
-        }
-
-        // --- SMS med sluttfaktura og betalingslenke ---
-        if (booking.phone) {
-            const firstName = booking.requesterName ? booking.requesterName.split(' ')[0] : 'deg';
-            let invoiceSmsBody;
-            if (vippsUrl) {
-                invoiceSmsBody = `Hei ${firstName}! Sluttfaktura for ${formatDate(booking.date)}: kr ${remainingNOK.toLocaleString('nb-NO')},-. Sjekk e-posten din for Vipps-betalingslenke. – Bjørkvang forsamlingslokale`;
-            } else {
-                const bankAccount = process.env.BANK_ACCOUNT || '1822.40.12345';
-                invoiceSmsBody = `Hei ${firstName}! Sluttfaktura for ${formatDate(booking.date)}: kr ${remainingNOK.toLocaleString('nb-NO')},-. Betal til kontonr. ${bankAccount}. Merk: ${id.slice(0, 8)}. – Bjørkvang forsamlingslokale`;
+            // --- SMS med sluttfaktura og betalingslenke ---
+            if (booking.phone) {
+                const firstName = booking.requesterName ? booking.requesterName.split(' ')[0] : 'deg';
+                let invoiceSmsBody;
+                if (vippsUrl) {
+                    invoiceSmsBody = `Hei ${firstName}! Sluttfaktura for ${formatDate(booking.date)}: kr ${remainingNOK.toLocaleString('nb-NO')},-. Sjekk e-posten din for Vipps-betalingslenke. – Bjørkvang forsamlingslokale`;
+                } else {
+                    invoiceSmsBody = `Hei ${firstName}! Sluttfaktura for ${formatDate(booking.date)}: kr ${remainingNOK.toLocaleString('nb-NO')},-. Betal til kontonr. ${bankAccount}. Merk: ${id.slice(0, 8)}. – Bjørkvang forsamlingslokale`;
+                }
+                await sendSms({ to: booking.phone, body: invoiceSmsBody }, context);
             }
-            await sendSms({ to: booking.phone, body: invoiceSmsBody }, context);
+        } else {
+            context.info(`sendFinalInvoice: skipEmail=true — recording amounts and marking as paid without sending email for booking ${id}`);
         }
 
         const updateFields = {
@@ -275,6 +279,8 @@ app.http('sendFinalInvoice', {
             finalInvoiceAmountNOK: remainingNOK,
             cleaningFeeNOK,
             ...(minnesamvaerActualCount !== null ? { minnesamvaerActualCount, minnesamvaerRate } : {}),
+            // When skipping email, mark as paid immediately since admin is registering a settled invoice
+            ...(skipEmail ? { finalInvoicePaid: true, finalInvoicePaidAt: now } : {}),
             invoiceItems: [
                 { description: 'Vask / Rengjøring', amountNOK: cleaningFeeNOK },
                 ...extraItems,
@@ -293,8 +299,8 @@ app.http('sendFinalInvoice', {
         const updated = await updateBookingFields(id.trim(), null, updateFields);
 
         return createJsonResponse(200, {
-            message: 'Sluttfaktura sendt.',
-            sentTo: booking.requesterEmail,
+            message: skipEmail ? 'Sluttoppgjør registrert og markert som betalt.' : 'Sluttfaktura sendt.',
+            sentTo: booking.requesterEmail || null,
             remainingAmount: remainingNOK,
             dueDate: dueDateStr,
             paymentMethod,
