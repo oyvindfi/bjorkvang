@@ -462,9 +462,9 @@ document.addEventListener('DOMContentLoaded', function () {
         focusTarget.classList.add('is-invalid');
         focusTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
         focusTarget.focus({ preventScroll: true });
-      } else {
-        statusEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
+      // Always scroll the status message into view so it's visible on mobile
+      setTimeout(() => statusEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), focusTarget ? 350 : 0);
     } else if (type === 'info') {
       statusEl.classList.add('is-info');
     } else {
@@ -1124,53 +1124,74 @@ document.addEventListener('DOMContentLoaded', function () {
       const isWedding = selectedSpaces.includes('Bryllupspakke');
       const paymentMethod = formValues.paymentMethod || 'vipps';
 
-      if (!name || !email || !phone || !dateValue || !timeValue || !eventType) {
-        // Highlight the first empty required field
-        const firstEmpty = [
-          ['name', form.querySelector('#name')],
-          ['email', form.querySelector('#email')],
-          ['phone', form.querySelector('#phone')],
-          ['date', form.querySelector('#date')],
-          ['time', form.querySelector('#time')],
-          ['eventType', form.querySelector('#event-type')],
-        ].find(([val, el]) => !formValues[val] || !String(formValues[val]).trim());
-        showStatus('Vennligst fyll ut alle obligatoriske felter.', 'error', firstEmpty ? firstEmpty[1] : null);
+      // --- Per-field inline error helper ---
+      function fieldError(fieldEl, msg) {
+        // Clear all previous inline errors and invalid states
+        form.querySelectorAll('.field-error-hint').forEach(el => el.remove());
+        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        // Mark field invalid
+        fieldEl.classList.add('is-invalid');
+        // Insert inline hint right after the field
+        const hint = document.createElement('span');
+        hint.className = 'field-error-hint';
+        hint.textContent = msg;
+        hint.setAttribute('role', 'alert');
+        fieldEl.insertAdjacentElement('afterend', hint);
+        // Scroll field into view
+        fieldEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        fieldEl.focus({ preventScroll: true });
+        // Also update the global status for screen readers
+        showStatus(msg, 'error');
         isSubmitting = false;
-        return;
       }
 
+      if (!name)  { return fieldError(form.querySelector('#name'), 'Navn er påkrevd.'); }
+      if (!email) { return fieldError(form.querySelector('#email'), 'E-post er påkrevd.'); }
+      if (!phone) { return fieldError(form.querySelector('#phone'), 'Telefonnummer er påkrevd.'); }
+      if (!dateValue) { return fieldError(form.querySelector('#date'), 'Dato er påkrevd.'); }
+      if (!timeValue) { return fieldError(form.querySelector('#time'), 'Velg oppstartstid.'); }
+      if (!eventType) { return fieldError(form.querySelector('#event-type'), 'Velg formål med leie.'); }
+
+      // Clear any leftover inline errors before continuing
+      form.querySelectorAll('.field-error-hint').forEach(el => el.remove());
+      form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
       if (!selectedSpaces.length) {
-        showStatus('Velg minst ett område du ønsker å leie.', 'error', form.querySelector('fieldset[aria-labelledby="spaces-label"]'));
+        const spacesFieldset = form.querySelector('fieldset[aria-labelledby="spaces-label"]');
+        spacesFieldset.classList.add('is-invalid');
+        const hint = document.createElement('span');
+        hint.className = 'field-error-hint';
+        hint.textContent = 'Velg minst ett lokale.';
+        hint.setAttribute('role', 'alert');
+        spacesFieldset.querySelector('.option-grid').insertAdjacentElement('afterend', hint);
+        spacesFieldset.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        showStatus('Velg minst ett lokale.', 'error');
         isSubmitting = false;
         return;
       }
 
       const startDate = new Date(`${dateValue}T${timeValue}`);
       if (Number.isNaN(startDate.getTime())) {
-        showStatus('Ugyldig dato eller klokkeslett.', 'error');
-        isSubmitting = false;
+        fieldError(form.querySelector('#date'), 'Ugyldig dato eller klokkeslett.');
         return;
       }
 
       let endDate, duration;
       if (isWedding) {
         if (!endDateValue || !endTimeValue) {
-          showStatus('Angi ca. sluttdato og slutttid for bryllupspakken.', 'error');
-          isSubmitting = false;
+          fieldError(form.querySelector('#end-date'), 'Angi sluttdato og slutttid for bryllupspakken.');
           return;
         }
         endDate = new Date(`${endDateValue}T${endTimeValue}`);
         if (Number.isNaN(endDate.getTime()) || endDate <= startDate) {
-          showStatus('Sluttidspunkt må være etter starttidspunkt.', 'error');
-          isSubmitting = false;
+          fieldError(form.querySelector('#end-date'), 'Sluttidspunkt må være etter starttidspunkt.');
           return;
         }
         duration = (endDate.getTime() - startDate.getTime()) / (60 * 60 * 1000);
       } else {
         const durationParsed = parseFloat(durationInput);
         if (!Number.isFinite(durationParsed) || durationParsed <= 0) {
-          showStatus('Varighet må være minst én time.', 'error');
-          isSubmitting = false;
+          fieldError(form.querySelector('#duration'), 'Varighet må være minst én time.');
           return;
         }
         duration = durationParsed;
@@ -1268,6 +1289,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         form.reset();
+        // Clear any inline error hints left from previous attempts
+        form.querySelectorAll('.field-error-hint').forEach(el => el.remove());
+        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
         // Re-show duration field and hide wedding fields after reset
         if (durationFieldEl) durationFieldEl.hidden = false;
         if (endDateFieldEl) endDateFieldEl.hidden = true;

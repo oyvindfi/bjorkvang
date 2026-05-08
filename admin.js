@@ -622,8 +622,9 @@ function createBookingCard(booking) {
         approvedActions += `<button onclick="printContract('${booking.id}')" class="btn-sm" style="background:#64748b;" title="Åpner utskriftsvennlig versjon">🖨 Skriv ut avtale</button>`;
 
         // Deposit flow
-        if (booking.adminCreated) {
-            // Manual booking — no emails, just register internally
+        const useManualDepositFlow = booking.adminCreated || !booking.requesterEmail;
+        if (useManualDepositFlow) {
+            // No email — just register internally without sending anything
             if (!depositRequested && !depositPaid) {
                 approvedActions += `<button onclick="registerDepositRequestOnly('${booking.id}')" class="btn-sm" style="background:#0ea5e9;">💸 Registrer forhåndsbetalingsforespørsel</button>`;
                 approvedActions += `<button onclick="markDepositPaid('${booking.id}')" class="btn-sm" style="background:#059669;">💰 Registrer forhåndsbetaling mottatt</button>`;
@@ -1480,10 +1481,47 @@ async function createManualBooking(event) {
     const statusEl = document.getElementById('mb-status');
     const submitBtn = event.target.querySelector('button[type="submit"]');
 
+    // Helper: show error, highlight field, scroll to it on mobile
+    function mbError(msg, fieldEl) {
+        statusEl.style.color = '#ef4444';
+        statusEl.style.fontWeight = '600';
+        statusEl.textContent = '⚠️ ' + msg;
+        // Clear previous highlights
+        document.querySelectorAll('.mb-invalid, .mb-invalid-group').forEach(el => {
+            el.classList.remove('mb-invalid', 'mb-invalid-group');
+        });
+        if (fieldEl) {
+            fieldEl.classList.add('mb-invalid');
+            fieldEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            try { fieldEl.focus({ preventScroll: true }); } catch(e) {}
+        }
+        setTimeout(() => statusEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), fieldEl ? 350 : 0);
+        isSubmitting = false;
+    }
+
+    let isSubmitting = false;
+
+    const nameEl = document.getElementById('mb-name');
+    const dateEl = document.getElementById('mb-date');
+    const durationEl = document.getElementById('mb-duration');
+    const eventTypeEl = document.getElementById('mb-eventtype');
+    const spacesRow = document.getElementById('mb-spaces-row');
+
+    if (!nameEl.value.trim()) { return mbError('Navn er påkrevd.', nameEl); }
+    if (!dateEl.value) { return mbError('Dato er påkrevd.', dateEl); }
+    if (!durationEl.value || parseFloat(durationEl.value) <= 0) { return mbError('Varighet er påkrevd.', durationEl); }
+    if (!eventTypeEl.value) { return mbError('Formål er påkrevd.', eventTypeEl); }
+
     const spaces = Array.from(document.querySelectorAll('input[name="mb-spaces"]:checked')).map(cb => cb.value);
     if (spaces.length === 0) {
         statusEl.style.color = '#ef4444';
-        statusEl.textContent = 'Velg minst ett lokale.';
+        statusEl.style.fontWeight = '600';
+        statusEl.textContent = '⚠️ Velg minst ett lokale.';
+        if (spacesRow) {
+            spacesRow.classList.add('mb-invalid-group');
+            spacesRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        setTimeout(() => statusEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 350);
         return;
     }
 
@@ -1512,7 +1550,12 @@ async function createManualBooking(event) {
 
     submitBtn.disabled = true;
     statusEl.style.color = '#555';
+    statusEl.style.fontWeight = '';
     statusEl.textContent = 'Oppretter booking...';
+    // Clear any leftover highlights
+    document.querySelectorAll('.mb-invalid, .mb-invalid-group').forEach(el => {
+        el.classList.remove('mb-invalid', 'mb-invalid-group');
+    });
 
     try {
         const res = await fetch(`${API_BASE_URL}/booking`, {
@@ -1525,7 +1568,9 @@ async function createManualBooking(event) {
 
         if (!res.ok) {
             statusEl.style.color = '#ef4444';
-            statusEl.textContent = data.message || data.error || 'Noe gikk galt.';
+            statusEl.style.fontWeight = '600';
+            statusEl.textContent = '⚠️ ' + (data.message || data.error || 'Noe gikk galt.');
+            statusEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             return;
         }
 
@@ -1537,18 +1582,24 @@ async function createManualBooking(event) {
 
         if (approveRes.ok) {
             statusEl.style.color = '#059669';
+            statusEl.style.fontWeight = '600';
             statusEl.textContent = `✓ Booking opprettet og godkjent (ID: ${data.id})`;
+            statusEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             event.target.reset();
             loadDashboard();
         } else {
             statusEl.style.color = '#f59e0b';
+            statusEl.style.fontWeight = '600';
             statusEl.textContent = `Booking opprettet (ID: ${data.id}), men automatisk godkjenning feilet. Godkjenn manuelt i listen.`;
+            statusEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             loadDashboard();
         }
     } catch (err) {
         console.error('createManualBooking failed', err);
         statusEl.style.color = '#ef4444';
-        statusEl.textContent = 'Nettverksfeil. Sjekk konsollen.';
+        statusEl.style.fontWeight = '600';
+        statusEl.textContent = '⚠️ Nettverksfeil. Sjekk konsollen.';
+        statusEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } finally {
         submitBtn.disabled = false;
     }

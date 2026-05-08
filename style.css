@@ -2221,6 +2221,15 @@ button[type="submit"] {
     transform: translateY(0);
 }
 
+/* Inline field error hint – shown directly below invalid field */
+.field-error-hint {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #c13b3b;
+}
+
 .form-status.is-success {
     color: var(--brand-600);
 }

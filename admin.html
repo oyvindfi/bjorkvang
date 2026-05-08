@@ -89,6 +89,18 @@
 
         .hidden { display: none !important; }
 
+        .manual-booking-form input.mb-invalid,
+        .manual-booking-form select.mb-invalid,
+        .manual-booking-form textarea.mb-invalid {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 3px rgba(239,68,68,0.18);
+        }
+        .mb-invalid-group {
+            outline: 2px solid #ef4444;
+            border-radius: 6px;
+            padding: 4px;
+        }
+
         .manual-booking-form {
             display: grid;
             grid-template-columns: 1fr 1fr;
