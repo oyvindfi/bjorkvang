@@ -312,6 +312,147 @@
         }
         .guide-item li { margin-bottom: 3px; }
 
+        /* ── Guide: scrollable booking-flow strip ────────────────────── */
+        .guide-flow {
+            display: flex;
+            align-items: center;
+            padding: 4px 0 20px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .guide-flow::-webkit-scrollbar { display: none; }
+        .guide-flow-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 7px;
+            min-width: 70px;
+        }
+        .guide-flow-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            background: #f0f9ff;
+            border: 2px solid #bae6fd;
+            flex-shrink: 0;
+        }
+        .guide-flow-label {
+            font-size: 0.62rem;
+            font-weight: 700;
+            color: #374151;
+            text-align: center;
+            line-height: 1.3;
+            white-space: nowrap;
+            letter-spacing: 0.01em;
+        }
+        .guide-flow-arrow {
+            color: #93c5fd;
+            font-size: 1.1rem;
+            margin-bottom: 24px;
+            flex-shrink: 0;
+            padding: 0 3px;
+        }
+
+        /* ── Guide: phase section labels ─────────────────────────────── */
+        .guide-phase {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.09em;
+            color: #6b7280;
+            padding: 16px 0 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .guide-phase::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e5e7eb;
+        }
+
+        /* ── Guide: numbered badge on summary ────────────────────────── */
+        .guide-step-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            color: #374151;
+            font-size: 0.68rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-right: 8px;
+            transition: background 0.15s, color 0.15s;
+        }
+        .guide-item[open] .guide-step-badge { background: #dbeafe; color: #1d4ed8; }
+
+        /* ── Guide: visual step list (replaces <ol>) ─────────────────── */
+        .guide-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+        .guide-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+        .guide-steps li {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            font-size: 0.92rem;
+            color: #374151;
+            line-height: 1.55;
+        }
+        .sn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #f3f4f6;
+            border: 1.5px solid #d1d5db;
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: #374151;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        /* ── Guide: inline button-name pills ─────────────────────────── */
+        .btn-ref {
+            display: inline-flex;
+            align-items: center;
+            background: #1f2937;
+            color: #f9fafb;
+            border-radius: 5px;
+            padding: 1px 7px;
+            font-size: 0.77rem;
+            font-weight: 600;
+            white-space: nowrap;
+            vertical-align: middle;
+            line-height: 1.8;
+            margin: 0 1px;
+        }
+
+        /* ── Guide: tip and warning callouts ─────────────────────────── */
+        .guide-tip, .guide-warn {
+            display: flex;
+            gap: 9px;
+            border-radius: 7px;
+            padding: 10px 12px;
+            font-size: 0.84rem;
+            line-height: 1.5;
+            color: #374151;
+            align-items: flex-start;
+        }
+        .guide-tip { background: #f0f9ff; border: 1px solid #bae6fd; }
+        .guide-warn { background: #fffbeb; border: 1px solid #fde68a; }
+        .guide-tip-icon, .guide-warn-icon { flex-shrink: 0; font-size: 1rem; margin-top: 1px; }
+
         /* ── Mobile-first improvements ──────────────────────────────── */
         @media (max-width: 768px) {
             .admin-container { padding: 12px; }
@@ -415,104 +556,174 @@
             <h2 style="cursor:pointer;" onclick="toggleHelp()">📖 Brukerveiledning <span id="help-toggle-icon">▼</span></h2>
             <div id="help-panel" class="hidden" style="padding-top:12px;">
 
+                <!-- ── Booking-flow illustration ─────────────────────── -->
+                <div class="guide-flow">
+                    <div class="guide-flow-step">
+                        <div class="guide-flow-icon">📥</div>
+                        <div class="guide-flow-label">Forespørsel<br>mottas</div>
+                    </div>
+                    <div class="guide-flow-arrow">→</div>
+                    <div class="guide-flow-step">
+                        <div class="guide-flow-icon">✅</div>
+                        <div class="guide-flow-label">Godkjenn<br>/ avvis</div>
+                    </div>
+                    <div class="guide-flow-arrow">→</div>
+                    <div class="guide-flow-step">
+                        <div class="guide-flow-icon">📄</div>
+                        <div class="guide-flow-label">Kontrakt<br>signeres</div>
+                    </div>
+                    <div class="guide-flow-arrow">→</div>
+                    <div class="guide-flow-step">
+                        <div class="guide-flow-icon">💰</div>
+                        <div class="guide-flow-label">50 %<br>betaling</div>
+                    </div>
+                    <div class="guide-flow-arrow">→</div>
+                    <div class="guide-flow-step">
+                        <div class="guide-flow-icon">🎉</div>
+                        <div class="guide-flow-label">Arrange-<br>mentet</div>
+                    </div>
+                    <div class="guide-flow-arrow">→</div>
+                    <div class="guide-flow-step">
+                        <div class="guide-flow-icon">🧾</div>
+                        <div class="guide-flow-label">Slutt-<br>faktura</div>
+                    </div>
+                </div>
+
+                <!-- ── Phase 1: Standard bookingflyt ─────────────────── -->
+                <div class="guide-phase">Standard bookingflyt</div>
                 <div style="display:grid; gap:10px;">
 
                     <details class="guide-item">
-                        <summary>📥 Nye bookingforespørsler</summary>
-                        <ol>
-                            <li>Nye forespørsler vises øverst under <strong>«Venter på godkjenning»</strong>.</li>
-                            <li>Les gjennom informasjonen om arrangementet.</li>
-                            <li>Klikk <strong>«Godkjenn»</strong> for å godkjenne – leietaker mottar automatisk e-post med kontrakt.</li>
-                            <li>Klikk <strong>«Avvis»</strong> dersom dere ikke kan ta imot bookingen – leietaker får beskjed pr. e-post.</li>
-                        </ol>
+                        <summary><span class="guide-step-badge">1</span>📥 Ny bookingforespørsel</summary>
+                        <div class="guide-body">
+                            <ol class="guide-steps">
+                                <li><span class="sn">①</span><span>Nye forespørsler dukker opp øverst under <strong>«Venter på godkjenning»</strong>. Du får også e-post med direktelenke.</span></li>
+                                <li><span class="sn">②</span><span>Les gjennom informasjonen: dato, formål, antall gjester og pris.</span></li>
+                                <li><span class="sn">③</span><span>Klikk <span class="btn-ref">✅ Godkjenn</span> – leietaker får automatisk e-post med kontrakt. Klikk <span class="btn-ref">❌ Avvis</span> med begrunnelse hvis dere ikke kan ta imot bookingen.</span></li>
+                            </ol>
+                            <div class="guide-tip">
+                                <span class="guide-tip-icon">💡</span>
+                                <span>Etter godkjenning flyttes bookingen automatisk til <strong>«Kommende godkjente bookinger»</strong>.</span>
+                            </div>
+                        </div>
                     </details>
 
                     <details class="guide-item">
-                        <summary>✅ Kontrakt</summary>
-                        <ol>
-                            <li>Etter godkjenning vises bookingen under <strong>«Kommende godkjente bookinger»</strong>.</li>
-                            <li>Klikk <strong>«Åpne/signer kontrakt»</strong> på bookingkortet.</li>
-                            <li>Les gjennom kontrakten og klikk <strong>«Signer som utleier»</strong>.</li>
-                            <li>Leietaker får automatisk varsel om å signere. Systemet sender påminnelse hvis de ikke har signert innen 24 timer.</li>
-                            <li>Du kan skrive ut en kopi med <strong>«Skriv ut kontrakt»</strong>.</li>
-                        </ol>
+                        <summary><span class="guide-step-badge">2</span>📄 Kontrakt</summary>
+                        <div class="guide-body">
+                            <ol class="guide-steps">
+                                <li><span class="sn">①</span><span>Finn bookingen under <strong>«Kommende godkjente bookinger»</strong>.</span></li>
+                                <li><span class="sn">②</span><span>Klikk <span class="btn-ref">📄 Åpne/signer kontrakt</span>, les gjennom og klikk <span class="btn-ref">Signer som utleier</span>.</span></li>
+                                <li><span class="sn">③</span><span>Leietaker mottar e-post med signeringslenke. Systemet sender automatisk påminnelse hvis de ikke signerer innen 24 timer.</span></li>
+                                <li><span class="sn">④</span><span>Vil du ha en papirkopi? Klikk <span class="btn-ref">🖨 Skriv ut kontrakt</span>.</span></li>
+                            </ol>
+                            <div class="guide-tip">
+                                <span class="guide-tip-icon">💡</span>
+                                <span>Statusindikatorene på bookingkortet viser deg om leietaker har signert.</span>
+                            </div>
+                        </div>
                     </details>
 
                     <details class="guide-item">
-                        <summary>💰 Forhåndsbetaling (50 %)</summary>
-                        <ol>
-                            <li>Etter at kontrakten er signert, klikk <strong>«Send forhåndsbetalingsforespørsel»</strong> på bookingkortet.</li>
-                            <li>Leietaker mottar betalingslink (Vipps eller bankoverføring avhengig av hva de valgte).</li>
-                            <li>Betalingen oppdateres automatisk dersom leietaker betaler via Vipps. Sjekk med <strong>«Sjekk Vipps-status»</strong> ved behov.</li>
-                            <li>Har dere mottatt bankoverføring manuelt? Klikk <strong>«Forhåndsbetaling mottatt (bank)»</strong>.</li>
-                        </ol>
+                        <summary><span class="guide-step-badge">3</span>💰 Forhåndsbetaling (50 %)</summary>
+                        <div class="guide-body">
+                            <ol class="guide-steps">
+                                <li><span class="sn">①</span><span>Etter at kontrakten er signert, klikk <span class="btn-ref">💳 Send forhåndsbetalingsforespørsel</span> på bookingkortet.</span></li>
+                                <li><span class="sn">②</span><span>Leietaker mottar lenke for Vipps (automatisk) eller bankoverførings­detaljer – avhengig av hva de valgte ved booking.</span></li>
+                                <li><span class="sn">③</span><span>Vipps-betaling oppdateres automatisk. Klikk <span class="btn-ref">🔍 Sjekk Vipps-status</span> for å hente siste status manuelt.</span></li>
+                                <li><span class="sn">④</span><span>Mottatt bankoverføring? Klikk <span class="btn-ref">✅ Forhåndsbetaling mottatt (bank)</span>.</span></li>
+                            </ol>
+                        </div>
                     </details>
 
                     <details class="guide-item">
-                        <summary>🧾 Sluttfaktura</summary>
-                        <ol>
-                            <li>Etter arrangementet, klikk <strong>«Send sluttfaktura»</strong> på bookingkortet.</li>
-                            <li>Legg eventuelt til ekstra linjer (f.eks. ekstra rengjøring) i dialogvinduet som åpnes.</li>
-                            <li>Klikk <strong>«Send faktura»</strong> – leietaker mottar fakturaen pr. e-post.</li>
-                            <li>Betalingen oppdateres automatisk ved Vipps. Klikk <strong>«Sluttfaktura betalt»</strong> ved bankoverføring.</li>
-                        </ol>
+                        <summary><span class="guide-step-badge">4</span>🧾 Sluttfaktura</summary>
+                        <div class="guide-body">
+                            <ol class="guide-steps">
+                                <li><span class="sn">①</span><span>Etter arrangementet, klikk <span class="btn-ref">🧾 Send sluttfaktura</span> på bookingkortet.</span></li>
+                                <li><span class="sn">②</span><span>Juster vaskegebyret og legg eventuelt til ekstrautgifter (f.eks. skader) i dialogvinduet.</span></li>
+                                <li><span class="sn">③</span><span>Klikk <span class="btn-ref">Send faktura</span> – leietaker mottar fakturaen på e-post med restbeløpet.</span></li>
+                                <li><span class="sn">④</span><span>Vipps oppdateres automatisk. Mottatt bank? Klikk <span class="btn-ref">✅ Sluttfaktura betalt</span>.</span></li>
+                            </ol>
+                            <div class="guide-tip">
+                                <span class="guide-tip-icon">💡</span>
+                                <span>Restbeløpet beregnes automatisk: totalsum − forhåndsbetaling. Du trenger bare legge til eventuelle ekstrautgifter.</span>
+                            </div>
+                        </div>
                     </details>
+
+                </div>
+
+                <!-- ── Phase 2: Andre verktøy ─────────────────────────── -->
+                <div class="guide-phase" style="margin-top:4px;">Andre verktøy</div>
+                <div style="display:grid; gap:10px;">
 
                     <details class="guide-item">
                         <summary>📝 Manuell booking (telefon/e-post)</summary>
-                        <ol>
-                            <li>Har noen ringt eller sendt e-post? Klikk <strong>«🗓 Registrer manuell booking»</strong> øverst på siden.</li>
-                            <li>Fyll inn kundens opplysninger og velg lokale, dato og tidspunkt.</li>
-                            <li>Klikk <strong>«Opprett og godkjenn booking»</strong> – bookingen registreres og godkjennes direkte.</li>
-                        </ol>
+                        <div class="guide-body">
+                            <ol class="guide-steps">
+                                <li><span class="sn">①</span><span>Noen har ringt eller sendt e-post? Klikk <span class="btn-ref">🗓 Registrer manuell booking</span> øverst på siden.</span></li>
+                                <li><span class="sn">②</span><span>Fyll inn kundens opplysninger, velg lokale, dato og tidspunkt.</span></li>
+                                <li><span class="sn">③</span><span>Klikk <span class="btn-ref">Opprett og godkjenn booking</span> – bookingen registreres og godkjennes umiddelbart.</span></li>
+                            </ol>
+                            <div class="guide-tip">
+                                <span class="guide-tip-icon">💡</span>
+                                <span>Husk å huke av <strong>«Send e-post, SMS og kontrakt til kunden»</strong> hvis kunden ønsker digitale varsler.</span>
+                            </div>
+                        </div>
                     </details>
 
                     <details class="guide-item">
                         <summary>🔄 Omplanlegging av dato</summary>
-                        <ol>
-                            <li>Klikk <strong>«📅 Endre dato»</strong> på en godkjent booking.</li>
-                            <li>Velg ny dato og nytt starttidspunkt i dialogvinduet.</li>
-                            <li>Klikk <strong>«Bekreft flytt»</strong> – leietaker varsles automatisk.</li>
-                            <li><strong>Merk:</strong> En booking kan kun omplanlegges én gang (jf. vilkår §5).</li>
-                        </ol>
+                        <div class="guide-body">
+                            <ol class="guide-steps">
+                                <li><span class="sn">①</span><span>Klikk <span class="btn-ref">📅 Endre dato</span> på en godkjent booking.</span></li>
+                                <li><span class="sn">②</span><span>Velg ny dato og nytt starttidspunkt i dialogvinduet.</span></li>
+                                <li><span class="sn">③</span><span>Klikk <span class="btn-ref">Bekreft flytt</span> – leietaker varsles automatisk på e-post og SMS.</span></li>
+                            </ol>
+                            <div class="guide-warn">
+                                <span class="guide-warn-icon">⚠️</span>
+                                <span>En booking kan kun omplanlegges <strong>én gang</strong> i henhold til vilkårene (§5). Knappen vises ikke etter første omplanlegging.</span>
+                            </div>
+                        </div>
                     </details>
 
                     <details class="guide-item">
                         <summary>🔔 Påminnelser</summary>
-                        <ol>
-                            <li>Klikk <strong>«Påminnelse»</strong> på en booking.</li>
-                            <li>Skriv eventuelt en kommentar som skal med i e-posten.</li>
-                            <li>Leietaker mottar e-post med påminnelse.</li>
-                        </ol>
+                        <div class="guide-body">
+                            <ol class="guide-steps">
+                                <li><span class="sn">①</span><span>Klikk <span class="btn-ref">🔔 Påminnelse</span> på en booking og velg hva påminnelsen gjelder (signering, betaling e.l.).</span></li>
+                                <li><span class="sn">②</span><span>Legg eventuelt til en kommentar som vises i e-posten til leietaker.</span></li>
+                                <li><span class="sn">③</span><span>Klikk <span class="btn-ref">Send påminnelse</span> – leietaker mottar e-post umiddelbart.</span></li>
+                            </ol>
+                            <div class="guide-tip">
+                                <span class="guide-tip-icon">💡</span>
+                                <span>Systemet sender automatiske påminnelser for manglende signering (etter 24 t) og forfalte betalinger. Bruk den manuelle knappen ved behov for raskere oppfølging.</span>
+                            </div>
+                        </div>
                     </details>
 
                     <details class="guide-item">
                         <summary>🔍 Søk og filter</summary>
-                        <ol>
-                            <li>Bruk søkefeltet øverst i filterpanelet til å søke etter navn eller e-post.</li>
-                            <li>Velg tidsperiode med knappene <strong>«I dag / Denne uken / Denne måneden»</strong>, eller sett egne datoer.</li>
-                            <li>Filtrer på status med knappene <strong>«Venter / Godkjent / Avvist»</strong>.</li>
-                            <li>Filtrer på lokale med lokalebryterne under statusfiltrene.</li>
-                            <li>Klikk <strong>«Nullstill ✕»</strong> for å fjerne alle filter.</li>
-                        </ol>
+                        <div class="guide-body">
+                            <ol class="guide-steps">
+                                <li><span class="sn">①</span><span>Bruk søkefeltet til å søke på navn eller e-post.</span></li>
+                                <li><span class="sn">②</span><span>Velg tidsperiode med <span class="btn-ref">I dag</span> <span class="btn-ref">Denne uken</span> <span class="btn-ref">Denne måneden</span>, eller sett egne datoer.</span></li>
+                                <li><span class="sn">③</span><span>Filtrer på status med <span class="btn-ref">Venter</span> <span class="btn-ref">Godkjent</span> <span class="btn-ref">Avvist</span>.</span></li>
+                                <li><span class="sn">④</span><span>Filtrer på lokale under statusknappene. Klikk <span class="btn-ref">Nullstill ✕</span> for å fjerne alle filter.</span></li>
+                            </ol>
+                        </div>
                     </details>
 
                     <details class="guide-item">
-                        <summary>💳 Vipps-status</summary>
-                        <ol>
-                            <li>Statusen oppdateres automatisk når siden lastes inn.</li>
-                            <li>Klikk <strong>«🔍 Sjekk Vipps-status»</strong> på en enkelt booking for å hente siste status fra Vipps.</li>
-                            <li>Se en samlet oversikt under seksjonen <strong>«💳 Vipps betalingsoversikt»</strong> lengre ned på siden.</li>
-                        </ol>
-                    </details>
-
-                    <details class="guide-item">
-                        <summary>🧹 Vaskoversikt</summary>
-                        <ol>
-                            <li>Klikk <strong>«🧹 Vaskoversikt»</strong> lengre ned på siden for å se alle bookinger som inkluderer vask.</li>
-                            <li>Oversikten viser dato, leietaker og vaskeestimatet (ca. 1 000 kr per arrangement).</li>
-                            <li>Bruk oversikten til å koordinere vaskeoppdrag med frivillige eller vaske-ansvarlig.</li>
-                        </ol>
+                        <summary>💳 Vipps-status og 🧹 Vaskoversikt</summary>
+                        <div class="guide-body">
+                            <ol class="guide-steps">
+                                <li><span class="sn">①</span><span>Vipps-status oppdateres automatisk når siden lastes. Klikk <span class="btn-ref">🔍 Sjekk Vipps-status</span> på en enkelt booking for siste status.</span></li>
+                                <li><span class="sn">②</span><span>Se samlet betalingsoversikt under seksjonen <strong>«💳 Vipps betalingsoversikt»</strong> lengre ned på siden.</span></li>
+                                <li><span class="sn">③</span><span>Under <strong>«🧹 Vaskoversikt»</strong> ser du alle bookinger med vask, fordelt per måned – praktisk for å koordinere vaskeansvar.</span></li>
+                            </ol>
+                        </div>
                     </details>
 
                 </div>
