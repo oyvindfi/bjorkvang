@@ -82,7 +82,7 @@ app.http('depositPaid', {
                             <tr><td style="padding:8px 0;color:#6b7280;">Booking-ID</td><td style="padding:8px 0;text-align:right;font-family:monospace;font-size:0.85rem;">${updated.id}</td></tr>
                         </table>
                         <p style="color:#4b5563;font-size:0.9rem;">Restbel\u00f8pet faktureres etter at arrangementet er avholdt.</p>
-                        <p style="font-size:0.9em;color:#6b7280;">Sp\u00f8rsm\u00e5l? Ta kontakt p\u00e5 <a href="mailto:styret@bj\u00f8rkvang.no" style="color:#1a823b;">styret@bj\u00f8rkvang.no</a>.</p>
+                        <p style="font-size:0.9em;color:#6b7280;">Sp\u00f8rsm\u00e5l? Ta kontakt p\u00e5 <a href="mailto:styret@bjorkvang.org" style="color:#1a823b;">styret@bjorkvang.org</a>.</p>
                     `
                 });
                 await sendEmail({

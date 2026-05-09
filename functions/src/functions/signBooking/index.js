@@ -228,7 +228,7 @@ app.http('signBooking', {
                                 <a href="${escHtml(contractLink)}" style="display:inline-block;padding:14px 36px;background:#1a6fa3;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;font-size:1.05rem;">&#128196; Se og last ned leieavtalen</a>
                             </div>
                             ${depositPaymentSection}
-                            <p style="font-size:0.9rem;color:#6b7280;margin-top:24px;">Sp&oslash;rsm&aring;l? Ta kontakt p&aring; <a href="mailto:styret@bj&oslash;rkvang.no" style="color:#1a6fa3;">styret@bj&oslash;rkvang.no</a>.</p>
+                            <p style="font-size:0.9rem;color:#6b7280;margin-top:24px;">Sp&oslash;rsm&aring;l? Ta kontakt p&aring; <a href="mailto:styret@bjorkvang.org" style="color:#1a6fa3;">styret@bjorkvang.org</a>.</p>
                         `,
                         action: { text: 'Se og last ned leieavtalen', url: contractLink },
                         previewText: `Leieavtalen for ${updatedBooking.date} er ferdig signert – last ned her`

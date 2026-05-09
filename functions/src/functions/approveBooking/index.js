@@ -255,7 +255,7 @@ app.http('approveBooking', {
                         </ol>
                     </div>
 
-                    <p style="font-size:0.9em;color:#6b7280;">Sp\u00f8rsm\u00e5l? Ta kontakt p\u00e5 <a href="mailto:styret@bj\u00f8rkvang.no" style="color:#1a823b;">styret@bj\u00f8rkvang.no</a>.</p>
+                    <p style="font-size:0.9em;color:#6b7280;">Sp\u00f8rsm\u00e5l? Ta kontakt p\u00e5 <a href="mailto:styret@bjorkvang.org" style="color:#1a823b;">styret@bjorkvang.org</a>.</p>
                 `;
 
                 const html = generateEmailHtml({

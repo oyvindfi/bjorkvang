@@ -84,7 +84,7 @@ app.http('sendReminder', {
                     <div style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:8px;padding:16px 20px;margin:12px 0 16px;">
                         <a href="${contractLink}" style="display:inline-block;background:#1a56db;color:#fff;font-weight:700;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:1rem;">📄 Signer leieavtalen</a>
                     </div>
-                    <p style="font-size:0.9em;color:#6b7280;">Spørsmål? Ta kontakt på <a href="mailto:styret@bjørkvang.no" style="color:#1a823b;">styret@bjørkvang.no</a>.</p>
+                    <p style="font-size:0.9em;color:#6b7280;">Spørsmål? Ta kontakt på <a href="mailto:styret@bjorkvang.org" style="color:#1a823b;">styret@bjorkvang.org</a>.</p>
                 `;
                 smsBody = `Hei ${firstName}! Påminnelse: Leieavtalen for ${formatDate(booking.date)} er ikke signert ennå. Signer her: ${contractLink} – Bjørkvang forsamlingslokale og Helgøens Vel`;
 
@@ -101,7 +101,7 @@ app.http('sendReminder', {
                     <p>Vi venter fortsatt på forhåndsbetalingen (<strong>${depositStr}</strong>) for din booking på Bjørkvang forsamlingslokale den <strong>${safeDate}</strong>.</p>
                     ${commentBlock}
                     ${paymentInfoHtml}
-                    <p style="font-size:0.9em;color:#6b7280;">Spørsmål? Ta kontakt på <a href="mailto:styret@bjørkvang.no" style="color:#1a823b;">styret@bjørkvang.no</a>.</p>
+                    <p style="font-size:0.9em;color:#6b7280;">Spørsmål? Ta kontakt på <a href="mailto:styret@bjorkvang.org" style="color:#1a823b;">styret@bjorkvang.org</a>.</p>
                 `;
                 smsBody = booking.paymentMethod === 'vipps'
                     ? `Hei ${firstName}! Påminnelse: Forhåndsbetaling${depositNOK ? ' kr ' + depositNOK.toLocaleString('nb-NO') + ',-' : ''} for ${formatDate(booking.date)} er ikke betalt. Sjekk e-posten for betalingslenke. – Bjørkvang forsamlingslokale og Helgøens Vel`
@@ -120,7 +120,7 @@ app.http('sendReminder', {
                     <p>Vi venter fortsatt på betaling av sluttfakturaen (<strong>${remainingStr}</strong>) for din booking på Bjørkvang forsamlingslokale den <strong>${safeDate}</strong>.</p>
                     ${commentBlock}
                     ${paymentInfoHtml}
-                    <p style="font-size:0.9em;color:#6b7280;">Spørsmål? Ta kontakt på <a href="mailto:styret@bjørkvang.no" style="color:#1a823b;">styret@bjørkvang.no</a>.</p>
+                    <p style="font-size:0.9em;color:#6b7280;">Spørsmål? Ta kontakt på <a href="mailto:styret@bjorkvang.org" style="color:#1a823b;">styret@bjorkvang.org</a>.</p>
                 `;
                 smsBody = booking.paymentMethod === 'vipps'
                     ? `Hei ${firstName}! Påminnelse: Sluttfaktura${remainingNOK ? ' kr ' + remainingNOK.toLocaleString('nb-NO') + ',-' : ''} for ${formatDate(booking.date)} er ikke betalt. Sjekk e-posten for betalingslenke. – Bjørkvang forsamlingslokale og Helgøens Vel`
