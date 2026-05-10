@@ -984,51 +984,73 @@ document.addEventListener('DOMContentLoaded', function () {
           }
         };
 
-        const handleMouseMove = (event) => {
+        const positionTooltip = (clientX, clientY) => {
           const tooltip = document.getElementById('fc-tooltip');
-          if (!tooltip) {
-            return;
-          }
-          tooltip.style.left = event.pageX + 12 + 'px';
-          tooltip.style.top = event.pageY + 12 + 'px';
+          if (!tooltip) return;
+          const vw = window.innerWidth;
+          const vh = window.innerHeight;
+          const tw = tooltip.offsetWidth || 260;
+          const th = tooltip.offsetHeight || 80;
+          const gap = 14;
+          let left = clientX + gap;
+          let top = clientY + gap;
+          if (left + tw > vw - 8) left = clientX - tw - gap;
+          if (top + th > vh - 8) top = clientY - th - gap;
+          tooltip.style.left = Math.max(4, left) + 'px';
+          tooltip.style.top = Math.max(4, top) + 'px';
         };
 
-        const handleMouseEnter = () => {
+        const buildTooltip = (clientX, clientY) => {
           removeTooltip();
-
           const tooltip = document.createElement('div');
           tooltip.id = 'fc-tooltip';
-          tooltip.style.position = 'absolute';
-          tooltip.style.zIndex = '10001';
-          tooltip.style.background = '#fff';
-          tooltip.style.border = '1px solid #ccc';
-          tooltip.style.padding = '6px 9px';
-          tooltip.style.borderRadius = '8px';
-          tooltip.style.boxShadow = '0 8px 18px rgba(24, 61, 44, 0.18)';
-          tooltip.style.pointerEvents = 'none'; // Prevent tooltip from interfering with mouse events
+          tooltip.style.cssText = [
+            'position:fixed',
+            'z-index:10001',
+            'background:#fff',
+            'border:1px solid #ccc',
+            'padding:8px 11px',
+            'border-radius:8px',
+            'box-shadow:0 8px 18px rgba(24,61,44,0.18)',
+            'pointer-events:none',
+            'max-width:260px',
+            'min-width:140px',
+            'word-break:break-word',
+            'line-height:1.5',
+            'font-size:0.88rem'
+          ].join(';');
           tooltip.setAttribute('role', 'tooltip');
 
           const start = info.event.start ? new Date(info.event.start) : null;
           const end = info.event.end ? new Date(info.event.end) : null;
-          const timeRange =
-            start && end
-              ? `${start.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })} - ${end.toLocaleTimeString('nb-NO', {
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}`
-              : start
-                ? start.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })
-                : '';
-
-          const spaces = Array.isArray(info.event.extendedProps?.spaces) && info.event.extendedProps.spaces.length
-            ? `<br>${info.event.extendedProps.spaces.join(', ')}`
+          const dateStr = start
+            ? start.toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
             : '';
-          tooltip.innerHTML =
-            `<strong>${info.event.extendedProps?.eventType || 'Reservasjon'}</strong><br>` +
-            `${start ? start.toLocaleDateString('nb-NO') : ''} ${timeRange}` +
-            (spaces ? `<br>${spaces.replace(/^<br>/, '')}` : '');
+          const timeRange = start && end
+            ? `${start.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })}–${end.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })}`
+            : start
+              ? start.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })
+              : '';
+          const spaces = Array.isArray(info.event.extendedProps?.spaces) && info.event.extendedProps.spaces.length
+            ? info.event.extendedProps.spaces.join(', ')
+            : '';
 
+          const typeLine = `<div style="font-weight:700;margin-bottom:2px">${info.event.extendedProps?.eventType || 'Reservasjon'}</div>`;
+          const dateLine = dateStr ? `<div style="color:#555">${dateStr}</div>` : '';
+          const timeLine = timeRange ? `<div style="color:#555">${timeRange}</div>` : '';
+          const spacesLine = spaces ? `<div style="color:#777;font-size:0.82rem;margin-top:2px">${spaces}</div>` : '';
+
+          tooltip.innerHTML = typeLine + dateLine + timeLine + spacesLine;
           document.body.appendChild(tooltip);
+          positionTooltip(clientX, clientY);
+        };
+
+        const handleMouseMove = (event) => {
+          positionTooltip(event.clientX, event.clientY);
+        };
+
+        const handleMouseEnter = (event) => {
+          buildTooltip(event.clientX, event.clientY);
           info.el.addEventListener('mousemove', handleMouseMove);
         };
 
@@ -1037,12 +1059,27 @@ document.addEventListener('DOMContentLoaded', function () {
           removeTooltip();
         };
 
+        let touchTimer = null;
+        const handleTouchStart = (event) => {
+          if (event.touches.length !== 1) return;
+          const touch = event.touches[0];
+          buildTooltip(touch.clientX, touch.clientY);
+          clearTimeout(touchTimer);
+          touchTimer = setTimeout(removeTooltip, 2800);
+        };
+
+        const handleTouchEnd = () => {};
+
         info.el.addEventListener('mouseenter', handleMouseEnter);
         info.el.addEventListener('mouseleave', handleMouseLeave);
+        info.el.addEventListener('touchstart', handleTouchStart, { passive: true });
+        info.el.addEventListener('touchend', handleTouchEnd, { passive: true });
 
         info.el._bookingHandleMouseEnter = handleMouseEnter;
         info.el._bookingHandleMouseLeave = handleMouseLeave;
         info.el._bookingHandleMouseMove = handleMouseMove;
+        info.el._bookingHandleTouchStart = handleTouchStart;
+        info.el._bookingHandleTouchEnd = handleTouchEnd;
       },
       eventWillUnmount: function (info) {
         const tooltip = document.getElementById('fc-tooltip');
@@ -1064,6 +1101,16 @@ document.addEventListener('DOMContentLoaded', function () {
           if (info.el._bookingHandleMouseMove) {
             info.el.removeEventListener('mousemove', info.el._bookingHandleMouseMove);
             delete info.el._bookingHandleMouseMove;
+          }
+
+          if (info.el._bookingHandleTouchStart) {
+            info.el.removeEventListener('touchstart', info.el._bookingHandleTouchStart);
+            delete info.el._bookingHandleTouchStart;
+          }
+
+          if (info.el._bookingHandleTouchEnd) {
+            info.el.removeEventListener('touchend', info.el._bookingHandleTouchEnd);
+            delete info.el._bookingHandleTouchEnd;
           }
         }
       },

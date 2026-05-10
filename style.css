@@ -1776,7 +1776,7 @@ button {
 }
 
 .legend-dot--available {
-    background: rgba(20, 100, 160, 0.55);
+    background: rgba(26, 102, 68, 0.70);
 }
 
 .legend-dot--pending {
@@ -1850,9 +1850,33 @@ button {
     pointer-events: none;
 }
 
+#calendar .fc-daygrid-day.is-available {
+    cursor: pointer;
+}
+
 #calendar .fc-daygrid-day.is-available::before {
-    background: rgba(20, 100, 160, 0.10);
-    box-shadow: inset 0 0 0 1px rgba(20, 100, 160, 0.22);
+    background: rgba(26, 102, 68, 0.10);
+    box-shadow: inset 0 0 0 2px rgba(26, 102, 68, 0.30);
+}
+
+@media (hover: hover) {
+    #calendar .fc-daygrid-day.is-available:hover::before {
+        background: rgba(26, 102, 68, 0.20);
+        box-shadow: inset 0 0 0 2px rgba(26, 102, 68, 0.50);
+    }
+}
+
+@media (max-width: 600px) {
+    #calendar .fc-daygrid-day.is-available .fc-daygrid-day-top::after {
+        content: '\2713';
+        color: #1a6644;
+        font-size: 0.75rem;
+        font-weight: 700;
+        position: absolute;
+        top: 2px;
+        right: 4px;
+        pointer-events: none;
+    }
 }
 
 #calendar .fc-daygrid-day.is-pending::before {
