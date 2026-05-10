@@ -29,7 +29,7 @@ const createJsonResponse = (status, body = {}, request = null, extraHeaders = {}
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': getCorsOrigin(request),
         'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key',
         ...extraHeaders,
     },
 });
@@ -44,7 +44,7 @@ const createHtmlResponse = (status, html, request = null) => ({
         'Content-Type': 'text/html; charset=utf-8',
         'Access-Control-Allow-Origin': getCorsOrigin(request),
         'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key',
     },
 });
 
@@ -88,10 +88,26 @@ const resolveBaseUrl = (request) => {
     }
 };
 
+/**
+ * Verify that the request carries a valid X-Admin-Key header.
+ * Returns a 401 response object if unauthorized, or null if OK.
+ * Falls back to permissive if ADMIN_PASSWORD is not configured.
+ */
+const requireAdminKey = (request) => {
+    const expectedKey = (process.env.ADMIN_PASSWORD || '').trim();
+    if (!expectedKey) return null; // Not configured — skip check
+    const provided = (request.headers.get('x-admin-key') || '').trim();
+    if (!provided || provided !== expectedKey) {
+        return { status: 401, jsonBody: { error: 'Unauthorized' }, headers: { 'Content-Type': 'application/json' } };
+    }
+    return null; // Authorized
+};
+
 module.exports = {
     ALLOWED_ORIGINS,
     createHtmlResponse,
     createJsonResponse,
     parseBody,
+    requireAdminKey,
     resolveBaseUrl,
 };

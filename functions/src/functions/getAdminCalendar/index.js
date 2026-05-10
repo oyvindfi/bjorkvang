@@ -1,15 +1,22 @@
 const { app } = require('@azure/functions');
-const { createJsonResponse } = require('../../../shared/http');
+const { createJsonResponse, requireAdminKey } = require('../../../shared/http');
 const { listBookings } = require('../../../shared/cosmosDb');
 
 /**
  * Admin calendar endpoint with full requester visibility.
  */
 app.http('getAdminCalendar', {
-    methods: ['GET'],
+    methods: ['GET', 'OPTIONS'],
     authLevel: 'anonymous',
     route: 'booking/admin',
     handler: async (request, context) => {
+        if (request.method === 'OPTIONS') {
+            return createJsonResponse(204, {}, request);
+        }
+
+        const authError = requireAdminKey(request);
+        if (authError) return authError;
+
         context.log('Handling getAdminCalendar request');
 
         try {

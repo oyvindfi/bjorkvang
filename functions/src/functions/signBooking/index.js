@@ -1,6 +1,6 @@
 const { app } = require('@azure/functions');
 const { addContractSignature, getBooking, updateBookingFields } = require('../../../shared/cosmosDb');
-const { createJsonResponse } = require('../../../shared/http');
+const { createJsonResponse, requireAdminKey } = require('../../../shared/http');
 const { sendEmail } = require('../../../shared/email');
 const { sendSms, formatDate } = require('../../../shared/sms');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
@@ -18,7 +18,31 @@ app.http('signBooking', {
                 return createJsonResponse(400, { message: 'Missing booking ID' }, request);
             }
 
-            // Capture metadata for the signature
+            // Validate signing authorization
+            const signingRole = role || 'requester';
+            if (signingRole === 'requester') {
+                // Tenant must supply the signing token from their approval email
+                const { signingToken } = body;
+                const existingBooking = await getBooking(id, null);
+                if (!existingBooking) {
+                    return createJsonResponse(404, { message: 'Booking not found' }, request);
+                }
+                // Only enforce token if one is stored (backward-compat with old bookings)
+                if (existingBooking.signingToken) {
+                    if (!signingToken || signingToken !== existingBooking.signingToken) {
+                        return createJsonResponse(403, { message: 'Ugyldig signeringstoken. Be om ny signeringslenke fra Bjørkvang.' }, request);
+                    }
+                }
+            } else if (signingRole === 'landlord') {
+                // Accept the key from the header (admin.js API calls) or from the JSON body
+                // (kontrakt.js tab opened via URL with ?adminKey=...)
+                const headerKey = (request.headers.get('x-admin-key') || '').trim();
+                const bodyKey = String(body.adminKey || '').trim();
+                const expectedKey = (process.env.ADMIN_PASSWORD || '').trim();
+                if (expectedKey && headerKey !== expectedKey && bodyKey !== expectedKey) {
+                    return createJsonResponse(403, { message: 'Unauthorized' }, request);
+                }
+            }
             const signatureMetadata = {
                 role: role || 'requester', // Default to requester for backward compatibility
                 signatureData: signatureData, // { type: 'draw'|'text', data: '...' }

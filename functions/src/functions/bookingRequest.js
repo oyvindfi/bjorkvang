@@ -1,4 +1,5 @@
 const { app } = require('@azure/functions');
+const crypto = require('crypto');
 const { sendEmail } = require('../../shared/email');
 const { sendSms, formatDate } = require('../../shared/sms');
 const { createJsonResponse, parseBody, resolveBaseUrl } = require('../../shared/http');
@@ -210,6 +211,7 @@ app.http('bookingRequest', {
                 totalAmount: totalAmount || paymentAmount / 100,
                 paymentAmount: paymentAmount,
                 cateringContact: cateringContact === true || cateringContact === 'true',
+                signingToken: crypto.randomBytes(32).toString('hex'),
                 adminCreated: adminCreated === true,
                 suppressEmails: suppressEmails || false,
                 // External tracking: pre-set fields if admin indicated these were handled outside the system
@@ -464,7 +466,7 @@ app.http('bookingRequest', {
             // DEBUG: Exposing full error for troubleshooting
             const userMessage = error.message || 'Unable to process booking right now.';
                 
-            return createJsonResponse(500, { error: userMessage, details: error.stack }, request);
+            return createJsonResponse(500, { error: userMessage }, request);
         }
     },
 });

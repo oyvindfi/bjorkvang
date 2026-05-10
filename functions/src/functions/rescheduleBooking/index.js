@@ -1,6 +1,6 @@
 const { app } = require('@azure/functions');
 const { sendEmail } = require('../../../shared/email');
-const { createJsonResponse, parseBody } = require('../../../shared/http');
+const { createJsonResponse, parseBody, requireAdminKey } = require('../../../shared/http');
 const { getBooking, updateBookingFields, listBookings } = require('../../../shared/cosmosDb');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
 const { checkForDoubleBooking } = require('../../../shared/conflictCheck');
@@ -15,6 +15,9 @@ app.http('rescheduleBooking', {
         if (request.method === 'OPTIONS') {
             return createJsonResponse(204, {}, request);
         }
+
+        const authError = requireAdminKey(request);
+        if (authError) return authError;
 
         try {
             const body = await parseBody(request);

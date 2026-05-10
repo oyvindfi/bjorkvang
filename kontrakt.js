@@ -379,7 +379,8 @@ const signContract = async () => {
                 id, 
                 role: 'requester',
                 signatureData: signature,
-                signerName: signerName
+                signerName: signerName,
+                signingToken: getQueryParam('signingToken') || ''
             })
         });
         
@@ -428,7 +429,8 @@ const signContractLandlord = async () => {
                 id, 
                 role: 'landlord',
                 signatureData: signature,
-                signerName: signerName
+                signerName: signerName,
+                adminKey: getQueryParam('adminKey') || sessionStorage.getItem('admin_api_key') || ''
             })
         });
         

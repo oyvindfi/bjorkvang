@@ -1,7 +1,7 @@
 const { app } = require('@azure/functions');
 const { sendEmail } = require('../../../shared/email');
 const { sendSms, formatDate } = require('../../../shared/sms');
-const { createHtmlResponse, createJsonResponse, parseBody } = require('../../../shared/http');
+const { createHtmlResponse, createJsonResponse, parseBody, requireAdminKey } = require('../../../shared/http');
 const { getBooking, updateBookingStatus, updateBookingFields } = require('../../../shared/cosmosDb');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
 
@@ -157,6 +157,13 @@ app.http('approveBooking', {
 
         // --- POST: Execute approval ---
         const body = await parseBody(request);
+
+        // Require admin key for API (JSON) approval requests
+        if (isApiRequest) {
+            const authError = requireAdminKey(request);
+            if (authError) return authError;
+        }
+
         const adminMessage = (body.message || '').trim().substring(0, 2000);
 
         const updatedBooking = await updateBookingStatus(id.trim(), null, 'approved');
@@ -213,7 +220,8 @@ app.http('approveBooking', {
                 const totalStr = totalNOK ? `kr\u00a0${totalNOK.toLocaleString('nb-NO')}` : '(beregnes av styret)';
 
                 const websiteUrl = (process.env.WEBSITE_URL || 'https://bj\u00f8rkvang.no').replace(/\/$/, '');
-                const contractLink = `${websiteUrl}/leieavtale.html?id=${existingBooking.id}`;
+                const signingToken = existingBooking.signingToken || '';
+                const contractLink = `${websiteUrl}/leieavtale.html?id=${existingBooking.id}${signingToken ? `&signingToken=${encodeURIComponent(signingToken)}` : ''}`;
 
                 // Booking summary table
                 const summaryTable = `

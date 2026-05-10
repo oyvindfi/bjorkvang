@@ -1,7 +1,7 @@
 const { app } = require('@azure/functions');
 const { sendEmail } = require('../../../shared/email');
 const { sendSms, formatDate } = require('../../../shared/sms');
-const { createHtmlResponse, createJsonResponse, parseBody } = require('../../../shared/http');
+const { createHtmlResponse, createJsonResponse, parseBody, requireAdminKey } = require('../../../shared/http');
 const { getBooking, updateBookingStatus } = require('../../../shared/cosmosDb');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
 
@@ -157,6 +157,13 @@ app.http('rejectBooking', {
         // --- POST: Execute rejection ---
         let rejectionMessage = '';
         const body = await parseBody(request);
+
+        // Require admin key for API (JSON) rejection requests
+        if (isApiRequest) {
+            const authError = requireAdminKey(request);
+            if (authError) return authError;
+        }
+
         rejectionMessage = (body.reason || '').trim();
         if (rejectionMessage.length > 1000) {
             context.warn('rejectBooking: Rejection message too long, truncating');

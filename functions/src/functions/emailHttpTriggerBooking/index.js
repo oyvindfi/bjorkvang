@@ -58,12 +58,15 @@ app.http('emailHttpTriggerBooking', {
             (process.env.DEFAULT_FROM_ADDRESS && process.env.DEFAULT_FROM_ADDRESS.trim()) ||
             'Bjorkvang <styret@bjorkvang.org>';
 
-        const to = (body?.to && String(body.to).trim()) || defaultToAddress;
-        const from = (body?.from && String(body.from).trim()) || defaultFromAddress;
-        const subject = body?.subject || 'Plunk test';
+        // Sanitize header fields to prevent CRLF injection
+        const stripCrlf = (val) => val ? String(val).replace(/[\r\n\t]+/g, ' ').trim().substring(0, 500) : val;
+
+        const to = stripCrlf((body?.to && String(body.to).trim()) || defaultToAddress);
+        const from = stripCrlf((body?.from && String(body.from).trim()) || defaultFromAddress);
+        const subject = stripCrlf(body?.subject || 'Plunk test').substring(0, 300);
         const html = body?.html || '<p>Hei fra Azure Function via Plunk!</p>';
         const text = body?.text || 'Hei fra Azure Function via Plunk!';
-        const replyTo = (body?.replyTo && String(body.replyTo).trim()) || undefined;
+        const replyTo = body?.replyTo ? stripCrlf(String(body.replyTo).trim()) : undefined;
 
         if (!to || !from) {
             context.warn('emailHttpTriggerBooking missing required addresses', {

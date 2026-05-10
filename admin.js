@@ -2,6 +2,11 @@ const API_BASE_URL = window.location.hostname === '127.0.0.1' || window.location
     ? 'http://localhost:7071/api' 
     : 'https://bjorkvang-duhsaxahgfe0btgv.westeurope-01.azurewebsites.net/api';
 
+// Returns the stored admin API key (same value as the admin password)
+function getAdminKey() {
+    return sessionStorage.getItem('admin_api_key') || '';
+}
+
 // ---------- Reschedule modal ----------
 
 function injectRescheduleModal() {
@@ -78,7 +83,7 @@ async function confirmReschedule() {
     try {
         const res = await fetch(`${API_BASE_URL}/booking/reschedule`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Admin-Key': getAdminKey() },
             body: JSON.stringify({ id: _rescheduleBookingId, newDate, newTime }),
         });
 
@@ -122,6 +127,7 @@ async function checkLogin() {
             document.getElementById('login-overlay').classList.add('hidden');
             document.getElementById('dashboard').classList.remove('hidden');
             sessionStorage.setItem('admin_auth', 'true');
+            sessionStorage.setItem('admin_api_key', input);
             initFilterPanel();
             loadDashboard();
         } else {
@@ -144,6 +150,7 @@ async function checkLogin() {
 
 function logout() {
     sessionStorage.removeItem('admin_auth');
+    sessionStorage.removeItem('admin_api_key');
     location.reload();
 }
 
@@ -161,7 +168,7 @@ async function loadDashboard() {
         const timeout = setTimeout(() => ctrl.abort(), 20000); // 20s timeout
         let response;
         try {
-            response = await fetch(`${API_BASE_URL}/booking/admin`, { signal: ctrl.signal });
+            response = await fetch(`${API_BASE_URL}/booking/admin`, { signal: ctrl.signal, headers: { 'X-Admin-Key': getAdminKey() } });
         } finally {
             clearTimeout(timeout);
         }
@@ -176,7 +183,7 @@ async function loadDashboard() {
         try {
             const vippsRes = await fetch(`${API_BASE_URL}/booking/check-vipps-statuses`, {
                 method: 'POST',
-                headers: { 'Accept': 'application/json' }
+                headers: { 'Accept': 'application/json', 'X-Admin-Key': getAdminKey() }
             });
             if (vippsRes.ok) {
                 const vippsData = await vippsRes.json();
@@ -763,7 +770,8 @@ function exportBookingCSV(id) {
 }
 
 function openContract(id) {
-    const link = window.location.origin + '/leieavtale?id=' + id + '&mode=admin';
+    const key = getAdminKey();
+    const link = window.location.origin + '/leieavtale?id=' + id + '&mode=admin' + (key ? '&adminKey=' + encodeURIComponent(key) : '');
     window.open(link, '_blank');
 }
 
@@ -792,7 +800,8 @@ async function sendReminder(id, type) {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'X-Admin-Key': getAdminKey()
             },
             body: JSON.stringify({ id, comment })
         });
@@ -813,7 +822,7 @@ async function markDepositPaid(id) {
     try {
         const response = await fetch(`${API_BASE_URL}/booking/deposit-paid?id=${id}`, {
             method: 'POST',
-            headers: { 'Accept': 'application/json' }
+            headers: { 'Accept': 'application/json', 'X-Admin-Key': getAdminKey() }
         });
         if (response.ok) {
             alert('Forhåndsbetaling markert som mottatt!');
@@ -832,7 +841,7 @@ async function registerDepositRequestOnly(id) {
     try {
         const res = await fetch(`${API_BASE_URL}/booking/send-deposit`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Admin-Key': getAdminKey() },
             body: JSON.stringify({ id, skipEmail: true })
         });
         const data = await res.json().catch(() => ({}));
@@ -853,7 +862,7 @@ async function sendDepositRequest(id) {
     try {
         const res = await fetch(`${API_BASE_URL}/booking/send-deposit`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Admin-Key': getAdminKey() },
             body: JSON.stringify({ id })
         });
         const data = await res.json().catch(() => ({}));
@@ -1092,7 +1101,7 @@ async function submitFinalInvoice() {
     try {
         const res = await fetch(`${API_BASE_URL}/booking/send-final-invoice`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Admin-Key': getAdminKey() },
             body: JSON.stringify({ id: _finalInvoiceBookingId, cleaningFeeNOK, extraItems, skipEmail,
                 ...(minnesamvaerActualCount !== null ? { minnesamvaerActualCount, minnesamvaerRate } : {}) })
         });
@@ -1124,7 +1133,7 @@ async function markFinalInvoicePaid(id) {
     try {
         const res = await fetch(`${API_BASE_URL}/booking/final-invoice-paid?id=${id}`, {
             method: 'POST',
-            headers: { 'Accept': 'application/json' }
+            headers: { 'Accept': 'application/json', 'X-Admin-Key': getAdminKey() }
         });
         if (res.ok) {
             alert('Sluttfaktura markert som betalt! Kvittering sendt til leietaker.');
@@ -1147,7 +1156,7 @@ async function checkVippsPayment(orderId, bookingId) {
     try {
         const res = await fetch(`${API_BASE_URL}/vipps/check-status`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Admin-Key': getAdminKey() },
             body: JSON.stringify({ orderId })
         });
         const data = await res.json().catch(() => ({}));
@@ -1347,7 +1356,7 @@ async function sendInvoice(id) {
     try {
         const response = await fetch(`${API_BASE_URL}/booking/invoice`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Admin-Key': getAdminKey() },
             body: JSON.stringify({ id })
         });
         if (response.ok) {
@@ -1373,7 +1382,8 @@ async function approveBooking(id) {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'X-Admin-Key': getAdminKey()
             },
             body: JSON.stringify({ message })
         });
@@ -1399,7 +1409,8 @@ async function rejectBooking(id) {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'X-Admin-Key': getAdminKey()
             },
             body: JSON.stringify({ reason })
         });
@@ -1577,7 +1588,7 @@ async function createManualBooking(event) {
         // Auto-approve since admin is creating it
         const approveRes = await fetch(`${API_BASE_URL}/booking/approve?id=${encodeURIComponent(data.id)}`, {
             method: 'POST',
-            headers: { 'Accept': 'application/json' }
+            headers: { 'Accept': 'application/json', 'X-Admin-Key': getAdminKey() }
         });
 
         if (approveRes.ok) {
@@ -1686,7 +1697,7 @@ async function sendManualSms() {
     try {
         const res = await fetch(`${API_BASE_URL}/sms/send`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Admin-Key': getAdminKey() },
             body: JSON.stringify({ to, body, bookingId }),
         });
         const data = await res.json().catch(() => ({}));

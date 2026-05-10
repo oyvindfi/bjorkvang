@@ -1,5 +1,5 @@
 const { app } = require('@azure/functions');
-const { createJsonResponse } = require('../../../shared/http');
+const { createJsonResponse, requireAdminKey } = require('../../../shared/http');
 const { getBooking, updateBookingFields } = require('../../../shared/cosmosDb');
 const { sendEmail } = require('../../../shared/email');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
@@ -16,6 +16,9 @@ app.http('finalInvoicePaid', {
         if (request.method === 'OPTIONS') {
             return createJsonResponse(204, {}, request);
         }
+
+        const authError = requireAdminKey(request);
+        if (authError) return authError;
 
         const id = request.query.get('id');
 
