@@ -1925,6 +1925,34 @@ button {
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.18);
 }
 
+/* Replace broken icon-font arrows with CSS border chevrons */
+#calendar .fc-prev-button .fc-icon,
+#calendar .fc-next-button .fc-icon {
+    display: inline-block;
+    width: 0.55rem;
+    height: 0.55rem;
+    border: 2px solid #fff;
+    border-right: none;
+    border-bottom: none;
+    font-size: 0;
+    vertical-align: middle;
+}
+
+#calendar .fc-prev-button .fc-icon::before,
+#calendar .fc-next-button .fc-icon::before {
+    content: none;
+}
+
+#calendar .fc-prev-button .fc-icon {
+    transform: rotate(-45deg);
+    margin-left: 3px;
+}
+
+#calendar .fc-next-button .fc-icon {
+    transform: rotate(135deg);
+    margin-right: 3px;
+}
+
 #calendar .fc-daygrid-day-number,
 #calendar .fc-col-header-cell-cushion {
     color: var(--text-primary);
