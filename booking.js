@@ -878,6 +878,14 @@ document.addEventListener('DOMContentLoaded', function () {
       views: {
         listMonth: { buttonText: 'Liste' }
       },
+      windowResize: function () {
+        const mobile = window.innerWidth < 768;
+        calendar.setOption('headerToolbar', {
+          left: mobile ? 'prev,next' : 'prev,next today',
+          center: 'title',
+          right: mobile ? 'dayGridMonth,listMonth' : 'dayGridMonth,timeGridWeek,timeGridDay'
+        });
+      },
       locale: 'nb',
       firstDay: 1,
       selectable: true,
@@ -1123,6 +1131,14 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     calendar.render();
     highlightDayCells();
+
+    // Update hint text for touch devices
+    if ('ontouchstart' in window) {
+      const hintTextEl = document.querySelector('.calendar-cta-hint span:not([aria-hidden])');
+      if (hintTextEl) {
+        hintTextEl.textContent = 'Trykk på en ledig dato for å åpne bookingskjemaet';
+      }
+    }
     } catch (error) {
       console.error('Kunne ikke initialisere kalender:', error);
       if (statusEl) {
