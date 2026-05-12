@@ -2034,6 +2034,34 @@ label {
     color: var(--text-secondary);
 }
 
+.date-availability {
+    margin: -0.125rem 0 0;
+    font-size: 0.83rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.3em;
+    transition: opacity 0.2s ease;
+}
+
+.date-availability--available {
+    color: #1a7f3c;
+}
+
+.date-availability--pending {
+    color: #925a00;
+}
+
+.date-availability--booked {
+    color: #b91c1c;
+}
+
+@media (max-width: 640px) {
+    .date-availability {
+        font-size: 0.9rem;
+    }
+}
+
 .form-field--full {
     grid-column: 1 / -1;
 }

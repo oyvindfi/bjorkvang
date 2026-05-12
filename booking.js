@@ -38,7 +38,10 @@ document.addEventListener('DOMContentLoaded', function () {
       allowInput: true,
       nextArrow: '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
       prevArrow: '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
+      onChange: (_selectedDates, dateStr) => { updateDateAvailability(dateStr); },
     });
+  } else if (dateInput) {
+    dateInput.addEventListener('change', (e) => { updateDateAvailability(e.target.value); });
   }
   const durationInputEl = document.getElementById('duration');
   const endDateInputEl = document.getElementById('end-date');
@@ -370,6 +373,60 @@ document.addEventListener('DOMContentLoaded', function () {
       return 'confirmed';
     }
     return 'pending';
+  };
+
+  const updateDateAvailability = (dateStr) => {
+    const el = document.getElementById('date-availability');
+    if (!el) return;
+
+    if (!dateStr) {
+      el.hidden = true;
+      el.className = 'date-availability';
+      return;
+    }
+
+    const date = new Date(`${dateStr}T00:00:00`);
+    if (Number.isNaN(date.getTime())) {
+      el.hidden = true;
+      return;
+    }
+
+    const dayStart = new Date(date);
+    const dayEnd = new Date(date);
+    dayStart.setHours(0, 0, 0, 0);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    let strongestStatus = null;
+    let strongestPriority = 0;
+
+    events.forEach((event) => {
+      const start = new Date(event.start);
+      const end = event.end
+        ? new Date(event.end)
+        : new Date(start.getTime() + (event.extendedProps?.duration || 1) * 60 * 60 * 1000);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return;
+      if (start <= dayEnd && end >= dayStart) {
+        const status = normaliseStatus(event.extendedProps?.status, 'pending');
+        const priority = statusPriority[status] || 0;
+        if (priority > strongestPriority) {
+          strongestPriority = priority;
+          strongestStatus = status;
+        }
+      }
+    });
+
+    el.className = 'date-availability';
+    if (!strongestStatus) {
+      el.classList.add('date-availability--available');
+      el.textContent = '✓ Datoen ser ut til å være ledig';
+    } else if (strongestStatus === 'pending') {
+      el.classList.add('date-availability--pending');
+      el.textContent = '⚠ Det finnes allerede en forespørsel for denne datoen';
+    } else {
+      el.classList.add('date-availability--booked');
+      el.textContent = '✗ Datoen er opptatt';
+    }
+    el.hidden = false;
   };
 
   const highlightDayCells = () => {
@@ -749,6 +806,9 @@ document.addEventListener('DOMContentLoaded', function () {
             highlightDayCells();
         }
         updateReservationList();
+        if (dateInput && dateInput.value) {
+          updateDateAvailability(dateInput.value);
+        }
       } catch (error) {
           console.error('Feil ved initialisering av hendelser:', error);
       }
