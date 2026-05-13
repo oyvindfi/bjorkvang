@@ -314,6 +314,7 @@ document.addEventListener('DOMContentLoaded', function () {
           attendees: bookingDetails.attendees,
           isMember: bookingDetails.isMember || false,
           cateringContact: bookingDetails.cateringContact || false,
+          ageVerified: bookingDetails.ageVerified || false,
           paymentMethod: bookingDetails.paymentMethod || 'vipps',
           paymentStatus: 'unpaid',
           totalAmount: bookingDetails.totalAmount || null,
@@ -1271,6 +1272,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!name)  { return fieldError(form.querySelector('#name'), 'Navn er påkrevd.'); }
       if (!email) { return fieldError(form.querySelector('#email'), 'E-post er påkrevd.'); }
       if (!phone) { return fieldError(form.querySelector('#phone'), 'Telefonnummer er påkrevd.'); }
+      if (!form.querySelector('#age-verified')?.checked) { return fieldError(form.querySelector('#age-verified'), 'Vennligst bekreft at du er 18 år eller eldre.'); }
       if (!dateValue) { return fieldError(form.querySelector('#date'), 'Dato er påkrevd.'); }
       if (!timeValue) { return fieldError(form.querySelector('#time'), 'Velg oppstartstid.'); }
       if (!eventType) { return fieldError(form.querySelector('#event-type'), 'Velg formål med leie.'); }
@@ -1363,7 +1365,7 @@ document.addEventListener('DOMContentLoaded', function () {
         attendees: attendeeCount,
         isMember: form.querySelector('#is-member')?.checked ?? false,
         cateringContact: form.querySelector('#catering-contact')?.checked ?? false,
-        startDate,
+          ageVerified: form.querySelector('#age-verified')?.checked ?? false,
         endDate
       };
 

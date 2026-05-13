@@ -22,11 +22,17 @@ app.http('bookingRequest', {
         }
 
         const body = await parseBody(request);
-        const { date, time, requesterName, requesterEmail, message, duration, eventType, spaces, services, attendees, paymentOrderId, paymentStatus, isMember, paymentMethod, totalAmount, cateringContact, endDate, endTime, phone, address, source, adminCreated, externalContract, depositAlreadyPaid, fullyPaid, sendConfirmationEmail } = body;
+        const { date, time, requesterName, requesterEmail, message, duration, eventType, spaces, services, attendees, paymentOrderId, paymentStatus, isMember, paymentMethod, totalAmount, cateringContact, endDate, endTime, phone, address, source, adminCreated, externalContract, depositAlreadyPaid, fullyPaid, sendConfirmationEmail, ageVerified } = body;
 
         const isAdminBooking = adminCreated === true;
         // For admin bookings, emails are opt-in (require explicit sendConfirmationEmail flag)
         const suppressEmails = isAdminBooking && sendConfirmationEmail !== true;
+
+        // Validate age verification (required for public bookings)
+        if (!isAdminBooking && ageVerified !== true) {
+            context.warn('bookingRequest: Age verification missing');
+            return createJsonResponse(400, { error: 'Du må bekrefte at du er 18 år eller eldre for å sende en bookingforespørsel.' }, request);
+        }
 
         // Validate required fields (email optional for admin bookings)
         if (!date || !time || !requesterName || (!requesterEmail && !isAdminBooking)) {

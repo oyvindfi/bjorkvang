@@ -164,8 +164,8 @@ a:focus-visible,
 .branding {
     display: flex;
     align-items: center;
-    min-width: 0; /* Allow flex shrinking on small screens */
-    overflow: hidden; /* Prevent logo anchor from bleeding over toggle button */
+    min-width: 0;
+    overflow: visible;
     flex: 1;
 }
 
@@ -176,7 +176,6 @@ a:focus-visible,
     font-weight: 600;
     color: var(--brand-600);
     max-width: 100%;
-    overflow: hidden;
 }
 
 .logo-mark {
@@ -204,9 +203,10 @@ a:focus-visible,
     font-size: clamp(1.25rem, 2vw + 1rem, 1.55rem);
     font-weight: 800;
     letter-spacing: -0.01em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    word-break: break-word;
 }
 
 .logo-subtitle {
@@ -3020,9 +3020,10 @@ fieldset.is-invalid {
 
     .logo-title {
         font-size: 1.05rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: unset;
+        word-break: break-word;
     }
 
     .logo-subtitle {
