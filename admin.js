@@ -1672,8 +1672,12 @@ async function addAdminContact(e) {
             headers: { 'Content-Type': 'application/json', 'X-Admin-Key': getAdminKey() },
             body: JSON.stringify({ name, phone })
         });
+        if (!res.ok) {
+            let errMsg = res.statusText;
+            try { const d = await res.json(); errMsg = d.error || errMsg; } catch (_) { errMsg = (await res.text()) || errMsg; }
+            throw new Error(errMsg);
+        }
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || res.statusText);
         document.getElementById('admin-contact-name').value = '';
         document.getElementById('admin-contact-phone').value = '';
         status.textContent = '✓ Kontakt lagt til';
