@@ -1624,7 +1624,7 @@ async function loadAdminContacts() {
     const container = document.getElementById('admin-contacts-list');
     if (!container) return;
     try {
-        const res = await fetch(`${API_BASE_URL}/admin/contacts`, {
+        const res = await fetch(`${API_BASE_URL}/admin-contacts`, {
             headers: { 'X-Admin-Key': getAdminKey() }
         });
         if (!res.ok) throw new Error(await res.text());
@@ -1667,7 +1667,7 @@ async function addAdminContact(e) {
     status.textContent = 'Lagrer…';
     status.style.color = '#6b7280';
     try {
-        const res = await fetch(`${API_BASE_URL}/admin/contacts`, {
+        const res = await fetch(`${API_BASE_URL}/admin-contacts`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-Admin-Key': getAdminKey() },
             body: JSON.stringify({ name, phone })
@@ -1693,7 +1693,7 @@ async function addAdminContact(e) {
 async function deleteAdminContact(id) {
     if (!confirm('Fjerne denne kontakten fra varslingsgruppen?')) return;
     try {
-        const res = await fetch(`${API_BASE_URL}/admin/contacts?id=${encodeURIComponent(id)}`, {
+        const res = await fetch(`${API_BASE_URL}/admin-contacts?id=${encodeURIComponent(id)}`, {
             method: 'DELETE',
             headers: { 'X-Admin-Key': getAdminKey() }
         });
