@@ -106,3 +106,4 @@ loadFunction('sendFinalInvoice', './functions/sendFinalInvoice');
 loadFunction('rescheduleBooking', './functions/rescheduleBooking');
 loadFunction('getMembers', './functions/getMembers');
 loadFunction('signingReminder', './functions/signingReminder');
+loadFunction('adminContacts', './functions/adminContacts');
