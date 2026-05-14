@@ -2,7 +2,7 @@ const { app } = require('@azure/functions');
 const { addContractSignature, getBooking, updateBookingFields } = require('../../../shared/cosmosDb');
 const { createJsonResponse, requireAdminKey } = require('../../../shared/http');
 const { sendEmail } = require('../../../shared/email');
-const { sendSms, formatDate } = require('../../../shared/sms');
+const { sendSms, sendSmsToAdminGroup, formatDate } = require('../../../shared/sms');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
 const vipps = require('../../../shared/vipps');
 
@@ -116,6 +116,9 @@ app.http('signBooking', {
                     } else {
                         context.warn('No BOARD_TO_ADDRESS configured, skipping tenant signature notification');
                     }
+                    // SMS to admin group
+                    const adminSmsBody = `Leieavtale signert av ${updatedBooking.requesterName}, ${formatDate(updatedBooking.date)}. Signer som utleier: ${contractLink} – Bjørkvang`;
+                    await sendSmsToAdminGroup(adminSmsBody, context);
                 } catch (notifyError) {
                     context.error(`Failed to send board notification for tenant signature: ${notifyError.message}`);
                 }

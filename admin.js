@@ -1618,13 +1618,95 @@ async function createManualBooking(event) {
 
 // ——— SMS-senter ———
 
+// ——— Admin contact group ———
+
+async function loadAdminContacts() {
+    const container = document.getElementById('admin-contacts-list');
+    if (!container) return;
+    try {
+        const res = await fetch(`${API_BASE_URL}/admin/contacts`, {
+            headers: { 'X-Admin-Key': getAdminKey() }
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const { contacts } = await res.json();
+        if (!contacts.length) {
+            container.innerHTML = '<p style="color:#9ca3af;font-size:.88rem;margin:0;">Ingen kontakter ennå.</p>';
+            return;
+        }
+        container.innerHTML = `
+            <table style="border-collapse:collapse;font-size:.9rem;width:100%;max-width:520px;">
+                <thead><tr style="border-bottom:1px solid #e5e7eb;">
+                    <th style="padding:6px 8px;text-align:left;color:#6b7280;font-weight:600;">Navn</th>
+                    <th style="padding:6px 8px;text-align:left;color:#6b7280;font-weight:600;">Telefon</th>
+                    <th style="padding:6px 8px;"></th>
+                </tr></thead>
+                <tbody>
+                    ${contacts.map(c => `
+                        <tr style="border-bottom:1px solid #f3f4f6;">
+                            <td style="padding:6px 8px;">${escHtml(c.name)}</td>
+                            <td style="padding:6px 8px;font-family:monospace;">${escHtml(c.phone)}</td>
+                            <td style="padding:6px 8px;">
+                                <button onclick="deleteAdminContact('${escHtml(c.id)}')"
+                                    style="background:none;border:1px solid #fca5a5;color:#dc2626;border-radius:4px;padding:2px 10px;cursor:pointer;font-size:.82rem;">
+                                    Fjern
+                                </button>
+                            </td>
+                        </tr>`).join('')}
+                </tbody>
+            </table>`;
+    } catch (err) {
+        container.innerHTML = `<p style="color:#dc2626;font-size:.88rem;">Feil ved henting av kontakter: ${err.message}</p>`;
+    }
+}
+
+async function addAdminContact(e) {
+    e.preventDefault();
+    const name = document.getElementById('admin-contact-name').value.trim();
+    const phone = document.getElementById('admin-contact-phone').value.trim();
+    const status = document.getElementById('admin-contact-status');
+    status.textContent = 'Lagrer…';
+    status.style.color = '#6b7280';
+    try {
+        const res = await fetch(`${API_BASE_URL}/admin/contacts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Admin-Key': getAdminKey() },
+            body: JSON.stringify({ name, phone })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || res.statusText);
+        document.getElementById('admin-contact-name').value = '';
+        document.getElementById('admin-contact-phone').value = '';
+        status.textContent = '✓ Kontakt lagt til';
+        status.style.color = '#059669';
+        await loadAdminContacts();
+        setTimeout(() => { status.textContent = ''; }, 3000);
+    } catch (err) {
+        status.textContent = `Feil: ${err.message}`;
+        status.style.color = '#dc2626';
+    }
+}
+
+async function deleteAdminContact(id) {
+    if (!confirm('Fjerne denne kontakten fra varslingsgruppen?')) return;
+    try {
+        const res = await fetch(`${API_BASE_URL}/admin/contacts?id=${encodeURIComponent(id)}`, {
+            method: 'DELETE',
+            headers: { 'X-Admin-Key': getAdminKey() }
+        });
+        if (!res.ok) throw new Error(await res.text());
+        await loadAdminContacts();
+    } catch (err) {
+        alert(`Kunne ikke slette: ${err.message}`);
+    }
+}
+
 function toggleSmsDashboard() {
     const panel = document.getElementById('sms-center-panel');
     const toggle = document.getElementById('sms-center-toggle');
     if (!panel) return;
     const isHidden = panel.classList.toggle('hidden');
     if (toggle) toggle.textContent = isHidden ? '▼' : '▲';
-    if (!isHidden) populateSmsBookingSelect();
+    if (!isHidden) { populateSmsBookingSelect(); loadAdminContacts(); }
 }
 
 function populateSmsBookingSelect() {

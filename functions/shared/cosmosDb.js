@@ -468,6 +468,60 @@ const listMembers = async () => {
     }
 };
 
+const ADMIN_CONTACTS_PK = 'admin-contacts';
+
+/**
+ * List all active admin SMS contacts.
+ */
+const listAdminContacts = async () => {
+    try {
+        const db = initCosmosClient();
+        if (useInMemory || !db) return [];
+        const { container } = db;
+        const querySpec = { query: "SELECT * FROM c WHERE c.type = 'adminContact' ORDER BY c.addedAt ASC" };
+        const { resources } = await container.items
+            .query(querySpec, { partitionKey: ADMIN_CONTACTS_PK })
+            .fetchAll();
+        return resources;
+    } catch (error) {
+        console.error('CosmosDB: Failed to list admin contacts', { error: error.message });
+        return [];
+    }
+};
+
+/**
+ * Save a new admin SMS contact.
+ * @param {{ name: string; phone: string }} contact
+ */
+const saveAdminContact = async (contact) => {
+    const db = initCosmosClient();
+    const id = `contact-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const item = {
+        id,
+        type: 'adminContact',
+        bjorkvang: ADMIN_CONTACTS_PK,
+        name: contact.name,
+        phone: contact.phone,
+        active: true,
+        addedAt: new Date().toISOString(),
+    };
+    if (useInMemory || !db) return item;
+    const { container } = db;
+    const { resource } = await container.items.create(item);
+    return resource;
+};
+
+/**
+ * Delete an admin SMS contact by id.
+ * @param {string} id
+ */
+const deleteAdminContact = async (id) => {
+    const db = initCosmosClient();
+    if (useInMemory || !db) return;
+    const { container } = db;
+    await container.item(id, ADMIN_CONTACTS_PK).delete();
+};
+
 module.exports = {
     saveBooking,
     getBooking,
@@ -478,4 +532,7 @@ module.exports = {
     deleteBooking,
     saveMember,
     listMembers,
+    listAdminContacts,
+    saveAdminContact,
+    deleteAdminContact,
 };

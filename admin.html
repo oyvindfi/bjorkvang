@@ -1010,6 +1010,29 @@
         <div class="dashboard-section" id="sms-center-section">
             <h2 style="cursor:pointer;" onclick="toggleSmsDashboard()">💬 SMS-senter <span id="sms-center-toggle">▼</span></h2>
             <div id="sms-center-panel" class="hidden">
+
+                <!-- Admin SMS group -->
+                <div style="margin-bottom:2rem;">
+                    <h3 style="margin:0 0 .5rem;">📲 Admin-varslingsgruppe</h3>
+                    <p style="color:#6b7280;font-size:.88rem;margin:0 0 1rem;">Disse numrene mottar automatisk SMS ved ny booking, signert kontrakt og mottatt betaling.</p>
+                    <div id="admin-contacts-list" style="margin-bottom:1rem;"></div>
+                    <form id="admin-contact-form" onsubmit="addAdminContact(event)" style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:flex-end;max-width:520px;">
+                        <div style="flex:1;min-width:140px;">
+                            <label style="display:block;font-weight:600;font-size:.85rem;margin-bottom:.25rem;">Navn</label>
+                            <input id="admin-contact-name" type="text" placeholder="Ola Nordmann" required
+                                style="width:100%;padding:.5rem .75rem;border:1px solid #d1d5db;border-radius:6px;font-size:.9rem;box-sizing:border-box;">
+                        </div>
+                        <div style="flex:1;min-width:140px;">
+                            <label style="display:block;font-weight:600;font-size:.85rem;margin-bottom:.25rem;">Telefonnummer</label>
+                            <input id="admin-contact-phone" type="tel" placeholder="90409836" maxlength="8" required
+                                style="width:100%;padding:.5rem .75rem;border:1px solid #d1d5db;border-radius:6px;font-size:.9rem;box-sizing:border-box;">
+                        </div>
+                        <button type="submit" class="btn" style="padding:.5rem 1.25rem;white-space:nowrap;">+ Legg til</button>
+                        <span id="admin-contact-status" style="font-size:.85rem;width:100%;"></span>
+                    </form>
+                </div>
+                <hr style="border:none;border-top:1px solid #e5e7eb;margin-bottom:1.75rem;">
+
                 <p style="color:#6b7280;font-size:0.88rem;margin-bottom:1.25rem;">
                     Send en SMS manuelt til en leietaker. Meldingen sendes fra <strong>Bjorkvang</strong>. Maks 160 tegn.
                 </p>

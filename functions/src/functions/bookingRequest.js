@@ -1,7 +1,7 @@
 const { app } = require('@azure/functions');
 const crypto = require('crypto');
 const { sendEmail } = require('../../shared/email');
-const { sendSms, formatDate } = require('../../shared/sms');
+const { sendSms, sendSmsToAdminGroup, formatDate } = require('../../shared/sms');
 const { createJsonResponse, parseBody, resolveBaseUrl } = require('../../shared/http');
 const { saveBooking, listBookings } = require('../../shared/cosmosDb');
 const { generateEmailHtml } = require('../../shared/emailTemplate');
@@ -384,10 +384,8 @@ app.http('bookingRequest', {
             context.info('bookingRequest: Board notification email sent');
 
             // --- Board SMS notification ---
-            if (process.env.BOARD_PHONE_NUMBER) {
-                const boardSmsBody = `Ny leieforespørsel: ${booking.requesterName}, ${formatDate(booking.date)} (${booking.eventType || 'Reservasjon'}), ${booking.attendees || '?'} gjester. Godkjenn i admin. – Bjørkvang forsamlingslokale og Helgøens Vel`;
-                await sendSms({ to: process.env.BOARD_PHONE_NUMBER, body: boardSmsBody }, context);
-            }
+            const boardSmsBody = `Ny leieforespørsel: ${booking.requesterName}, ${formatDate(booking.date)} (${booking.eventType || 'Reservasjon'}), ${booking.attendees || '?'} gjester. Godkjenn i admin. – Bjørkvang`;
+            await sendSmsToAdminGroup(boardSmsBody, context);
 
             // --- Requester Confirmation Email ---
             const confirmationSubject = isPaid

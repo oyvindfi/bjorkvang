@@ -3,6 +3,7 @@ const { createJsonResponse, requireAdminKey } = require('../../../shared/http');
 const { getBooking, updateBookingFields } = require('../../../shared/cosmosDb');
 const { sendEmail } = require('../../../shared/email');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
+const { sendSmsToAdminGroup, formatDate } = require('../../../shared/sms');
 
 /**
  * Mark a booking's deposit as received (manual confirmation by admin).
@@ -99,6 +100,15 @@ app.http('depositPaid', {
             } catch (mailErr) {
                 context.warn('depositPaid: Could not send receipt email', { error: mailErr.message });
             }
+        }
+
+        // Admin group SMS
+        try {
+            const depositNOK = Number(updated.depositAmount) || 0;
+            const adminSmsBody = `Depositum mottatt: ${updated.requesterName}, ${formatDate(updated.date)}${depositNOK ? `, kr ${depositNOK}` : ''}. – Bjørkvang`;
+            await sendSmsToAdminGroup(adminSmsBody, context);
+        } catch (smsErr) {
+            context.warn('depositPaid: Could not send admin SMS', { error: smsErr.message });
         }
 
         return createJsonResponse(200, { message: 'Forhåndsbetaling registrert som betalt.', booking: updated }, request);

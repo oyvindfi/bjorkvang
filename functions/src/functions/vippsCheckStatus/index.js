@@ -4,6 +4,7 @@ const { getPayment, capturePayment } = require('../../../shared/vipps');
 const { getBooking, updateBookingStatus } = require('../../../shared/cosmosDb');
 const { sendEmail } = require('../../../shared/email');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
+const { sendSmsToAdminGroup, formatDate } = require('../../../shared/sms');
 
 app.http('vippsCheckStatus', {
     methods: ['POST', 'OPTIONS'],
@@ -96,6 +97,14 @@ app.http('vippsCheckStatus', {
                                     context.info(`Payment confirmation email sent to ${booking.requesterEmail}`);
                                 } catch (emailError) {
                                     context.error(`Failed to send payment confirmation email: ${emailError.message}`);
+                                }
+                                // Admin group SMS
+                                try {
+                                    const amountNOK = booking.paymentAmount ? Math.round(booking.paymentAmount / 100) : null;
+                                    const adminSmsBody = `Betaling mottatt: ${booking.requesterName}, ${formatDate(booking.date)}${amountNOK ? `, kr ${amountNOK}` : ''}. Booking aktiv. – Bjørkvang`;
+                                    await sendSmsToAdminGroup(adminSmsBody, context);
+                                } catch (smsError) {
+                                    context.warn(`Failed to send admin payment SMS: ${smsError.message}`);
                                 }
                             }
                         }

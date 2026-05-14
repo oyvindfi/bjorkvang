@@ -88,4 +88,37 @@ const sendSms = async (options, context = console) => {
     }
 };
 
-module.exports = { sendSms, normalizeNorwegianPhone, formatDate };
+module.exports = { sendSms, normalizeNorwegianPhone, formatDate, sendSmsToAdminGroup };
+
+/**
+ * Send an SMS to all active admin contacts stored in Cosmos DB.
+ * Falls back to BOARD_PHONE_NUMBER env var if no contacts found (local dev).
+ * Never throws — failures are logged per recipient.
+ * @param {string} body  Message text
+ * @param {object} [context]  Azure Function context for logging
+ */
+async function sendSmsToAdminGroup(body, context = console) {
+    const { listAdminContacts } = require('./cosmosDb');
+    let contacts = [];
+    try {
+        contacts = await listAdminContacts();
+    } catch (err) {
+        context.warn('sendSmsToAdminGroup: Failed to fetch admin contacts, falling back to BOARD_PHONE_NUMBER', { error: err.message });
+    }
+
+    if (!contacts.length) {
+        const fallback = process.env.BOARD_PHONE_NUMBER;
+        if (fallback) {
+            context.info('sendSmsToAdminGroup: No DB contacts found, using BOARD_PHONE_NUMBER fallback');
+            await sendSms({ to: fallback, body }, context);
+        } else {
+            context.warn('sendSmsToAdminGroup: No admin contacts and no BOARD_PHONE_NUMBER set. Skipping admin SMS.');
+        }
+        return;
+    }
+
+    context.info(`sendSmsToAdminGroup: Sending to ${contacts.length} admin contact(s)`);
+    await Promise.allSettled(
+        contacts.map((c) => sendSms({ to: c.phone, body }, context))
+    );
+}
