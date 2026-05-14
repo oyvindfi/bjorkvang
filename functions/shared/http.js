@@ -28,7 +28,7 @@ const createJsonResponse = (status, body = {}, request = null, extraHeaders = {}
     headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': getCorsOrigin(request),
-        'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+        'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key',
         ...extraHeaders,
     },
@@ -43,7 +43,7 @@ const createHtmlResponse = (status, html, request = null) => ({
     headers: {
         'Content-Type': 'text/html; charset=utf-8',
         'Access-Control-Allow-Origin': getCorsOrigin(request),
-        'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+        'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key',
     },
 });

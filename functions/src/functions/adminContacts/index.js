@@ -15,7 +15,7 @@ const { normalizeNorwegianPhone } = require('../../../shared/sms');
 app.http('adminContacts', {
     methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
     authLevel: 'anonymous',
-    route: 'admin-contacts',
+    route: 'notification-contacts',
     handler: async (request, context) => {
         if (request.method === 'OPTIONS') {
             return createJsonResponse(204, {}, request);
