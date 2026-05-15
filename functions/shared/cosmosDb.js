@@ -531,6 +531,7 @@ const deleteAdminContact = async (id) => {
 };
 
 module.exports = {
+    initCosmosClient,
     saveBooking,
     getBooking,
     updateBookingStatus,

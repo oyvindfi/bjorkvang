@@ -162,10 +162,13 @@ const probePlunk = () => withTimeout('plunk', async () => {
         };
     }
 
+    // 200/401/404/405 alle bekrefter at hosten responderer. Vi tar ikke med
+    // httpStatus i details når alt er bra — det forvirret administratorer som
+    // så "404" og trodde det var en feil.
     return {
         status: 'ok',
         message: 'Plunk API tilgjengelig',
-        details: { httpStatus: response.status },
+        details: {},
         env
     };
 });
