@@ -172,6 +172,14 @@ if (sessionStorage.getItem('admin_auth') === 'true') {
     document.getElementById('dashboard').classList.remove('hidden');
     initFilterPanel();
     loadDashboard();
+    // Health panel must render even if the bookings fetch fails or is slow,
+    // so kick it off independently from loadDashboard.
+    setTimeout(() => {
+        if (typeof loadSystemHealth === 'function') {
+            loadSystemHealth().catch((err) => console.warn('System health init failed:', err));
+            startSystemHealthPolling();
+        }
+    }, 0);
 }
 
 async function loadDashboard() {
@@ -201,8 +209,11 @@ async function loadDashboard() {
         refreshVippsStatusesInBackground();
 
         // Kick off system-health check + polling (also fire-and-forget).
-        loadSystemHealth().catch((err) => console.warn('System health init failed:', err));
-        startSystemHealthPolling();
+        // Guarded so a missed bookings render doesn't suppress the health panel.
+        if (typeof loadSystemHealth === 'function') {
+            loadSystemHealth().catch((err) => console.warn('System health init failed:', err));
+            startSystemHealthPolling();
+        }
     } catch (error) {
         const msg = error.name === 'AbortError'
             ? 'Forespørselen tok for lang tid (>45s). Funksjonen kan være under oppstart (cold start) — prøv på nytt om noen sekunder. Hvis problemet vedvarer, sjekk Cosmos DB i Azure Portal.'

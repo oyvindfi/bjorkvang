@@ -143,10 +143,12 @@ const probePlunk = () => withTimeout('plunk', async () => {
         };
     }
 
-    // Probe Plunk's API host without sending mail. We expect a JSON response;
-    // 200/401/404 all confirm the host is reachable. Only network errors / 5xx
+    // Probe the same Plunk API host that email.js uses. We expect a JSON response;
+    // 200/401/404/405 all confirm the host is reachable. Only network errors / 5xx
     // indicate an outage.
-    const response = await fetchWithTimeout('https://api.useplunk.com/', {
+    const probeUrl = (process.env.PLUNK_API_URL || 'https://next-api.useplunk.com/v1/send')
+        .replace(/\/v1\/send.*$/, '/v1/');
+    const response = await fetchWithTimeout(probeUrl, {
         method: 'GET',
         headers: { 'Authorization': `Bearer ${process.env.PLUNK_API_TOKEN}` }
     });
