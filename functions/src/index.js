@@ -107,3 +107,4 @@ loadFunction('rescheduleBooking', './functions/rescheduleBooking');
 loadFunction('getMembers', './functions/getMembers');
 loadFunction('signingReminder', './functions/signingReminder');
 loadFunction('adminContacts', './functions/adminContacts');
+loadFunction('systemHealth', './functions/systemHealth');

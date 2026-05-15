@@ -270,5 +270,7 @@ module.exports = {
     capturePayment,
     createRecurringAgreement,
     getRecurringAgreement,
+    getAccessToken,
+    VIPPS_BASE_URL,
     VIPPS_TEST_AMOUNTS
 };

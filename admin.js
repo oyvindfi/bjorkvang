@@ -199,6 +199,10 @@ async function loadDashboard() {
         // It performs a second listBookings() + N serial Vipps API calls, so
         // awaiting it pre-render frequently pushed the total request past 20s.
         refreshVippsStatusesInBackground();
+
+        // Kick off system-health check + polling (also fire-and-forget).
+        loadSystemHealth().catch((err) => console.warn('System health init failed:', err));
+        startSystemHealthPolling();
     } catch (error) {
         const msg = error.name === 'AbortError'
             ? 'Forespørselen tok for lang tid (>45s). Funksjonen kan være under oppstart (cold start) — prøv på nytt om noen sekunder. Hvis problemet vedvarer, sjekk Cosmos DB i Azure Portal.'
@@ -229,6 +233,322 @@ async function refreshVippsStatusesInBackground() {
         console.warn('Vipps status check failed (non-fatal):', vippsErr);
     }
 }
+
+// ── System / Helse panel ──────────────────────────────────────────────────
+const HEALTH_POLL_INTERVAL_MS = 60 * 1000;
+const HEALTH_FETCH_TIMEOUT_MS = 10 * 1000;
+const HEALTH_LAST_OK_KEY = 'bjorkvang_health_last_ok';
+
+const PROBE_META = {
+    cosmos: { label: 'Cosmos DB',          icon: '🗄️', link: 'https://portal.azure.com/' },
+    plunk:  { label: 'Plunk (e-post)',      icon: '✉️',  link: 'https://app.useplunk.com/' },
+    twilio: { label: 'Twilio (SMS)',        icon: '📱', link: 'https://console.twilio.com/' },
+    vipps:  { label: 'Vipps',               icon: '💳', link: 'https://portal.vippsmobilepay.com/' },
+    azure:  { label: 'Azure Service Health', icon: '☁️', link: 'https://status.azure.com/' },
+    self:   { label: 'Function App',        icon: '⚙️', link: 'https://portal.azure.com/' }
+};
+
+const STATUS_TEXT = {
+    ok: 'Oppe',
+    degraded: 'Redusert',
+    down: 'Nede',
+    unknown: 'Ukjent'
+};
+
+let _healthData = null;
+let _healthClientLatencyMs = null;
+let _healthPollTimer = null;
+let _healthInFlight = false;
+
+function formatLatency(ms) {
+    if (ms == null || Number.isNaN(ms)) return '—';
+    if (ms < 1000) return `${Math.round(ms)} ms`;
+    return `${(ms / 1000).toFixed(1)} s`;
+}
+
+function formatRelativeTime(iso) {
+    if (!iso) return '—';
+    const t = new Date(iso).getTime();
+    if (!t || Number.isNaN(t)) return '—';
+    const diff = Math.max(0, Date.now() - t);
+    if (diff < 5_000) return 'akkurat nå';
+    if (diff < 60_000) return `for ${Math.round(diff / 1000)} sek siden`;
+    if (diff < 3_600_000) return `for ${Math.round(diff / 60_000)} min siden`;
+    if (diff < 86_400_000) return `for ${Math.round(diff / 3_600_000)} t siden`;
+    return new Date(iso).toLocaleString('nb-NO');
+}
+
+async function loadSystemHealth({ force = false } = {}) {
+    if (_healthInFlight) return;
+    _healthInFlight = true;
+
+    const errEl = document.getElementById('health-error');
+    if (errEl) { errEl.hidden = true; errEl.textContent = ''; }
+
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), HEALTH_FETCH_TIMEOUT_MS);
+    const startedAt = Date.now();
+    const url = `${API_BASE_URL}/system/health${force ? '?fresh=1' : ''}`;
+
+    try {
+        const res = await fetch(url, {
+            signal: ctrl.signal,
+            headers: { 'X-Admin-Key': getAdminKey() }
+        });
+        _healthClientLatencyMs = Date.now() - startedAt;
+
+        if (res.status === 401) {
+            renderSystemHealthError('Ikke autorisert (401). Logg inn på nytt.');
+            return;
+        }
+        if (!res.ok) {
+            renderSystemHealthError(`Helse-endepunkt svarte ${res.status}.`);
+            return;
+        }
+
+        const data = await res.json();
+        _healthData = data;
+
+        // Persist last-OK marker locally so we can show "Siste OK" even when
+        // the next poll fails or the user returns later.
+        if (data.status === 'ok') {
+            try {
+                localStorage.setItem(HEALTH_LAST_OK_KEY, data.generatedAt || new Date().toISOString());
+            } catch (_) { /* localStorage may be disabled */ }
+        }
+
+        renderSystemHealth(data);
+    } catch (err) {
+        const msg = err && err.name === 'AbortError'
+            ? `Helse-sjekken tok mer enn ${HEALTH_FETCH_TIMEOUT_MS / 1000}s (sannsynligvis kald-start).`
+            : (err && err.message) || 'Ukjent feil ved helse-sjekk.';
+        renderSystemHealthError(msg);
+    } finally {
+        clearTimeout(timer);
+        _healthInFlight = false;
+    }
+}
+
+function renderSystemHealthError(message) {
+    const grid = document.getElementById('health-grid');
+    const errEl = document.getElementById('health-error');
+    const overall = document.getElementById('health-overall-badge');
+    const updated = document.getElementById('health-updated');
+
+    if (overall) {
+        overall.textContent = STATUS_TEXT.down;
+        overall.className = 'health-badge health-badge--down';
+        overall.dataset.status = 'down';
+    }
+    if (errEl) {
+        errEl.textContent = `⚠ ${message}`;
+        errEl.hidden = false;
+    }
+    if (updated) {
+        let lastOk = null;
+        try { lastOk = localStorage.getItem(HEALTH_LAST_OK_KEY); } catch (_) { /* ignore */ }
+        updated.textContent = lastOk ? `Siste OK: ${formatRelativeTime(lastOk)}` : '—';
+    }
+    if (grid && !grid.querySelector('.health-card')) {
+        grid.replaceChildren();
+        const empty = document.createElement('p');
+        empty.className = 'health-empty';
+        empty.textContent = 'Kunne ikke hente status. Prøv «Oppdater».';
+        grid.appendChild(empty);
+    }
+}
+
+function renderSystemHealth(data) {
+    const grid = document.getElementById('health-grid');
+    const overall = document.getElementById('health-overall-badge');
+    const updated = document.getElementById('health-updated');
+    if (!grid || !overall) return;
+
+    overall.textContent = STATUS_TEXT[data.status] || data.status;
+    overall.className = `health-badge health-badge--${data.status}`;
+    overall.dataset.status = data.status;
+
+    if (updated) {
+        const cacheTag = data.cached ? ' · cached' : '';
+        const clientTag = _healthClientLatencyMs != null ? ` · klient ${formatLatency(_healthClientLatencyMs)}` : '';
+        updated.textContent = `Oppdatert ${formatRelativeTime(data.generatedAt)}${cacheTag}${clientTag}`;
+    }
+
+    grid.replaceChildren();
+    const probes = Array.isArray(data.probes) ? data.probes : [];
+    if (!probes.length) {
+        const empty = document.createElement('p');
+        empty.className = 'health-empty';
+        empty.textContent = 'Ingen probes returnerte data.';
+        grid.appendChild(empty);
+        return;
+    }
+
+    probes.forEach((probe) => grid.appendChild(buildHealthCard(probe)));
+}
+
+function buildHealthCard(probe) {
+    const meta = PROBE_META[probe.name] || { label: probe.name, icon: '•', link: null };
+    const status = probe.status || 'unknown';
+
+    const card = document.createElement('article');
+    card.className = `health-card health-card--${status}`;
+    card.dataset.probe = probe.name;
+
+    // Header row: icon + label + status badge
+    const header = document.createElement('div');
+    header.className = 'health-card-header';
+    const title = document.createElement('div');
+    title.className = 'health-card-title';
+    const icon = document.createElement('span');
+    icon.className = 'health-card-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = meta.icon;
+    const labelEl = document.createElement('span');
+    labelEl.className = 'health-card-label';
+    labelEl.textContent = meta.label;
+    title.append(icon, labelEl);
+    const badge = document.createElement('span');
+    badge.className = `health-badge health-badge--${status}`;
+    badge.textContent = STATUS_TEXT[status] || status;
+    header.append(title, badge);
+    card.appendChild(header);
+
+    // Message
+    const msg = document.createElement('p');
+    msg.className = 'health-card-message';
+    msg.textContent = probe.message || '—';
+    card.appendChild(msg);
+
+    // Latency line
+    const latencyEl = document.createElement('p');
+    latencyEl.className = 'health-card-latency';
+    latencyEl.textContent = `Latency: ${formatLatency(probe.latencyMs)}`;
+    card.appendChild(latencyEl);
+
+    // Env-var presence chips (only relevant ones)
+    const envEntries = probe.env ? Object.entries(probe.env) : [];
+    if (envEntries.length) {
+        const chips = document.createElement('div');
+        chips.className = 'health-env-chips';
+        envEntries.forEach(([key, present]) => {
+            const chip = document.createElement('span');
+            chip.className = `health-env-chip ${present ? 'is-present' : 'is-missing'}`;
+            chip.textContent = `${key} ${present ? '✓' : '✗'}`;
+            chip.title = present ? `${key} er satt` : `${key} mangler`;
+            chips.appendChild(chip);
+        });
+        card.appendChild(chips);
+    }
+
+    // Probe-specific details (rendered as compact key/value rows)
+    const detailEntries = probe.details ? Object.entries(probe.details).filter(([, v]) => v != null && v !== '') : [];
+    if (detailEntries.length) {
+        const dl = document.createElement('dl');
+        dl.className = 'health-card-details';
+        detailEntries.forEach(([k, v]) => {
+            const dt = document.createElement('dt');
+            dt.textContent = k;
+            const dd = document.createElement('dd');
+            if (Array.isArray(v)) {
+                dd.textContent = v.map((item) => {
+                    if (item && typeof item === 'object') return item.title || JSON.stringify(item);
+                    return String(item);
+                }).join(' • ');
+            } else if (v && typeof v === 'object') {
+                dd.textContent = JSON.stringify(v);
+            } else {
+                dd.textContent = String(v);
+            }
+            dl.append(dt, dd);
+        });
+        card.appendChild(dl);
+    }
+
+    // Deep link
+    if (meta.link) {
+        const link = document.createElement('a');
+        link.className = 'health-card-link';
+        link.href = meta.link;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = 'Åpne konsoll ↗';
+        card.appendChild(link);
+    }
+
+    return card;
+}
+
+function startSystemHealthPolling() {
+    if (_healthPollTimer) return;
+    _healthPollTimer = setInterval(() => {
+        if (document.hidden) return;
+        loadSystemHealth().catch((err) => console.warn('System health poll failed:', err));
+    }, HEALTH_POLL_INTERVAL_MS);
+
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            // Resume immediately when the tab becomes visible again.
+            loadSystemHealth().catch(() => { /* already logged */ });
+        }
+    });
+}
+
+async function copyDiagnosticReport() {
+    let lastOk = null;
+    try { lastOk = localStorage.getItem(HEALTH_LAST_OK_KEY); } catch (_) { /* ignore */ }
+    const report = {
+        generatedAt: new Date().toISOString(),
+        client: {
+            url: window.location.href,
+            userAgent: navigator.userAgent,
+            online: navigator.onLine,
+            apiBaseUrl: API_BASE_URL,
+            healthFetchLatencyMs: _healthClientLatencyMs,
+            lastSuccessfulProbeAt: lastOk
+        },
+        server: _healthData
+    };
+    const text = JSON.stringify(report, null, 2);
+    try {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+        } else {
+            // Fallback for non-secure contexts (e.g. http://localhost over IP)
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+        }
+        const btn = document.getElementById('health-copy-btn');
+        if (btn) {
+            const original = btn.textContent;
+            btn.textContent = '✓ Kopiert';
+            setTimeout(() => { btn.textContent = original; }, 2000);
+        }
+    } catch (err) {
+        console.error('Copy diagnostic failed:', err);
+        alert('Kunne ikke kopiere — sjekk konsollen for detaljer.');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const refreshBtn = document.getElementById('health-refresh-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+            refreshBtn.disabled = true;
+            loadSystemHealth({ force: true }).finally(() => { refreshBtn.disabled = false; });
+        });
+    }
+    const copyBtn = document.getElementById('health-copy-btn');
+    if (copyBtn) {
+        copyBtn.addEventListener('click', copyDiagnosticReport);
+    }
+});
 
 let _allBookings = [];
 let _activeStatusFilter = 'all';

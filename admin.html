@@ -552,6 +552,25 @@
             </div>
         </div>
 
+        <section id="system-health" class="dashboard-section health-panel" aria-live="polite">
+            <div class="health-header">
+                <h2 class="health-title">
+                    <span aria-hidden="true">🩺</span>
+                    System / Helse
+                    <span id="health-overall-badge" class="health-badge health-badge--unknown" data-status="unknown">Henter…</span>
+                </h2>
+                <div class="health-actions">
+                    <span id="health-updated" class="health-updated" aria-live="off">—</span>
+                    <button type="button" id="health-refresh-btn" class="btn-sm health-action-btn" title="Tving ny sjekk (omgår 30s cache)">🔄 Oppdater</button>
+                    <button type="button" id="health-copy-btn" class="btn-sm health-action-btn" title="Kopier diagnose-rapport til utklippstavle">📋 Kopier diagnose</button>
+                </div>
+            </div>
+            <div id="health-grid" class="health-grid">
+                <p class="health-empty" id="health-empty">Henter status fra integrasjonene…</p>
+            </div>
+            <p id="health-error" class="health-error" hidden></p>
+        </section>
+
         <div class="dashboard-section">
             <h2 style="cursor:pointer;" onclick="toggleHelp()">📖 Brukerveiledning <span id="help-toggle-icon">▼</span></h2>
             <div id="help-panel" class="hidden" style="padding-top:12px;">
