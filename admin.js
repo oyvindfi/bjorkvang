@@ -1,6 +1,18 @@
+
 const API_BASE_URL = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' 
     ? 'http://localhost:7071/api' 
     : 'https://bjorkvang-duhsaxahgfe0btgv.westeurope-01.azurewebsites.net/api';
+
+// Escape HTML utility for safe rendering
+function escHtml(str) {
+    return String(str).replace(/[&<>"']/g, (m) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    })[m]);
+}
 
 // Returns the stored admin API key (same value as the admin password)
 function getAdminKey() {
