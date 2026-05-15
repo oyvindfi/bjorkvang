@@ -596,6 +596,132 @@ document.addEventListener('DOMContentLoaded', function () {
     };
   };
 
+  const getCompactEventLabel = (event, maxLength = 18) => {
+    const rawTitle = (event?.title || '').replace(/\s*\(Venter\)\s*$/i, '').trim();
+    const eventType = (event?.extendedProps?.eventType || '').trim();
+
+    let label = rawTitle || eventType || 'Reservasjon';
+
+    if (/^helg\s*[\u2013-]/i.test(label) || /^helg$/i.test(label)) {
+      label = 'Helg';
+    } else if (/^møte eller kurs$/i.test(eventType) && rawTitle) {
+      label = rawTitle;
+    } else if (/^reservasjon$/i.test(label) && eventType) {
+      label = eventType;
+    }
+
+    if (label.length <= maxLength) {
+      return label;
+    }
+
+    const shortened = label.slice(0, maxLength).trim();
+    return `${shortened.replace(/[\s.,;:!-]+$/g, '')}…`;
+  };
+
+  const getEventTimeRangeLabel = (event) => {
+    const start = event?.start ? new Date(event.start) : null;
+    const end = event?.end ? new Date(event.end) : null;
+    if (!start || Number.isNaN(start.getTime())) {
+      return '';
+    }
+    const startTime = start.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' });
+    if (!end || Number.isNaN(end.getTime())) {
+      return startTime;
+    }
+    const endTime = end.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' });
+    return `${startTime}-${endTime}`;
+  };
+
+  const getTooltipDetails = (event) => {
+    const start = event?.start ? new Date(event.start) : null;
+    const end = event?.end ? new Date(event.end) : null;
+    const spaces = Array.isArray(event?.extendedProps?.spaces) && event.extendedProps.spaces.length
+      ? event.extendedProps.spaces.join(', ')
+      : '';
+    const status = normaliseStatus(event?.extendedProps?.status, 'pending');
+    const statusText = getStatusLabel(status);
+
+    const dateText = start
+      ? start.toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+      : '';
+
+    return {
+      title: (event?.title || event?.extendedProps?.eventType || 'Reservasjon').replace(/\s*\(Venter\)\s*$/i, '').trim(),
+      dateText,
+      timeText: getEventTimeRangeLabel({ start, end }),
+      spaces,
+      statusText
+    };
+  };
+
+  const removeCalendarTooltip = () => {
+    const tooltip = document.getElementById('fc-tooltip');
+    if (tooltip && tooltip.parentNode) {
+      tooltip.remove();
+    }
+  };
+
+  const positionCalendarTooltip = (clientX, clientY) => {
+    const tooltip = document.getElementById('fc-tooltip');
+    if (!tooltip) return;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const tw = tooltip.offsetWidth || 280;
+    const th = tooltip.offsetHeight || 120;
+    const gap = 14;
+    let left = clientX + gap;
+    let top = clientY + gap;
+    if (left + tw > vw - 8) left = clientX - tw - gap;
+    if (top + th > vh - 8) top = clientY - th - gap;
+    tooltip.style.left = Math.max(4, left) + 'px';
+    tooltip.style.top = Math.max(4, top) + 'px';
+  };
+
+  const buildCalendarTooltip = (event, clientX, clientY) => {
+    removeCalendarTooltip();
+
+    const tooltip = document.createElement('div');
+    tooltip.id = 'fc-tooltip';
+    tooltip.className = 'calendar-tooltip';
+    tooltip.setAttribute('role', 'tooltip');
+
+    const { title, dateText, timeText, spaces, statusText } = getTooltipDetails(event);
+
+    const titleEl = document.createElement('div');
+    titleEl.className = 'calendar-tooltip__title';
+    titleEl.textContent = title;
+    tooltip.appendChild(titleEl);
+
+    if (dateText) {
+      const dateEl = document.createElement('div');
+      dateEl.className = 'calendar-tooltip__meta';
+      dateEl.textContent = dateText;
+      tooltip.appendChild(dateEl);
+    }
+
+    if (timeText) {
+      const timeEl = document.createElement('div');
+      timeEl.className = 'calendar-tooltip__meta';
+      timeEl.textContent = timeText;
+      tooltip.appendChild(timeEl);
+    }
+
+    if (spaces) {
+      const spacesEl = document.createElement('div');
+      spacesEl.className = 'calendar-tooltip__subtle';
+      spacesEl.textContent = spaces;
+      tooltip.appendChild(spacesEl);
+    }
+
+    const statusEl = document.createElement('div');
+    statusEl.className = 'calendar-tooltip__status';
+    statusEl.textContent = statusText;
+    tooltip.appendChild(statusEl);
+
+    document.body.appendChild(tooltip);
+    positionCalendarTooltip(clientX, clientY);
+  };
+
   const loadEvents = async () => {
     try {
       const response = await fetch(CALENDAR_API_ENDPOINT);
@@ -964,6 +1090,28 @@ document.addEventListener('DOMContentLoaded', function () {
         minute: '2-digit',
         hour12: false
       },
+      eventContent: function (arg) {
+        if (arg.view.type !== 'dayGridMonth') {
+          return undefined;
+        }
+
+        const wrap = document.createElement('div');
+        wrap.className = 'calendar-event-compact';
+
+        const time = document.createElement('span');
+        time.className = 'calendar-event-compact__time';
+        time.textContent = arg.event.start
+          ? new Date(arg.event.start).toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })
+          : '';
+        wrap.appendChild(time);
+
+        const label = document.createElement('span');
+        label.className = 'calendar-event-compact__label';
+        label.textContent = getCompactEventLabel(arg.event, window.innerWidth < 768 ? 10 : 18);
+        wrap.appendChild(label);
+
+        return { domNodes: [wrap] };
+      },
       eventClassNames: function (arg) {
         const status = normaliseStatus(arg.event.extendedProps?.status, 'pending');
         const classes = [`fc-event--${status}`];
@@ -1045,96 +1193,45 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         calendar.unselect();
       },
+      eventClick: function (info) {
+        if (info.jsEvent) {
+          info.jsEvent.preventDefault();
+          info.jsEvent.stopPropagation();
+        }
+
+        const rect = info.el.getBoundingClientRect();
+        buildCalendarTooltip(
+          info.event,
+          rect.left + Math.min(rect.width - 24, 36),
+          rect.top + Math.min(rect.height, 24)
+        );
+
+        if (window.matchMedia('(pointer: coarse)').matches) {
+          setTimeout(removeCalendarTooltip, 3200);
+        }
+      },
       eventDidMount: function (info) {
-        const removeTooltip = () => {
-          const tooltip = document.getElementById('fc-tooltip');
-          if (tooltip && tooltip.parentNode) {
-            tooltip.remove();
-          }
-        };
-
-        const positionTooltip = (clientX, clientY) => {
-          const tooltip = document.getElementById('fc-tooltip');
-          if (!tooltip) return;
-          const vw = window.innerWidth;
-          const vh = window.innerHeight;
-          const tw = tooltip.offsetWidth || 260;
-          const th = tooltip.offsetHeight || 80;
-          const gap = 14;
-          let left = clientX + gap;
-          let top = clientY + gap;
-          if (left + tw > vw - 8) left = clientX - tw - gap;
-          if (top + th > vh - 8) top = clientY - th - gap;
-          tooltip.style.left = Math.max(4, left) + 'px';
-          tooltip.style.top = Math.max(4, top) + 'px';
-        };
-
-        const buildTooltip = (clientX, clientY) => {
-          removeTooltip();
-          const tooltip = document.createElement('div');
-          tooltip.id = 'fc-tooltip';
-          tooltip.style.cssText = [
-            'position:fixed',
-            'z-index:10001',
-            'background:#fff',
-            'border:1px solid #ccc',
-            'padding:8px 11px',
-            'border-radius:8px',
-            'box-shadow:0 8px 18px rgba(24,61,44,0.18)',
-            'pointer-events:none',
-            'max-width:260px',
-            'min-width:140px',
-            'word-break:break-word',
-            'line-height:1.5',
-            'font-size:0.88rem'
-          ].join(';');
-          tooltip.setAttribute('role', 'tooltip');
-
-          const start = info.event.start ? new Date(info.event.start) : null;
-          const end = info.event.end ? new Date(info.event.end) : null;
-          const dateStr = start
-            ? start.toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-            : '';
-          const timeRange = start && end
-            ? `${start.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })}–${end.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })}`
-            : start
-              ? start.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })
-              : '';
-          const spaces = Array.isArray(info.event.extendedProps?.spaces) && info.event.extendedProps.spaces.length
-            ? info.event.extendedProps.spaces.join(', ')
-            : '';
-
-          const typeLine = `<div style="font-weight:700;margin-bottom:2px">${info.event.extendedProps?.eventType || 'Reservasjon'}</div>`;
-          const dateLine = dateStr ? `<div style="color:#555">${dateStr}</div>` : '';
-          const timeLine = timeRange ? `<div style="color:#555">${timeRange}</div>` : '';
-          const spacesLine = spaces ? `<div style="color:#777;font-size:0.82rem;margin-top:2px">${spaces}</div>` : '';
-
-          tooltip.innerHTML = typeLine + dateLine + timeLine + spacesLine;
-          document.body.appendChild(tooltip);
-          positionTooltip(clientX, clientY);
-        };
-
         const handleMouseMove = (event) => {
-          positionTooltip(event.clientX, event.clientY);
+          positionCalendarTooltip(event.clientX, event.clientY);
         };
 
         const handleMouseEnter = (event) => {
-          buildTooltip(event.clientX, event.clientY);
+          buildCalendarTooltip(info.event, event.clientX, event.clientY);
           info.el.addEventListener('mousemove', handleMouseMove);
         };
 
         const handleMouseLeave = () => {
           info.el.removeEventListener('mousemove', handleMouseMove);
-          removeTooltip();
+          removeCalendarTooltip();
         };
 
         let touchTimer = null;
         const handleTouchStart = (event) => {
           if (event.touches.length !== 1) return;
           const touch = event.touches[0];
-          buildTooltip(touch.clientX, touch.clientY);
+          buildCalendarTooltip(info.event, touch.clientX, touch.clientY);
           clearTimeout(touchTimer);
-          touchTimer = setTimeout(removeTooltip, 2800);
+          touchTimer = setTimeout(removeCalendarTooltip, 3200);
         };
 
         const handleTouchEnd = () => {};
@@ -1151,10 +1248,7 @@ document.addEventListener('DOMContentLoaded', function () {
         info.el._bookingHandleTouchEnd = handleTouchEnd;
       },
       eventWillUnmount: function (info) {
-        const tooltip = document.getElementById('fc-tooltip');
-        if (tooltip && tooltip.parentNode) {
-          tooltip.remove();
-        }
+        removeCalendarTooltip();
 
         if (info?.el) {
           if (info.el._bookingHandleMouseEnter) {

@@ -1961,10 +1961,14 @@ button {
 #calendar .fc-event {
     border: none;
     border-radius: var(--radius-sm);
-    padding: 0.2rem 0.45rem;
+    padding: 0.18rem 0.4rem;
     font-weight: 600;
     letter-spacing: 0.01em;
     overflow: hidden;
+}
+
+#calendar .fc-daygrid-event {
+    min-height: 1.55rem;
 }
 
 #calendar .fc-event .fc-event-title,
@@ -1973,6 +1977,29 @@ button {
     text-overflow: ellipsis;
     white-space: nowrap;
     min-width: 0;
+}
+
+#calendar .calendar-event-compact {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+#calendar .calendar-event-compact__time {
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.96;
+    white-space: nowrap;
+}
+
+#calendar .calendar-event-compact__label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 #calendar .fc-daygrid-event-harness {
@@ -1996,6 +2023,45 @@ button {
     background: linear-gradient(135deg, rgba(14, 82, 133, 0.9), rgba(20, 100, 160, 0.95));
     color: #fff;
     box-shadow: inset 0 0 0 1px rgba(15, 40, 90, 0.25);
+}
+
+.calendar-tooltip {
+    position: fixed;
+    z-index: 10001;
+    background: #fff;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    padding: 0.65rem 0.8rem;
+    border-radius: 0.8rem;
+    box-shadow: 0 12px 30px rgba(24, 61, 44, 0.16);
+    pointer-events: none;
+    max-width: 18rem;
+    min-width: 10rem;
+    word-break: break-word;
+    line-height: 1.45;
+    font-size: 0.88rem;
+}
+
+.calendar-tooltip__title {
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.1rem;
+}
+
+.calendar-tooltip__meta {
+    color: #475569;
+}
+
+.calendar-tooltip__subtle {
+    margin-top: 0.2rem;
+    color: #64748b;
+    font-size: 0.82rem;
+}
+
+.calendar-tooltip__status {
+    margin-top: 0.35rem;
+    color: var(--brand-700);
+    font-size: 0.8rem;
+    font-weight: 600;
 }
 
 form {
@@ -2777,8 +2843,20 @@ fieldset.is-invalid {
 
     #calendar .fc-event {
         font-size: 0.73rem;
-        padding: 0.1rem 0.2rem;
+        padding: 0.1rem 0.18rem;
         letter-spacing: 0;
+    }
+
+    #calendar .calendar-event-compact {
+        gap: 0.22rem;
+    }
+
+    #calendar .calendar-event-compact__time {
+        font-size: 0.66rem;
+    }
+
+    #calendar .calendar-event-compact__label {
+        font-size: 0.7rem;
     }
 
     #calendar .fc-toolbar-title {
