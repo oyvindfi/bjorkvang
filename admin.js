@@ -177,7 +177,7 @@ if (sessionStorage.getItem('admin_auth') === 'true') {
 async function loadDashboard() {
     try {
         const ctrl = new AbortController();
-        const timeout = setTimeout(() => ctrl.abort(), 20000); // 20s timeout
+        const timeout = setTimeout(() => ctrl.abort(), 45000); // 45s — allow for Functions cold start
         let response;
         try {
             response = await fetch(`${API_BASE_URL}/booking/admin`, { signal: ctrl.signal, headers: { 'X-Admin-Key': getAdminKey() } });
@@ -191,36 +191,42 @@ async function loadDashboard() {
         const data = await response.json();
         let bookings = data.bookings || [];
 
-        // Auto-check Vipps payment statuses on every dashboard load
-        try {
-            const vippsRes = await fetch(`${API_BASE_URL}/booking/check-vipps-statuses`, {
-                method: 'POST',
-                headers: { 'Accept': 'application/json', 'X-Admin-Key': getAdminKey() }
-            });
-            if (vippsRes.ok) {
-                const vippsData = await vippsRes.json();
-                // Use the fresh booking list returned by the status check
-                if (Array.isArray(vippsData.bookings) && vippsData.bookings.length > 0) {
-                    bookings = vippsData.bookings;
-                }
-                if (vippsData.updatedCount > 0) {
-                    console.info(`Vipps status check: ${vippsData.updatedCount} booking(s) updated.`);
-                }
-            }
-        } catch (vippsErr) {
-            console.warn('Vipps status check failed (non-fatal):', vippsErr);
-        }
-
         _allBookings = bookings;
         applyFilters();
         renderVaskDashboard(bookings);
+
+        // Fire Vipps status check in the background — don't block initial render.
+        // It performs a second listBookings() + N serial Vipps API calls, so
+        // awaiting it pre-render frequently pushed the total request past 20s.
+        refreshVippsStatusesInBackground();
     } catch (error) {
         const msg = error.name === 'AbortError'
-            ? 'Forespørselen tok for lang tid (>20s) — sannsynligvis timeout mot Cosmos DB. Sjekk Azure Portal.'
+            ? 'Forespørselen tok for lang tid (>45s). Funksjonen kan være under oppstart (cold start) — prøv på nytt om noen sekunder. Hvis problemet vedvarer, sjekk Cosmos DB i Azure Portal.'
             : (error.message || 'Ukjent feil');
         console.error('Error loading dashboard:', msg, error);
         document.getElementById('pending-list').innerHTML = `<p style="color:#ef4444;">⚠ Feil: ${msg}</p>`;
         alert('Kunne ikke laste bookinger: ' + msg);
+    }
+}
+
+async function refreshVippsStatusesInBackground() {
+    try {
+        const vippsRes = await fetch(`${API_BASE_URL}/booking/check-vipps-statuses`, {
+            method: 'POST',
+            headers: { 'Accept': 'application/json', 'X-Admin-Key': getAdminKey() }
+        });
+        if (!vippsRes.ok) return;
+        const vippsData = await vippsRes.json();
+        if (Array.isArray(vippsData.bookings) && vippsData.bookings.length > 0) {
+            _allBookings = vippsData.bookings;
+            applyFilters();
+            renderVaskDashboard(vippsData.bookings);
+        }
+        if (vippsData.updatedCount > 0) {
+            console.info(`Vipps status check: ${vippsData.updatedCount} booking(s) updated.`);
+        }
+    } catch (vippsErr) {
+        console.warn('Vipps status check failed (non-fatal):', vippsErr);
     }
 }
 

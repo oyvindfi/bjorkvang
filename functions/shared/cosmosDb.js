@@ -284,14 +284,19 @@ const listBookings = async ({ startDate, endDate } = {}) => {
         const { container } = db;
         
         let querySpec;
-        
+
         // Note: ORDER BY removed from queries to avoid requiring composite index
         // Sorting is done client-side instead.
-        // Always exclude member records (c.type = 'member') so SELECT * doesn't
-        // contaminate the booking list with non-booking documents.
+        // Use a positive filter on c.type so the default range index can be used
+        // (the previous `NOT IS_DEFINED(c.type) OR c.type != 'member'` form forced
+        // a cross-partition full scan). Legacy bookings without a `type` field
+        // are still matched via the IS_DEFINED(c.date) branch.
+        const bookingTypeFilter =
+            "(c.type = 'booking' OR (NOT IS_DEFINED(c.type) AND IS_DEFINED(c.date)))";
+
         if (startDate && endDate) {
             querySpec = {
-                query: "SELECT * FROM c WHERE (NOT IS_DEFINED(c.type) OR c.type != 'member') AND c.date >= @startDate AND c.date <= @endDate",
+                query: `SELECT * FROM c WHERE ${bookingTypeFilter} AND c.date >= @startDate AND c.date <= @endDate`,
                 parameters: [
                     { name: '@startDate', value: startDate },
                     { name: '@endDate', value: endDate }
@@ -299,26 +304,29 @@ const listBookings = async ({ startDate, endDate } = {}) => {
             };
         } else if (startDate) {
             querySpec = {
-                query: "SELECT * FROM c WHERE (NOT IS_DEFINED(c.type) OR c.type != 'member') AND c.date >= @startDate",
+                query: `SELECT * FROM c WHERE ${bookingTypeFilter} AND c.date >= @startDate`,
                 parameters: [{ name: '@startDate', value: startDate }]
             };
         } else {
             querySpec = {
-                query: "SELECT * FROM c WHERE NOT IS_DEFINED(c.type) OR c.type != 'member'"
+                query: `SELECT * FROM c WHERE ${bookingTypeFilter}`
             };
         }
 
+        const queryStartedAt = Date.now();
+
         const { resources } = await container.items.query(querySpec).fetchAll();
-        
+        const queryMs = Date.now() - queryStartedAt;
+
         // Sort client-side by date ASC, then time ASC
         const sorted = resources.sort((a, b) => {
             if (a.date === b.date) {
                 return (a.time || '').localeCompare(b.time || '');
             }
-            return a.date.localeCompare(b.date);
+            return (a.date || '').localeCompare(b.date || '');
         });
-        
-        console.log(`CosmosDB: Retrieved ${sorted.length} bookings`);
+
+        console.log(`CosmosDB: Retrieved ${sorted.length} bookings in ${queryMs}ms`);
         return sorted;
     } catch (error) {
         console.error('CosmosDB: Failed to list bookings', {
