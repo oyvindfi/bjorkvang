@@ -103,8 +103,3 @@ app.http('getFacebookFeed', {
         }
     },
 });
-                error: 'Kunne ikke hente innlegg fra Facebook.',
-            }, request);
-        }
-    },
-});
