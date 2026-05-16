@@ -981,8 +981,17 @@
                 </div>
                 <div id="members-sms-panel" style="display:none;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:1rem;margin-bottom:1rem;max-width:540px;">
                     <p style="font-size:.875rem;color:#1e40af;font-weight:600;margin:0 0 .5rem;">Send SMS til valgte medlemmer</p>
-                    <textarea id="members-sms-body" rows="3" placeholder="Skriv meldingen her…"
+                    <p style="font-size:.8rem;color:#1e3a8a;margin:0 0 .45rem;">Maks 160 tegn. Hold meldingen tydelig og handlingsorientert.</p>
+                    <textarea id="members-sms-body" rows="3" maxlength="160" oninput="updateMembersSmsCounter()" placeholder="Skriv meldingen her…"
                         style="width:100%;padding:.5rem .75rem;border:1px solid #93c5fd;border-radius:6px;font-size:.9rem;resize:vertical;box-sizing:border-box;font-family:inherit;background:#fff;"></textarea>
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-top:.35rem;">
+                        <span id="members-sms-counter" style="font-size:.78rem;color:#64748b;">(0/160)</span>
+                        <span style="font-size:.78rem;color:#1e3a8a;">Estimert kost: 1 SMS per mottaker</span>
+                    </div>
+                    <div style="margin-top:.55rem;background:#fff;border:1px dashed #93c5fd;border-radius:6px;padding:.5rem .65rem;">
+                        <div style="font-size:.75rem;color:#64748b;margin-bottom:.25rem;">Forhåndsvisning</div>
+                        <div id="members-sms-preview" style="font-size:.88rem;color:#1f2937;line-height:1.45;word-break:break-word;">Skriv melding for å se forhåndsvisning…</div>
+                    </div>
                     <div style="display:flex;gap:.75rem;align-items:center;margin-top:.6rem;flex-wrap:wrap;">
                         <button onclick="sendBulkMemberSms()"
                             style="padding:.45rem 1.25rem;background:#1d4ed8;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:.9rem;">
@@ -1215,8 +1224,22 @@
             const panel = document.getElementById('members-sms-panel');
             panel.style.display = panel.style.display === 'none' ? '' : 'none';
             if (panel.style.display !== 'none') {
+                updateMembersSmsCounter();
                 document.getElementById('members-sms-body').focus();
             }
+        }
+
+        function updateMembersSmsCounter() {
+            const bodyEl = document.getElementById('members-sms-body');
+            const counterEl = document.getElementById('members-sms-counter');
+            const previewEl = document.getElementById('members-sms-preview');
+            if (!bodyEl || !counterEl || !previewEl) return;
+
+            const value = bodyEl.value || '';
+            const len = value.length;
+            counterEl.textContent = `(${len}/160)`;
+            counterEl.style.color = len >= 150 ? '#dc2626' : (len >= 130 ? '#b45309' : '#64748b');
+            previewEl.textContent = value.trim() || 'Skriv melding for å se forhåndsvisning…';
         }
 
         function sendBulkMemberSms() {
@@ -1226,6 +1249,7 @@
             const statusEl = document.getElementById('members-sms-status');
             if (phones.length === 0) { statusEl.textContent = 'Velg minst ett medlem.'; return; }
             if (!body) { statusEl.textContent = 'Skriv en melding.'; return; }
+            if (body.length > 160) { statusEl.innerHTML = '<span style="color:#dc2626;">Meldingen er for lang. Maks 160 tegn.</span>'; return; }
 
             const sendBtn = document.querySelector('#members-sms-panel button');
             sendBtn.disabled = true;
@@ -1233,7 +1257,10 @@
 
             fetch(`${API_BASE_URL}/sms/bulk`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Admin-Key': getAdminKey()
+                },
                 body: JSON.stringify({ phones, body })
             })
             .then(r => r.json())

@@ -2,7 +2,7 @@ const { app } = require('@azure/functions');
 const { createJsonResponse } = require('../../../shared/http');
 const { getBooking, updateBookingFields } = require('../../../shared/cosmosDb');
 const { sendEmail } = require('../../../shared/email');
-const { sendSms, formatDate } = require('../../../shared/sms');
+const { sendSms, buildSmsMessage } = require('../../../shared/sms');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
 const vipps = require('../../../shared/vipps');
 
@@ -261,12 +261,21 @@ app.http('sendFinalInvoice', {
 
             // --- SMS med sluttfaktura og betalingslenke ---
             if (booking.phone) {
-                const firstName = booking.requesterName ? booking.requesterName.split(' ')[0] : 'deg';
                 let invoiceSmsBody;
                 if (vippsUrl) {
-                    invoiceSmsBody = `Hei ${firstName}! Sluttfaktura for ${formatDate(booking.date)}: kr ${remainingNOK.toLocaleString('nb-NO')},-. Sjekk e-posten din for Vipps-betalingslenke. – Bjørkvang forsamlingslokale og Helgøens Vel`;
+                    invoiceSmsBody = buildSmsMessage('customer.finalInvoiceVipps', {
+                        requesterName: booking.requesterName,
+                        date: booking.date,
+                        amountNOK: remainingNOK,
+                    });
                 } else {
-                    invoiceSmsBody = `Hei ${firstName}! Sluttfaktura for ${formatDate(booking.date)}: kr ${remainingNOK.toLocaleString('nb-NO')},-. Betal til kontonr. ${bankAccount}. Merk: ${id.slice(0, 8)}. – Bjørkvang forsamlingslokale og Helgøens Vel`;
+                    invoiceSmsBody = buildSmsMessage('customer.finalInvoiceBank', {
+                        requesterName: booking.requesterName,
+                        date: booking.date,
+                        amountNOK: remainingNOK,
+                        bankAccount,
+                        bookingId: id,
+                    });
                 }
                 await sendSms({ to: booking.phone, body: invoiceSmsBody }, context);
             }

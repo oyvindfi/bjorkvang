@@ -2124,6 +2124,7 @@ async function sendManualSms() {
     if (!to) { statusEl.style.color = '#ef4444'; statusEl.textContent = 'Fyll inn telefonnummer.'; return; }
     if (!body) { statusEl.style.color = '#ef4444'; statusEl.textContent = 'Fyll inn melding.'; return; }
     if (!/^\d{8}$/.test(to)) { statusEl.style.color = '#ef4444'; statusEl.textContent = 'Nummeret må være nøyaktig 8 sifre (uten +47).'; return; }
+    if (body.length > 160) { statusEl.style.color = '#ef4444'; statusEl.textContent = 'Meldingen er for lang. Maks 160 tegn.'; return; }
 
     btn.disabled = true;
     btn.textContent = 'Sender...';

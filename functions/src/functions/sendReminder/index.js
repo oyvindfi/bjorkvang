@@ -1,6 +1,6 @@
 const { app } = require('@azure/functions');
 const { sendEmail } = require('../../../shared/email');
-const { sendSms, formatDate } = require('../../../shared/sms');
+const { sendSms, buildSmsMessage } = require('../../../shared/sms');
 const { createJsonResponse, parseBody } = require('../../../shared/http');
 const { getBooking } = require('../../../shared/cosmosDb');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
@@ -52,7 +52,6 @@ app.http('sendReminder', {
             })[m]);
 
             const safeName = escapeHtml(booking.requesterName || 'Kunde');
-            const firstName = booking.requesterName ? booking.requesterName.split(' ')[0] : 'deg';
             const safeComment = comment ? escapeHtml(comment) : null;
 
             const dateObj = new Date(`${booking.date}T00:00:00`);
@@ -86,7 +85,11 @@ app.http('sendReminder', {
                     </div>
                     <p style="font-size:0.9em;color:#6b7280;">Spørsmål? Ta kontakt på <a href="mailto:styret@bjorkvang.org" style="color:#1a823b;">styret@bjorkvang.org</a>.</p>
                 `;
-                smsBody = `Hei ${firstName}! Påminnelse: Leieavtalen for ${formatDate(booking.date)} er ikke signert ennå. Signer her: ${contractLink} – Bjørkvang forsamlingslokale og Helgøens Vel`;
+                smsBody = buildSmsMessage('customer.reminderSigning', {
+                    requesterName: booking.requesterName,
+                    date: booking.date,
+                    contractLink,
+                });
 
             } else if (reminderType === 'deposit') {
                 subject = `Påminnelse: Forhåndsbetaling forfaller – ${formattedDate}`;
@@ -104,8 +107,18 @@ app.http('sendReminder', {
                     <p style="font-size:0.9em;color:#6b7280;">Spørsmål? Ta kontakt på <a href="mailto:styret@bjorkvang.org" style="color:#1a823b;">styret@bjorkvang.org</a>.</p>
                 `;
                 smsBody = booking.paymentMethod === 'vipps'
-                    ? `Hei ${firstName}! Påminnelse: Forhåndsbetaling${depositNOK ? ' kr ' + depositNOK.toLocaleString('nb-NO') + ',-' : ''} for ${formatDate(booking.date)} er ikke betalt. Sjekk e-posten for betalingslenke. – Bjørkvang forsamlingslokale og Helgøens Vel`
-                    : `Hei ${firstName}! Påminnelse: Betal forhåndsbetaling${depositNOK ? ' kr ' + depositNOK.toLocaleString('nb-NO') + ',-' : ''} for ${formatDate(booking.date)} til kontonr. ${bankAccount}. Merk: ${id.slice(0, 8)}. – Bjørkvang forsamlingslokale og Helgøens Vel`;
+                    ? buildSmsMessage('customer.reminderDepositVipps', {
+                        requesterName: booking.requesterName,
+                        date: booking.date,
+                        amountNOK: depositNOK,
+                    })
+                    : buildSmsMessage('customer.reminderDepositBank', {
+                        requesterName: booking.requesterName,
+                        date: booking.date,
+                        amountNOK: depositNOK,
+                        bankAccount,
+                        bookingId: id,
+                    });
 
             } else { // finalInvoice
                 subject = `Påminnelse: Sluttfaktura for ${formattedDate}`;
@@ -123,8 +136,18 @@ app.http('sendReminder', {
                     <p style="font-size:0.9em;color:#6b7280;">Spørsmål? Ta kontakt på <a href="mailto:styret@bjorkvang.org" style="color:#1a823b;">styret@bjorkvang.org</a>.</p>
                 `;
                 smsBody = booking.paymentMethod === 'vipps'
-                    ? `Hei ${firstName}! Påminnelse: Sluttfaktura${remainingNOK ? ' kr ' + remainingNOK.toLocaleString('nb-NO') + ',-' : ''} for ${formatDate(booking.date)} er ikke betalt. Sjekk e-posten for betalingslenke. – Bjørkvang forsamlingslokale og Helgøens Vel`
-                    : `Hei ${firstName}! Påminnelse: Betal sluttfaktura${remainingNOK ? ' kr ' + remainingNOK.toLocaleString('nb-NO') + ',-' : ''} for ${formatDate(booking.date)} til kontonr. ${bankAccount}. Merk: ${id.slice(0, 8)}. – Bjørkvang forsamlingslokale og Helgøens Vel`;
+                    ? buildSmsMessage('customer.reminderFinalVipps', {
+                        requesterName: booking.requesterName,
+                        date: booking.date,
+                        amountNOK: remainingNOK,
+                    })
+                    : buildSmsMessage('customer.reminderFinalBank', {
+                        requesterName: booking.requesterName,
+                        date: booking.date,
+                        amountNOK: remainingNOK,
+                        bankAccount,
+                        bookingId: id,
+                    });
             }
 
             const html = generateEmailHtml({

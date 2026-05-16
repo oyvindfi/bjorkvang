@@ -3,7 +3,7 @@ const { createJsonResponse, requireAdminKey } = require('../../../shared/http');
 const { getBooking, updateBookingFields } = require('../../../shared/cosmosDb');
 const { sendEmail } = require('../../../shared/email');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
-const { sendSmsToAdminGroup, formatDate } = require('../../../shared/sms');
+const { sendSmsToAdminGroup, buildSmsMessage } = require('../../../shared/sms');
 
 /**
  * Mark a booking's deposit as received (manual confirmation by admin).
@@ -105,7 +105,11 @@ app.http('depositPaid', {
         // Admin group SMS
         try {
             const depositNOK = Number(updated.depositAmount) || 0;
-            const adminSmsBody = `Depositum mottatt: ${updated.requesterName}, ${formatDate(updated.date)}${depositNOK ? `, kr ${depositNOK}` : ''}. – Bjørkvang`;
+            const adminSmsBody = buildSmsMessage('admin.depositPaid', {
+                requesterName: updated.requesterName,
+                date: updated.date,
+                amountNOK: depositNOK,
+            });
             await sendSmsToAdminGroup(adminSmsBody, context);
         } catch (smsErr) {
             context.warn('depositPaid: Could not send admin SMS', { error: smsErr.message });

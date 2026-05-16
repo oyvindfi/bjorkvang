@@ -2,7 +2,7 @@ const { app } = require('@azure/functions');
 const { createJsonResponse } = require('../../../shared/http');
 const { getBooking, updateBookingFields } = require('../../../shared/cosmosDb');
 const { sendEmail } = require('../../../shared/email');
-const { sendSms, formatDate } = require('../../../shared/sms');
+const { sendSms, buildSmsMessage } = require('../../../shared/sms');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
 const vipps = require('../../../shared/vipps');
 
@@ -245,12 +245,21 @@ app.http('sendDepositRequest', {
 
         // --- SMS med betalingslenke ---
         if (booking.phone) {
-            const firstName = booking.requesterName ? booking.requesterName.split(' ')[0] : 'deg';
             let depositSmsBody;
             if (paymentMethod === 'vipps' && vippsUrl) {
-                depositSmsBody = `Hei ${firstName}! Forhåndsbetaling kr ${depositNOK.toLocaleString('nb-NO')},- for ${formatDate(booking.date)} er klar. Sjekk e-posten din for Vipps-betalingslenke. – Bjørkvang forsamlingslokale og Helgøens Vel`;
+                depositSmsBody = buildSmsMessage('customer.depositReadyVipps', {
+                    requesterName: booking.requesterName,
+                    date: booking.date,
+                    amountNOK: depositNOK,
+                });
             } else {
-                depositSmsBody = `Hei ${firstName}! Betal forhåndsbetaling kr ${depositNOK.toLocaleString('nb-NO')},- for ${formatDate(booking.date)} til kontonr. ${bankAccount}. Merk betalingen: ${id.slice(0, 8)}. – Bjørkvang forsamlingslokale og Helgøens Vel`;
+                depositSmsBody = buildSmsMessage('customer.depositReadyBank', {
+                    requesterName: booking.requesterName,
+                    date: booking.date,
+                    amountNOK: depositNOK,
+                    bankAccount,
+                    bookingId: id,
+                });
             }
             await sendSms({ to: booking.phone, body: depositSmsBody }, context);
         }

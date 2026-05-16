@@ -2,7 +2,7 @@ const { app } = require('@azure/functions');
 const { listBookings } = require('../../../shared/cosmosDb');
 const { updateBookingFields } = require('../../../shared/cosmosDb');
 const { sendEmail } = require('../../../shared/email');
-const { sendSms, formatDate } = require('../../../shared/sms');
+const { sendSms, buildSmsMessage } = require('../../../shared/sms');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
 
 /**
@@ -104,8 +104,11 @@ app.timer('signingReminder', {
 
                 // --- SMS-påminnelse til leietaker ---
                 if (booking.phone) {
-                    const firstName = booking.requesterName ? booking.requesterName.split(' ')[0] : 'deg';
-                    const tenantSms = `Hei ${firstName}! Din leieavtale for ${formatDate(booking.date)} venter på din signatur. Signer her: ${contractLink} – Bjørkvang forsamlingslokale og Helgøens Vel`;
+                    const tenantSms = buildSmsMessage('customer.reminderSigning', {
+                        requesterName: booking.requesterName,
+                        date: booking.date,
+                        contractLink,
+                    });
                     await sendSms({ to: booking.phone, body: tenantSms }, context);
                 }
 

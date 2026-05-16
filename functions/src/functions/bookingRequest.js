@@ -1,7 +1,7 @@
 const { app } = require('@azure/functions');
 const crypto = require('crypto');
 const { sendEmail } = require('../../shared/email');
-const { sendSms, sendSmsToAdminGroup, formatDate } = require('../../shared/sms');
+const { sendSms, sendSmsToAdminGroup, buildSmsMessage } = require('../../shared/sms');
 const { createJsonResponse, parseBody, resolveBaseUrl } = require('../../shared/http');
 const { saveBooking, listBookings } = require('../../shared/cosmosDb');
 const { generateEmailHtml } = require('../../shared/emailTemplate');
@@ -384,7 +384,12 @@ app.http('bookingRequest', {
             context.info('bookingRequest: Board notification email sent');
 
             // --- Board SMS notification ---
-            const boardSmsBody = `Ny leieforespørsel: ${booking.requesterName}, ${formatDate(booking.date)} (${booking.eventType || 'Reservasjon'}), ${booking.attendees || '?'} gjester. Godkjenn i admin. – Bjørkvang`;
+            const boardSmsBody = buildSmsMessage('admin.newBooking', {
+                requesterName: booking.requesterName,
+                date: booking.date,
+                eventType: booking.eventType,
+                attendees: booking.attendees,
+            });
             await sendSmsToAdminGroup(boardSmsBody, context);
 
             // --- Requester Confirmation Email ---
@@ -438,8 +443,10 @@ app.http('bookingRequest', {
 
                 // --- Requester SMS confirmation ---
                 if (booking.phone) {
-                    const firstName = booking.requesterName ? booking.requesterName.split(' ')[0] : 'deg';
-                    const requesterSmsBody = `Hei ${firstName}! Vi har mottatt din leieforespørsel for ${formatDate(booking.date)}. Vi behandler den og gir deg svar snart. – Bjørkvang forsamlingslokale og Helgøens Vel`;
+                    const requesterSmsBody = buildSmsMessage('customer.bookingReceived', {
+                        requesterName: booking.requesterName,
+                        date: booking.date,
+                    });
                     await sendSms({ to: booking.phone, body: requesterSmsBody }, context);
                 }
             } catch (error) {

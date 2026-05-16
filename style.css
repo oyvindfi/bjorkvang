@@ -3455,7 +3455,7 @@ fieldset.is-invalid {
 }
 
 /* ==========================================
-   Facebook Feed Styling
+   Facebook Feed – Consent-gated Page Plugin
    ========================================== */
 
 .facebook-feed-wrapper {
@@ -3470,10 +3470,164 @@ fieldset.is-invalid {
     width: 100%;
 }
 
+/* Consent card */
+.fb-consent-card {
+    max-width: 560px;
+    width: 100%;
+    margin: 0 auto;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.fb-consent-header {
+    background: #1877f2;
+    padding: 24px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.fb-consent-logo {
+    width: 40px;
+    height: 40px;
+    fill: white;
+    flex-shrink: 0;
+}
+
+.fb-consent-name {
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.fb-consent-sub {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.875rem;
+}
+
+.fb-consent-body {
+    padding: 32px;
+}
+
+.fb-consent-body > p:first-child {
+    color: #444;
+    line-height: 1.7;
+    margin: 0 0 24px;
+}
+
+.fb-consent-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.fb-consent-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 28px;
+    background: #1877f2;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.fb-consent-btn:hover:not(:disabled) {
+    background: #166fe5;
+}
+
+.fb-consent-btn:disabled {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+.fb-consent-btn-icon {
+    width: 20px;
+    height: 20px;
+    fill: white;
+}
+
+.fb-consent-link {
+    color: #1877f2;
+    font-weight: 500;
+    font-size: 0.95rem;
+    text-decoration: none;
+}
+
+.fb-consent-link:hover {
+    text-decoration: underline;
+}
+
+.fb-consent-notice {
+    color: #6b7280;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.fb-consent-notice a {
+    color: #6b7280;
+    text-decoration: underline;
+}
+
+/* Live feed container */
+.fb-feed-live {
+    max-width: 560px;
+    margin: 0 auto;
+}
+
+.fb-feed-footer {
+    text-align: center;
+    margin-top: 12px;
+}
+
+.fb-feed-hide-btn {
+    background: none;
+    border: none;
+    color: #6b7280;
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 6px 12px;
+}
+
+.fb-feed-hide-btn:hover {
+    color: #374151;
+    text-decoration: underline;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .facebook-feed-wrapper {
         max-width: 100%;
+    }
+
+    .fb-consent-header {
+        padding: 20px 20px;
+    }
+
+    .fb-consent-body {
+        padding: 24px 20px;
+    }
+
+    .fb-consent-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .fb-consent-btn {
+        justify-content: center;
+    }
+
+    .fb-consent-link {
+        text-align: center;
     }
 }
 

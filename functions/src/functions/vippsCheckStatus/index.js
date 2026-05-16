@@ -4,7 +4,7 @@ const { getPayment, capturePayment } = require('../../../shared/vipps');
 const { getBooking, updateBookingStatus } = require('../../../shared/cosmosDb');
 const { sendEmail } = require('../../../shared/email');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
-const { sendSmsToAdminGroup, formatDate } = require('../../../shared/sms');
+const { sendSmsToAdminGroup, buildSmsMessage } = require('../../../shared/sms');
 
 app.http('vippsCheckStatus', {
     methods: ['POST', 'OPTIONS'],
@@ -101,7 +101,11 @@ app.http('vippsCheckStatus', {
                                 // Admin group SMS
                                 try {
                                     const amountNOK = booking.paymentAmount ? Math.round(booking.paymentAmount / 100) : null;
-                                    const adminSmsBody = `Betaling mottatt: ${booking.requesterName}, ${formatDate(booking.date)}${amountNOK ? `, kr ${amountNOK}` : ''}. Booking aktiv. – Bjørkvang`;
+                                    const adminSmsBody = buildSmsMessage('admin.paymentReceived', {
+                                        requesterName: booking.requesterName,
+                                        date: booking.date,
+                                        amountNOK,
+                                    });
                                     await sendSmsToAdminGroup(adminSmsBody, context);
                                 } catch (smsError) {
                                     context.warn(`Failed to send admin payment SMS: ${smsError.message}`);

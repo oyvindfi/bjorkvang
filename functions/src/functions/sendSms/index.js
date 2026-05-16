@@ -1,6 +1,6 @@
 const { app } = require('@azure/functions');
-const { sendSms, normalizeNorwegianPhone } = require('../../../shared/sms');
-const { createJsonResponse, parseBody } = require('../../../shared/http');
+const { sendSms, normalizeNorwegianPhone, SMS_MAX_LENGTH } = require('../../../shared/sms');
+const { createJsonResponse, parseBody, requireAdminKey } = require('../../../shared/http');
 const { getBooking } = require('../../../shared/cosmosDb');
 
 /**
@@ -18,12 +18,21 @@ app.http('sendSms', {
             return createJsonResponse(204, {}, request);
         }
 
+        const authError = requireAdminKey(request);
+        if (authError) {
+            return createJsonResponse(401, { error: 'Unauthorized' }, request);
+        }
+
         const parsed = await parseBody(request);
         const { bookingId, body } = parsed;
         let { to } = parsed;
 
         if (!body || !String(body).trim()) {
             return createJsonResponse(400, { error: 'Melding (body) er påkrevd.' }, request);
+        }
+
+        if (String(body).trim().length > SMS_MAX_LENGTH) {
+            return createJsonResponse(400, { error: `Meldingen er for lang. Maks ${SMS_MAX_LENGTH} tegn.` }, request);
         }
 
         // Resolve phone from bookingId if `to` not supplied directly

@@ -2,7 +2,7 @@ const { app } = require('@azure/functions');
 const { addContractSignature, getBooking, updateBookingFields } = require('../../../shared/cosmosDb');
 const { createJsonResponse, requireAdminKey } = require('../../../shared/http');
 const { sendEmail } = require('../../../shared/email');
-const { sendSms, sendSmsToAdminGroup, formatDate } = require('../../../shared/sms');
+const { sendSms, sendSmsToAdminGroup, buildSmsMessage } = require('../../../shared/sms');
 const { generateEmailHtml } = require('../../../shared/emailTemplate');
 const vipps = require('../../../shared/vipps');
 
@@ -117,7 +117,11 @@ app.http('signBooking', {
                         context.warn('No BOARD_TO_ADDRESS configured, skipping tenant signature notification');
                     }
                     // SMS to admin group
-                    const adminSmsBody = `Leieavtale signert av ${updatedBooking.requesterName}, ${formatDate(updatedBooking.date)}. Signer som utleier: ${contractLink} – Bjørkvang`;
+                    const adminSmsBody = buildSmsMessage('admin.tenantSigned', {
+                        requesterName: updatedBooking.requesterName,
+                        date: updatedBooking.date,
+                        contractLink,
+                    });
                     await sendSmsToAdminGroup(adminSmsBody, context);
                 } catch (notifyError) {
                     context.error(`Failed to send board notification for tenant signature: ${notifyError.message}`);
@@ -273,16 +277,21 @@ app.http('signBooking', {
 
                     // --- SMS til leietaker: forhåndsbetaling klar for betaling ---
                     if (updatedBooking.phone) {
-                        const firstName = updatedBooking.requesterName ? updatedBooking.requesterName.split(' ')[0] : 'deg';
                         let depositSmsTxt;
                         if (paymentMethod === 'vipps' && depositNOK > 0) {
-                            // vippsResp may have thrown; fall back to contractLink in that case
-                            const vippsPayUrl = depositVippsOrderId
-                                ? depositPaymentText.match(/https?:\/\/\S+/)?.[0] || contractLink
-                                : `${websiteUrl}/complete-payment.html?bookingId=${encodeURIComponent(id)}`;
-                            depositSmsTxt = `Hei ${firstName}! Avtalen er signert av begge parter. Forhåndsbetaling kr ${depositNOK.toLocaleString('nb-NO')},- for ${formatDate(updatedBooking.date)} er klar. Sjekk e-posten din for Vipps-betalingslenke. – Bjørkvang forsamlingslokale og Helgøens Vel`;
+                            depositSmsTxt = buildSmsMessage('customer.depositReadyVipps', {
+                                requesterName: updatedBooking.requesterName,
+                                date: updatedBooking.date,
+                                amountNOK: depositNOK,
+                            });
                         } else if (paymentMethod === 'bank' && depositNOK > 0) {
-                            depositSmsTxt = `Hei ${firstName}! Avtalen er signert av begge parter. Betal forhåndsbetaling kr ${depositNOK.toLocaleString('nb-NO')},- for ${formatDate(updatedBooking.date)} til kontonr. ${bankAccount}. Merk: ${id.slice(0, 8)}. – Bjørkvang forsamlingslokale og Helgøens Vel`;
+                            depositSmsTxt = buildSmsMessage('customer.depositReadyBank', {
+                                requesterName: updatedBooking.requesterName,
+                                date: updatedBooking.date,
+                                amountNOK: depositNOK,
+                                bankAccount,
+                                bookingId: id,
+                            });
                         }
                         if (depositSmsTxt) {
                             await sendSms({ to: updatedBooking.phone, body: depositSmsTxt }, context);
