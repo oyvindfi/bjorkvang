@@ -68,7 +68,6 @@ app.http('apiStatus', {
                     TWILIO_ACCOUNT_SID:           !!process.env.TWILIO_ACCOUNT_SID,
                     TWILIO_AUTH_TOKEN:            !!process.env.TWILIO_AUTH_TOKEN,
                     BOARD_PHONE_NUMBER:           !!process.env.BOARD_PHONE_NUMBER,
-                    FACEBOOK_PAGE_ACCESS_TOKEN:   !!process.env.FACEBOOK_PAGE_ACCESS_TOKEN,
                 },
                 loadedFunctions,
                 loadingErrors,
@@ -109,4 +108,3 @@ loadFunction('getMembers', './functions/getMembers');
 loadFunction('signingReminder', './functions/signingReminder');
 loadFunction('adminContacts', './functions/adminContacts');
 loadFunction('systemHealth', './functions/systemHealth');
-loadFunction('getFacebookFeed', './functions/getFacebookFeed');

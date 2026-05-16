@@ -95,9 +95,9 @@
             <div class="hero-content">
                 <span class="hero-eyebrow">Nyheter</span>
                 <h1 id="news-title">Aktuelt fra Bjørkvang og Helgøens Vel</h1>
-                <p>Hold deg oppdatert på aktiviteter, prosjekter og beslutninger fra styret. Her samler vi siste nytt fra vellet.</p>
+                <p>Hold deg oppdatert på aktiviteter, prosjekter og beslutninger fra styret. Vi deler nyheter og oppdateringer på vår Facebook-side.</p>
                 <div class="hero-actions">
-                    <a class="button" href="#facebook-feed">Se siste oppdateringer</a>
+                    <a class="button" href="https://www.facebook.com/profile.php?id=100064406991223" target="_blank" rel="noopener noreferrer">Følg oss på Facebook ↗</a>
                     <a class="button secondary" href="medlemskap">Støtt arbeidet vårt</a>
                 </div>
             </div>
@@ -111,174 +111,22 @@
         <section class="page-section bg-gray" id="facebook-feed">
             <div class="container">
                 <div class="section-heading">
-                    <h2>Siste fra Facebook</h2>
-                    <p>Oppdateringer, bilder og arrangementer fra Helgøens Vel</p>
+                    <h2>Følg oss på Facebook</h2>
+                    <p>Vi publiserer nyheter, bilder og arrangementer på vår Facebook-side.</p>
                 </div>
 
-                <!-- Loading skeleton -->
-                <div class="fb-feed-loading" id="fb-feed-loading">
-                    <div class="fb-post-skeleton"></div>
-                    <div class="fb-post-skeleton"></div>
-                </div>
-
-                <!-- Error state -->
-                <div class="fb-feed-error" id="fb-feed-error" hidden>
-                    <p class="fb-feed-error-msg" id="fb-feed-error-msg">Kunne ikke laste innlegg.</p>
+                <div style="text-align: center; padding: 2rem 0;">
                     <a href="https://www.facebook.com/profile.php?id=100064406991223"
-                       target="_blank" rel="noopener noreferrer" class="button secondary">
-                        Åpne Facebook-siden ↗
-                    </a>
-                </div>
-
-                <!-- Posts container -->
-                <div class="fb-feed-posts" id="fb-feed-posts" hidden></div>
-
-                <div class="fb-feed-cta" id="fb-feed-cta" hidden>
-                    <a href="https://www.facebook.com/profile.php?id=100064406991223"
-                       target="_blank" rel="noopener noreferrer" class="button secondary">
-                        Følg oss på Facebook ↗
+                       target="_blank" rel="noopener noreferrer" class="button">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" style="vertical-align: middle; margin-right: 8px;">
+                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                        </svg>
+                        Gå til Facebook-siden vår ↗
                     </a>
                 </div>
             </div>
         </section>
     </main>
-
-    <script>
-    (function () {
-        var API_BASE_URL = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost')
-            ? 'http://localhost:7071/api'
-            : 'https://bjorkvang-duhsaxahgfe0btgv.westeurope-01.azurewebsites.net/api';
-        var PAGE_URL = 'https://www.facebook.com/profile.php?id=100064406991223';
-
-        var loadingEl = document.getElementById('fb-feed-loading');
-        var errorEl = document.getElementById('fb-feed-error');
-        var errorMsg = document.getElementById('fb-feed-error-msg');
-        var postsEl = document.getElementById('fb-feed-posts');
-        var ctaEl = document.getElementById('fb-feed-cta');
-
-        function relativeTime(isoStr) {
-            var date = new Date(isoStr);
-            var now = new Date();
-            var diffMs = now - date;
-            var mins = Math.floor(diffMs / 60000);
-            var hours = Math.floor(diffMs / 3600000);
-            var days = Math.floor(diffMs / 86400000);
-            if (mins < 1) return 'akkurat nå';
-            if (mins < 60) return mins + (mins === 1 ? ' minutt' : ' minutter') + ' siden';
-            if (hours < 24) return hours + (hours === 1 ? ' time' : ' timer') + ' siden';
-            if (days < 7) return days + (days === 1 ? ' dag' : ' dager') + ' siden';
-            return date.toLocaleDateString('nb-NO', { day: 'numeric', month: 'long', year: 'numeric' });
-        }
-
-        function escapeHtml(str) {
-            var div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        }
-
-        function linkify(text) {
-            return escapeHtml(text).replace(
-                /(https?:\/\/[^\s<]+)/g,
-                '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
-            );
-        }
-
-        function truncateMessage(text, limit) {
-            if (!text || text.length <= limit) return linkify(text || '');
-            var truncated = text.substring(0, limit);
-            var lastSpace = truncated.lastIndexOf(' ');
-            if (lastSpace > limit * 0.7) truncated = truncated.substring(0, lastSpace);
-            return linkify(truncated) + '<span class="fb-post-truncated">\u2026 <button type="button" class="fb-post-readmore">Les mer</button></span>' +
-                '<span class="fb-post-full" hidden>' + linkify(text) + '</span>';
-        }
-
-        function buildImageGrid(images) {
-            if (!images || images.length === 0) return '';
-            var count = Math.min(images.length, 4);
-            var html = '<div class="fb-post-images fb-post-images--' + count + '">';
-            for (var i = 0; i < count; i++) {
-                html += '<img src="' + escapeHtml(images[i]) + '" alt="Bilde fra innlegg" loading="lazy">';
-            }
-            if (images.length > 4) {
-                html += '<span class="fb-post-images-more">+' + (images.length - 4) + '</span>';
-            }
-            html += '</div>';
-            return html;
-        }
-
-        function renderPost(post) {
-            var images = post.images && post.images.length > 0 ? post.images :
-                         (post.picture ? [post.picture] : []);
-            var card = document.createElement('article');
-            card.className = 'fb-post-card';
-            card.innerHTML =
-                '<div class="fb-post-header">' +
-                    '<div class="fb-post-avatar">' +
-                        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="#1877F2">' +
-                            '<path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>' +
-                        '</svg>' +
-                    '</div>' +
-                    '<div class="fb-post-meta">' +
-                        '<span class="fb-post-author">Bjørkvang / Helgøens Vel</span>' +
-                        '<time class="fb-post-time" datetime="' + post.createdTime + '">' + relativeTime(post.createdTime) + '</time>' +
-                    '</div>' +
-                '</div>' +
-                (post.message ? '<div class="fb-post-body">' + truncateMessage(post.message, 280) + '</div>' : '') +
-                buildImageGrid(images) +
-                '<div class="fb-post-footer">' +
-                    '<a href="' + escapeHtml(post.permalink || PAGE_URL) + '" target="_blank" rel="noopener noreferrer" class="fb-post-link">' +
-                        'Åpne i Facebook ↗' +
-                    '</a>' +
-                '</div>';
-            return card;
-        }
-
-        function showError(msg) {
-            loadingEl.hidden = true;
-            errorMsg.textContent = msg;
-            errorEl.hidden = false;
-        }
-
-        function attachReadMoreHandlers() {
-            var btns = postsEl.querySelectorAll('.fb-post-readmore');
-            for (var i = 0; i < btns.length; i++) {
-                btns[i].addEventListener('click', function () {
-                    var truncated = this.parentNode;
-                    var full = truncated.nextElementSibling;
-                    truncated.hidden = true;
-                    full.hidden = false;
-                });
-            }
-        }
-
-        function loadFeed() {
-            fetch(API_BASE_URL + '/facebook/feed')
-                .then(function (res) { return res.json(); })
-                .then(function (data) {
-                    if (data.error) { showError(data.error); return; }
-                    if (!data.posts || data.posts.length === 0) {
-                        showError('Ingen innlegg å vise.');
-                        return;
-                    }
-                    var fragment = document.createDocumentFragment();
-                    data.posts.forEach(function (post) {
-                        fragment.appendChild(renderPost(post));
-                    });
-                    postsEl.innerHTML = '';
-                    postsEl.appendChild(fragment);
-                    loadingEl.hidden = true;
-                    postsEl.hidden = false;
-                    ctaEl.hidden = false;
-                    attachReadMoreHandlers();
-                })
-                .catch(function () {
-                    showError('Kunne ikke laste innlegg fra Facebook.');
-                });
-        }
-
-        loadFeed();
-    })();
-    </script>
 
     <footer class="site-footer">
         <div class="container footer-grid">
