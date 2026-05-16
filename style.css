@@ -3584,8 +3584,17 @@ fieldset.is-invalid {
     margin: 0 auto;
 }
 
+#fb-plugin-container {
+    min-height: 400px;
+    display: flex;
+    justify-content: center;
+}
+
 .fb-feed-footer {
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
     margin-top: 12px;
 }
 

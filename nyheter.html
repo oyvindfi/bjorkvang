@@ -108,7 +108,7 @@
     </section>
 
     <main class="page-main" id="main-content">
-        <!-- Facebook Feed Section – consent-gated Page Plugin -->
+        <!-- Facebook Feed – consent-gated, SDK init with registered App ID -->
         <section class="page-section bg-gray" id="facebook-feed">
             <div class="container">
                 <div class="section-heading">
@@ -116,7 +116,7 @@
                     <p>Se våre siste oppdateringer, bilder og arrangementer fra Helgøens Vel</p>
                 </div>
                 <div class="facebook-feed-wrapper">
-                    <!-- Consent card (default state) -->
+                    <!-- Consent card (default) -->
                     <div class="fb-consent-card" id="fb-consent-card">
                         <div class="fb-consent-header">
                             <svg class="fb-consent-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -130,15 +130,14 @@
                         <div class="fb-consent-body">
                             <p>Følg oss på Facebook for nyheter, bilder fra arrangementer, informasjon om dugnad og aktiviteter i lokalmiljøet på Helgøya.</p>
                             <div class="fb-consent-actions">
-                                <button type="button" class="fb-consent-btn" id="fb-load-feed" aria-label="Last inn Facebook-feed (laster innhold fra Facebook)">
+                                <button type="button" class="fb-consent-btn" id="fb-load-feed">
                                     <svg class="fb-consent-btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                                         <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                                     </svg>
                                     Vis Facebook-feed
                                 </button>
                                 <a href="https://www.facebook.com/profile.php?id=100064406991223"
-                                   target="_blank"
-                                   rel="noopener noreferrer"
+                                   target="_blank" rel="noopener noreferrer"
                                    class="fb-consent-link">
                                     Åpne i Facebook ↗
                                 </a>
@@ -147,23 +146,16 @@
                         </div>
                     </div>
 
-                    <!-- Live feed (shown after consent) -->
+                    <!-- Live feed (after consent) -->
                     <div class="fb-feed-live" id="fb-feed-live" hidden>
                         <div id="fb-root"></div>
-                        <div class="fb-page"
-                             data-href="https://www.facebook.com/profile.php?id=100064406991223"
-                             data-tabs="timeline,events"
-                             data-width="500"
-                             data-height="700"
-                             data-small-header="false"
-                             data-adapt-container-width="true"
-                             data-hide-cover="false"
-                             data-show-facepile="true">
-                            <blockquote cite="https://www.facebook.com/profile.php?id=100064406991223" class="fb-xfbml-parse-ignore">
-                                <a href="https://www.facebook.com/profile.php?id=100064406991223">Helgøens Vel</a>
-                            </blockquote>
-                        </div>
+                        <div id="fb-plugin-container"></div>
                         <div class="fb-feed-footer">
+                            <a href="https://www.facebook.com/profile.php?id=100064406991223"
+                               target="_blank" rel="noopener noreferrer"
+                               class="fb-consent-link">
+                                Åpne i Facebook ↗
+                            </a>
                             <button type="button" class="fb-feed-hide-btn" id="fb-hide-feed">Skjul feed</button>
                         </div>
                     </div>
@@ -174,39 +166,70 @@
 
     <script>
     (function () {
-        var FB_PAGE_URL = 'https://www.facebook.com/profile.php?id=100064406991223';
+        var APP_ID = '1593994929398028';
+        var PAGE_URL = 'https://www.facebook.com/profile.php?id=100064406991223';
         var consentCard = document.getElementById('fb-consent-card');
         var feedLive = document.getElementById('fb-feed-live');
+        var pluginContainer = document.getElementById('fb-plugin-container');
         var loadBtn = document.getElementById('fb-load-feed');
         var hideBtn = document.getElementById('fb-hide-feed');
-        var sdkLoaded = false;
+        var sdkReady = false;
 
-        function loadFacebookSDK() {
-            if (sdkLoaded) {
-                feedLive.hidden = false;
-                consentCard.hidden = true;
-                if (window.FB) window.FB.XFBML.parse(feedLive);
-                return;
-            }
+        function getPluginWidth() {
+            var w = pluginContainer.offsetWidth || 500;
+            return Math.max(180, Math.min(500, w));
+        }
+
+        function renderPlugin() {
+            var w = getPluginWidth();
+            pluginContainer.innerHTML =
+                '<div class="fb-page"' +
+                ' data-href="' + PAGE_URL + '"' +
+                ' data-tabs="timeline,events"' +
+                ' data-width="' + w + '"' +
+                ' data-height="800"' +
+                ' data-small-header="false"' +
+                ' data-adapt-container-width="true"' +
+                ' data-hide-cover="false"' +
+                ' data-show-facepile="true">' +
+                '<blockquote cite="' + PAGE_URL + '" class="fb-xfbml-parse-ignore">' +
+                '<a href="' + PAGE_URL + '">Helgøens Vel</a>' +
+                '</blockquote></div>';
+            if (window.FB) window.FB.XFBML.parse(pluginContainer);
+        }
+
+        function showFeed() {
+            consentCard.hidden = true;
+            feedLive.hidden = false;
+            renderPlugin();
+        }
+
+        function loadSDK() {
+            if (sdkReady) { showFeed(); return; }
+
             loadBtn.disabled = true;
-            loadBtn.textContent = 'Laster…';
+            loadBtn.textContent = 'Laster\u2026';
 
-            var script = document.createElement('script');
-            script.src = 'https://connect.facebook.net/nb_NO/sdk.js#xfbml=1&version=v21.0';
-            script.async = true;
-            script.defer = true;
-            script.crossOrigin = 'anonymous';
-            script.nonce = '';
-            script.onload = function () {
-                sdkLoaded = true;
-                consentCard.hidden = true;
-                feedLive.hidden = false;
+            window.fbAsyncInit = function () {
+                window.FB.init({
+                    appId: APP_ID,
+                    xfbml: false,
+                    version: 'v25.0'
+                });
+                sdkReady = true;
+                showFeed();
             };
-            script.onerror = function () {
+
+            var s = document.createElement('script');
+            s.src = 'https://connect.facebook.net/nb_NO/sdk.js';
+            s.async = true;
+            s.defer = true;
+            s.crossOrigin = 'anonymous';
+            s.onerror = function () {
                 loadBtn.disabled = false;
-                loadBtn.textContent = 'Kunne ikke laste – prøv igjen';
+                loadBtn.textContent = 'Kunne ikke laste \u2013 pr\u00f8v igjen';
             };
-            document.body.appendChild(script);
+            document.head.appendChild(s);
         }
 
         function hideFeed() {
@@ -214,7 +237,7 @@
             consentCard.hidden = false;
         }
 
-        loadBtn.addEventListener('click', loadFacebookSDK);
+        loadBtn.addEventListener('click', loadSDK);
         hideBtn.addEventListener('click', hideFeed);
     })();
     </script>
