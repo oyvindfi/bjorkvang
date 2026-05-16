@@ -1,5 +1,6 @@
 const { app } = require('@azure/functions');
 const { createJsonResponse } = require('../../../shared/http');
+const fetch = require('node-fetch');
 
 const PAGE_ID = '100064406991223';
 const GRAPH_API_VERSION = 'v25.0';
@@ -43,32 +44,31 @@ app.http('getFacebookFeed', {
     authLevel: 'anonymous',
     route: 'facebook/feed',
     handler: async (request, context) => {
-        context.log('getFacebookFeed: Handling request');
-
-        if (request.method === 'OPTIONS') {
-            return createJsonResponse(204, {}, request);
-        }
-
-        const token = (process.env.FACEBOOK_PAGE_ACCESS_TOKEN || '').trim();
-        if (!token) {
-            context.log.warn('getFacebookFeed: FACEBOOK_PAGE_ACCESS_TOKEN not configured');
-            return createJsonResponse(503, {
-                error: 'Facebook-integrasjon er ikke konfigurert.',
-            }, request);
-        }
-
-        // Return cached data if still fresh
-        const now = Date.now();
-        if (cache.data && (now - cache.timestamp) < CACHE_TTL_MS) {
-            context.log('getFacebookFeed: Returning cached data');
-            return createJsonResponse(200, cache.data, request);
-        }
-
-        const url = `https://graph.facebook.com/${GRAPH_API_VERSION}/${PAGE_ID}/posts`
-            + `?fields=${FIELDS}&limit=${POST_LIMIT}&access_token=${token}`;
-
         try {
-            const fetch = require('node-fetch');
+            context.log('getFacebookFeed: Handling request');
+
+            if (request.method === 'OPTIONS') {
+                return createJsonResponse(204, {}, request);
+            }
+
+            const token = (process.env.FACEBOOK_PAGE_ACCESS_TOKEN || '').trim();
+            if (!token) {
+                context.log.warn('getFacebookFeed: FACEBOOK_PAGE_ACCESS_TOKEN not configured');
+                return createJsonResponse(503, {
+                    error: 'Facebook-integrasjon er ikke konfigurert.',
+                }, request);
+            }
+
+            // Return cached data if still fresh
+            const now = Date.now();
+            if (cache.data && (now - cache.timestamp) < CACHE_TTL_MS) {
+                context.log('getFacebookFeed: Returning cached data');
+                return createJsonResponse(200, cache.data, request);
+            }
+
+            const url = `https://graph.facebook.com/${GRAPH_API_VERSION}/${PAGE_ID}/posts`
+                + `?fields=${FIELDS}&limit=${POST_LIMIT}&access_token=${token}`;
+
             const res = await fetch(url);
             const json = await res.json();
 
@@ -93,11 +93,16 @@ app.http('getFacebookFeed', {
             return createJsonResponse(200, result, request);
 
         } catch (error) {
-            context.log.error('getFacebookFeed: Failed to fetch', {
+            context.log.error('getFacebookFeed: Unhandled error', {
                 error: error.message,
                 stack: error.stack,
             });
             return createJsonResponse(502, {
+                error: 'Kunne ikke hente innlegg fra Facebook.',
+            }, request);
+        }
+    },
+});
                 error: 'Kunne ikke hente innlegg fra Facebook.',
             }, request);
         }
