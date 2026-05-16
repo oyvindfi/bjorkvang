@@ -3463,7 +3463,7 @@ fieldset.is-invalid {
     justify-content: center;
     align-items: center;
     margin: 2rem auto;
-    max-width: 500px;
+    max-width: 100%;
 }
 
 .facebook-feed-wrapper .fb-page {
@@ -3580,7 +3580,7 @@ fieldset.is-invalid {
 
 /* Live feed container */
 .fb-feed-live {
-    max-width: 750px;
+    max-width: 100%;
     margin: 0 auto;
 }
 
