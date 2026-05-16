@@ -177,7 +177,7 @@
 
         function getPluginWidth() {
             var w = pluginContainer.offsetWidth || 500;
-            return Math.max(180, Math.min(500, w));
+            return Math.max(180, Math.min(w, 500));
         }
 
         function renderPlugin() {
@@ -187,7 +187,7 @@
                 ' data-href="' + PAGE_URL + '"' +
                 ' data-tabs="timeline,events"' +
                 ' data-width="' + w + '"' +
-                ' data-height="800"' +
+                ' data-height="900"' +
                 ' data-small-header="false"' +
                 ' data-adapt-container-width="true"' +
                 ' data-hide-cover="false"' +
@@ -239,6 +239,9 @@
 
         loadBtn.addEventListener('click', loadSDK);
         hideBtn.addEventListener('click', hideFeed);
+
+        // Auto-load feed on page load
+        loadSDK();
     })();
     </script>
 

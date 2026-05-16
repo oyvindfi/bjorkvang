@@ -3580,7 +3580,7 @@ fieldset.is-invalid {
 
 /* Live feed container */
 .fb-feed-live {
-    max-width: 560px;
+    max-width: 750px;
     margin: 0 auto;
 }
 
