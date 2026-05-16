@@ -1,10 +1,12 @@
 const { app } = require('@azure/functions');
 const { createJsonResponse } = require('../../../shared/http');
 
+const FUNCTION_VERSION = '2.0';
 const PAGE_ID = '100064406991223';
 const GRAPH_API_VERSION = 'v25.0';
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const POST_LIMIT = 10;
+const FETCH_TIMEOUT_MS = 8000; // 8 second timeout for Graph API
 const FIELDS = 'message,created_time,full_picture,permalink_url,attachments{media,subattachments}';
 
 let cache = { data: null, timestamp: 0 };
@@ -44,7 +46,7 @@ app.http('getFacebookFeed', {
     route: 'facebook/feed',
     handler: async (request, context) => {
         try {
-            context.log('getFacebookFeed: Handling request');
+            context.log(`getFacebookFeed v${FUNCTION_VERSION}: ${request.method} request`);
 
             if (request.method === 'OPTIONS') {
                 return createJsonResponse(204, {}, request);
@@ -68,7 +70,17 @@ app.http('getFacebookFeed', {
             const url = `https://graph.facebook.com/${GRAPH_API_VERSION}/${PAGE_ID}/posts`
                 + `?fields=${FIELDS}&limit=${POST_LIMIT}&access_token=${token}`;
 
-            const res = await fetch(url);
+            context.log('getFacebookFeed: Calling Graph API...');
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+            let res;
+            try {
+                res = await fetch(url, { signal: controller.signal });
+            } finally {
+                clearTimeout(timeout);
+            }
+
             const json = await res.json();
 
             if (!res.ok) {
@@ -92,12 +104,16 @@ app.http('getFacebookFeed', {
             return createJsonResponse(200, result, request);
 
         } catch (error) {
+            const isTimeout = error.name === 'AbortError';
             context.log.error('getFacebookFeed: Unhandled error', {
                 error: error.message,
+                type: isTimeout ? 'TIMEOUT' : error.name,
                 stack: error.stack,
             });
-            return createJsonResponse(502, {
-                error: 'Kunne ikke hente innlegg fra Facebook.',
+            return createJsonResponse(isTimeout ? 504 : 502, {
+                error: isTimeout
+                    ? 'Facebook svarte ikke i tide.'
+                    : 'Kunne ikke hente innlegg fra Facebook.',
             }, request);
         }
     },
