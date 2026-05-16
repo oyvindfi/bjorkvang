@@ -1,6 +1,5 @@
 const { app } = require('@azure/functions');
 const { createJsonResponse } = require('../../../shared/http');
-const fetch = require('node-fetch');
 
 const PAGE_ID = '100064406991223';
 const GRAPH_API_VERSION = 'v25.0';
